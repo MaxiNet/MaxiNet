@@ -1,0 +1,3 @@
+echo Removing all tunnel devices...
+ip li | egrep -o 'mn_tun[0-9]+' | while read DEV ; do ip li se dev $DEV down ; done
+ip li | egrep -o 'mn_tun[0-9]+' | while read DEV ; do ip li del $DEV ; done

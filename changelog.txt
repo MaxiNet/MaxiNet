@@ -1,0 +1,31 @@
+MaxiNet
+
+MaxiNet 0.3:
+ * bugfix: installer wont fail because of outdated repositorys
+ * bugfix: paritioner wont create invalid partitions
+ * bugfix: output error message if network does not support mtu of 1600
+ * bugfix: tunnels were not removed properly
+ * bugfix: Pyro now reuses sockets to avoid waiting time on re-runs. (Thanks to Mark Goddard <mgoddard@cray.com>)
+ * bugfix: added timeout when starting nameserver (Thanks to Mark Goddard <mgoddard@cray.com>)
+ * bugfix: added timeout when waiting for workers to register on nameserver (Thanks to Mark Goddard <mgoddard@cray.com>)
+ * bugfix: make maxinet work with Pyro versions >= 4.25 (Thanks to Mark Goddard <mgoddard@cray.com>)
+ * bugfix: proper clean up of config entry in Pyro nameserver (Thanks to Mark Goddard <mgoddard@cray.com>)
+ * bugfix: log remote exceptions on Frontend (Thanks to Mark Goddard <mgoddard@cray.com>)
+ * feature: config setting which allows MaxiNet to run on network with mtu of 1500
+            (changes mtu on all nodes to 1450)
+ * feature: interactive command line interface
+ * feature: workload shares can be assigned to workers to influence partitioning
+ * feature: monitor function to log experiments and maxinet_plot.py script to generate graphs from log files
+            (added python-matplotlib and sysstat to dependencies)
+ * cleanup: partitioner api changed
+
+MaxiNet 0.2:
+ * bugfix: unload openvswitch module regardless of name
+ * feature: added install script for debian wheezy and ubuntu 12.04.3 Server
+ * feature: added ability to add nodes on-the-fly
+ * cleanup: some api changes
+   * configuration is now done in config.py only. 
+     Parameters of Cluster / Experiment classes override config
+   * Experiment.run_cmd_on_host is deprecated now. Use Experiment.get(host).cmd
+     instead
+   * Experiment.find_worker is deprecated now. Use Experiment.get_worker instead
