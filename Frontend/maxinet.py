@@ -18,6 +18,7 @@ import random
 import atexit
 import traceback
 from partitioner import Partitioner
+from cli import CLI
 
 
 
@@ -583,83 +584,7 @@ class Experiment:
         """
         open interactive command line interface
         """
-        print """Type '?' for help or 'quit' to close shell"""
-        while(True):
-            try:
-                inp = raw_input("> ")
-                if(inp == "quit"):
-                    break
-                elif(inp[:7] == "pingall"):
-                    sent=0.0
-                    received=0.0
-                    if(inp.find(" ")==-1):
-                        for host in self.hosts:
-                            for target in self.hosts:
-                                if(target==host):
-                                    continue
-                                sys.stdout.write(host.name +" -> "+ target.name)
-                                sent+=1.0
-                                if(host.pexec("ping -c1 "+target.IP())[2]!=0):
-                                    print " X"
-                                else:
-                                    received +=1.0
-                                    print ""
-                    else:
-                        host = self.get(inp[inp.find(" ")+1:])
-                        if(host==None):
-                            print "Error: Node "+inp[inp.find(" ")+1:]+" does not exist"
-                        else:
-                            for target in self.hosts:
-                                if(target==host):
-                                    continue
-                                sys.stdout.write(host.name +" -> "+ target.name)
-                                sent+=1.0
-                                if(host.pexec("ping -c1 "+target.IP())[2]!=0):
-                                    print " X"
-                                else:
-                                    received+=1.0
-                                    print ""
-                    print "*** Results: %.2f%% dropped (%d/%d received)" % ((1.0-received/sent), int(received), int(sent))
-                elif(inp[:3] == "ip "):
-                    node = inp[inp.find(" ")+1:]
-                    if(self.get(node)==None):
-                        print "Error: Node "+node+" does not exist"
-                    else:
-                        print self.get(node).IP()
-                elif(inp[:3] == "py "):
-                    cmd = inp[inp.find(" ")+1:]
-                    main = __import__("__main__")
-                    try:
-                        exec(cmd, pglobals, plocals)
-                    except Exception, e:
-                        traceback.print_exc()
-                elif(inp.find(" ")!=-1):
-                    node = inp[:inp.find(" ")]
-                    cmd = inp[inp.find(" ")+1:]
-                    if(self.get(node)==None):
-                        print "Error: Node "+node+" does not exist"
-                    else:
-                        pid = self.get_worker(self.get(node)).run_cmd("ps ax | grep \"bash -ms mininet:"+node+"\" -m1 | awk '{print $1}'").strip()
-                        if self.get_worker(self.get(node)).tunnelX11(node):
-                            rcmd = "ssh -q -X -t "+self.get_worker(self.get(node)).hn()+" sudo mnexec -a "+pid+" "+cmd
-                        else:
-                            rcmd = "ssh -q -t "+self.get_worker(self.get(node)).hn()+" sudo mnexec -a "+pid+" "+cmd
-                        subprocess.call(rcmd,shell=True)
-                elif(inp=="help" or inp=="?"):
-                    print """Type '<hostname> <command>' to execute commands on maxinet hosts
-\texample: h1 ifconfig h1-eth1
-Type '<command> [parameters]' to execute other commands.
-Available commands:
-\tpingall [host]
-\tip <host>
-\tpy <python command>
-or type 'quit' to close shell"""
-                elif(inp==""):
-                    pass
-                else:
-                    print "Error: Unknown command '"+inp+"'"
-            except KeyboardInterrupt:
-                pass
+        CLI(self,plocals,pglobals)
             
         
                 
