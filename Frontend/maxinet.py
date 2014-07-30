@@ -441,6 +441,7 @@ class Experiment:
         self.topology=None
         self.starttime = time.localtime()
         self.printed_log_info = False
+        self.isMonitoring = False
         if is_partitioned:
             self.topology = topology
         else:
@@ -504,7 +505,12 @@ class Experiment:
         returns folder to which log files will be saved
         """
         return "/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"
-        
+
+    def terminate_logging(self):
+        for worker in self.cluster.workers():
+            worker.run_cmd("killall getRxTx.sh getMemoryUsage.sh")
+        self.isMonitoring = False
+
     def log_cpu(self):
         """
         log cpu useage of workers and place log files in /tmp/maxinet_logs/
@@ -517,8 +523,8 @@ class Experiment:
         log cpu usage of worker and place log file in /tmp/maxinet_logs/
         """
         subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
-        worker.daemonize("mpstat 1 | while read l; do echo -n \"`date +%s`    \" ; echo \"$l \" ; done > \"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log\"")
         atexit.register(worker.get_file,"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
+        worker.daemonize("mpstat 1 | while read l; do echo -n \"`date +%s`    \" ; echo \"$l \" ; done > \"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log\"")
         atexit.register(self._print_log_info)
         
     def log_free_memory(self):
@@ -529,8 +535,8 @@ class Experiment:
         """
         subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
         for worker in self.cluster.workers():
-            worker.daemonize("getMemoryUsage.sh > \"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log\"")
             atexit.register(worker.get_file,"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
+            worker.daemonize("getMemoryUsage.sh > \"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log\"")
             atexit.register(self._print_log_info)
             
     def log_interfaces_of_node(self,node):
@@ -552,8 +558,8 @@ class Experiment:
         Format is:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
-        worker.daemonize("getRxTx.sh "+intf+" > \"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log\"")
         atexit.register(worker.get_file,"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
+        worker.daemonize("getRxTx.sh "+intf+" > \"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log\"")
         atexit.register(self._print_log_info)
         
         
@@ -561,6 +567,7 @@ class Experiment:
         """
         logs statistics of worker interfaces and memory usage and places them in /tmp/maxinet_logs
         """
+        self.isMonitoring = True
         atexit.register(self._print_monitor_info)
         self.log_free_memory()
         self.log_cpu()
@@ -771,6 +778,10 @@ class Experiment:
         """
         stop experiment and shut down emulation on workers
         """
+
+        if self.isMonitoring:
+            self.terminate_logging()
+
         for worker in self.cluster.workers():
             worker.stop()
         self.cluster.remove_all_tunnels()
