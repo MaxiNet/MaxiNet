@@ -702,7 +702,7 @@ or type 'quit' to close shell"""
         """
         self.addNode(name, **params)
         self.get_worker(name).addSwitch(name,cls, **params)
-        self.switches = self.switches + [ name ]
+        self.switches.append(self.get(name))
         return self.get(name)
 
     def addController(self, name="c0",controller = None, **params):
@@ -739,7 +739,7 @@ or type 'quit' to close shell"""
 
         else:
             self.logger.debug("tunneling needed")
-            if(not ((self.name(node1) in self.switches) and (self.name(node2) in self.switches))):
+            if(not ((node1 in self.switches) and (node2 in self.switches))):
                 self.logger.error("We cannot create tunnels between switches and hosts. Sorry.")
                 raise RuntimeError("Can't create tunnel between switch and host")
             intf = self.cluster.create_tunnel(w1,w2)
@@ -747,11 +747,11 @@ or type 'quit' to close shell"""
             w2.addTunnel(intf,self.name(node2), port2, cls, **params)
             l=((self.name(node1),intf),(self.name(node2),intf))
         if(autoconf):
-                if(self.name(node1) in self.switches):
+                if(node1 in self.switches):
                     node1.attach(l[0][1])
                 else:
                     node1.configDefault()
-                if(self.name(node2) in self.switches):
+                if(node2 in self.switches):
                     node2.attach(l[1][1])
                 else:
                     node2.configDefault()
@@ -799,13 +799,14 @@ or type 'quit' to close shell"""
         if(len(subtopos) > self.cluster.num_workers()):
             raise RuntimeError("Cluster does not have enough workers for given topology")
         for subtopo in subtopos:
-            self.switches = self.switches + subtopo.switches()
             for node in subtopo.nodes():
                 self.node_to_workerid[node]=subtopos.index(subtopo)
                 self.nodes.append(NodeWrapper(node, self.get_worker(node)))
                 self.node_to_wrapper[node]=self.nodes[-1]
                 if (not subtopo.isSwitch(node)):
                     self.hosts.append(self.nodes[-1])
+                else:
+                    self.switches.append(self.nodes[-1])
         self.logger.debug("Nodemapping: %s",self.node_to_workerid)
         tunnels = [[] for x in range(len(subtopos))]
         for tunnel in self.topology.getTunnels():

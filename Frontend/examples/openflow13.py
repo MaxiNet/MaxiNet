@@ -21,7 +21,7 @@ exp.setup()
 
 #Enable OpenFlow 1.3 on all switches
 for switch in exp.switches:
-    exp.get_worker(switch).run_cmd('ovs-vsctl -- set Bridge %s protocols=OpenFlow10,OpenFlow12,OpenFlow13' % exp.get(switch).name) 
+    exp.get_worker(switch).run_cmd('ovs-vsctl -- set Bridge %s protocols=OpenFlow10,OpenFlow12,OpenFlow13' % switch.name) 
 
 #Create some Flows
 print exp.get_node("h1").cmd("ping -c 5 10.0.0.4")
