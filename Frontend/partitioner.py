@@ -80,6 +80,15 @@ class Partitioner:
             ret = ret + " ".join(map(str,line)) + "\n"
         self.graph=self._write_to_file(ret)
 
+
+    def _convert_to_plain_topo(self, topo):
+        r = Topo()
+        for node in topo.nodes():
+            r.addNode(node,**topo.nodeInfo(node))
+        for edge in topo.links():
+            r.addLink(edge[0],edge[1],**topo.linkInfo(edge[0],edge[1]))
+        return r
+
     def partition(self,n,shares=None):
         self.tunnels=[]
         self.partitions=[]
@@ -98,7 +107,7 @@ class Partitioner:
             os.remove(self.graph+".part."+str(n))
             os.remove(self.graph)
         else:
-            tpart = [self.topo]
+            tpart = [self._convert_to_plain_topo(self.topo)]
             while(len(tpart) < n):
                 tpart.append(Topo())
             self.partitions = tpart
