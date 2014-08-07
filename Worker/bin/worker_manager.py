@@ -1,9 +1,10 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 import argparse
 import os,subprocess,threading
 parser = argparse.ArgumentParser()
 
+keepScreenOpenOnError=True
 
 group=parser.add_mutually_exclusive_group(required=True)
 group.add_argument("--start", help="start Worker daemons on remote hosts",
@@ -17,18 +18,27 @@ parser.add_argument("hosts",help="use these hosts",
 args = parser.parse_args()
 
 def start(hn):
-    wc = "fgcn-openflow/trunk/Worker/"
+    wc = "MaxiNet/Worker/"
+    remotecmd = "sudo python " + wc + "server.py "+args.ns[0]
     if(args.hmac):
-        cmd = "ssh "+ hn + " \"screen -d -m -S MNWorker sudo python "+wc+"server.py "+args.ns[0]+" "+args.hmac[0]+"\""
+        remotecmd += " " + args.hmac[0]
+
+    sshCMD = ['ssh', hn]
+
+    screenCMD = "screen -d -m -S MNWorker"
+    if keepScreenOpenOnError:
+        cmd = sshCMD + [screenCMD + " " + "sh -c '" + remotecmd + "|| sh'"]
     else:
-        cmd = "ssh "+ hn + " \"screen -d -m -S MNWorker sudo python "+wc+"server.py "+args.ns[0]+"\""
+        cmd = sshCMD  + [screenCMD + " " +  remotecmd]
+
     print cmd
-    subprocess.call(cmd,shell=True)
+
+    subprocess.call(cmd)
 
 def stop(hn):
-    wc = "fgcn-openflow/trunk/Worker/"
+    wc = "MaxiNet/Worker/"
     dnull=open("/dev/null","w")
-    cmd = "ssh "+ hn + " \"sudo pkill -f 'python "+wc+"server.py'\""
+    cmd = "ssh "+ hn + " \"sudo pkill -f '^python "+wc+"server.py'\""
     subprocess.call(cmd,stdout=dnull,stderr=dnull,shell=True)
     cmd = "ssh "+ hn + " \"sudo mn --clean\""
     subprocess.call(cmd,stdout=dnull,stderr=dnull,shell=True)
