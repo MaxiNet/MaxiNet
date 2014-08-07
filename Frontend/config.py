@@ -14,6 +14,7 @@ cfg = { "debian-vm1" :  { "ip" : "192.168.123.1"},
 }
 defaults = { "ip":None, "ls": "192.168.0.1", "share": 1 }
 controller = "192.168.123.1:6633" # default controller
+defaults = { "ip":None, "share": 1 }
 runWith1500MTU = False
 
 class Config:
@@ -57,12 +58,6 @@ class Config:
     def runWith1500MTU(self):
         return runWith1500MTU
         
-    def getLogServerIP(self,hn):
-        if(hn in cfg) and ("ls" in cfg[hn]):
-            return cfg[hn]["ls"]
-        else:
-            return defaults["ls"]
-    
     def getID(self,hn):
         self.lock.acquire()
         self.last_id = self.last_id +1
@@ -70,10 +65,3 @@ class Config:
         self.lock.release()
         return x
 
-
-
-# historic config for logserver
-logserverip = '192.168.0.4'
-logdirectory = '/tmp/logs'
-if not os.path.exists(logdirectory):
-    os.makedirs(logdirectory)
