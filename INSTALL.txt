@@ -65,10 +65,9 @@ where 192.168.0.2 is the ip-address of the host.
 5. Install MaxiNet at all workers and the frontend
 
 cd ~
-wget http://upb.de/maxinet-0.1.tar.bz2
-tar xjf maxinet-0.1.tar.bz2
+git clone git@github.com:MaxiNet/MaxiNet.git
 
-cd maxinet/Worker/
+cd MaxiNet/Worker/
 ./install.sh
 
 
@@ -81,13 +80,8 @@ of the host.
 at the Frontend:
 
 cd Frontend/example/
-
-edit pingAll.py such that the variable FRONTEND_IP is the IPv4 address of your 
-Frontend, CONTROLLER is the IPv4 address of your OpenFlow controller and WORKERS
-is a list of all your workers (including the Frontend)
-
 Now, exec the experiment by calling (as user mininet)
 
-python pingAll.py
+python simplePing.py
 
 and watch the output.
