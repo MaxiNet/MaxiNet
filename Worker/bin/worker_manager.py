@@ -4,7 +4,8 @@ import argparse
 import os,subprocess,threading
 parser = argparse.ArgumentParser()
 
-keepScreenOpenOnError=True
+keepScreenOpenOnError=False
+debugPyro=False
 
 group=parser.add_mutually_exclusive_group(required=True)
 group.add_argument("--start", help="start Worker daemons on remote hosts",
@@ -18,8 +19,13 @@ parser.add_argument("hosts",help="use these hosts",
 args = parser.parse_args()
 
 def start(hn):
-    wc = "MaxiNet/Worker/"
-    remotecmd = "sudo python " + wc + "server.py "+args.ns[0]
+    wc = "MaxiNet/Worker"
+    if debugPyro:
+        env="PYRO_LOGFILE='{stderr}' PYRO_LOGLEVEL=DEBUG"
+    else:
+        env=""
+    remotecmd = "sudo %s python %s/server.py %s" %(env, wc, args.ns[0])
+
     if(args.hmac):
         remotecmd += " " + args.hmac[0]
 
