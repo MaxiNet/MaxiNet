@@ -45,6 +45,8 @@ The Frontend starts mininet at the workers by using ssh. It is important that at
 all workers there is one user configured that is in the sudoers list with 
 NO_PASSWORD option. For this tutorial we assume this user is called "mininet".
 
+mininet ALL= NOPASSWD:  ALL
+
 as user mininet:
 ssh-keygen -t rsa
 ssh-copy-id -i ~/.ssh/id_rsa.pub mininet@remote-system
@@ -72,9 +74,9 @@ cd MaxiNet/Worker/
 
 
 6. Configure MaxiNet
-on the frontend edit the Frontend/config.py file. Every worker will need a line
-in the cfg section, starting with the hostname of the worker and the ip adress
-of the host.
+on the frontend copy the Frontend/config.py.sample to Frontend/config.py and edit the file.
+Every worker will need a line in the cfg section, starting with the hostname of the worker and
+the ip address of the host.
 
 7. Test your installation
 at the Frontend:
