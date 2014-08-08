@@ -7,11 +7,11 @@ part of maxinet which needs to be used by the user or third-party applications
 import os,re, sys
 import logging
 import tools
+import config
 from mininet.node import RemoteController, OVSSwitch, UserSwitch
 from mininet.topo import Topo
 from functools import partial
 from client import Frontend, log_and_reraise_remote_exception, remote_exceptions_logged_and_reraised
-import config
 import time
 import Pyro4
 import subprocess
@@ -292,7 +292,7 @@ class Cluster:
 
         self.nsport=9090
         self.frontend = Frontend(self.localIP, self.nsport)
-        self.config = config.Config(self.localIP,self.nsport)
+        self.config = tools.Config(self.localIP,self.nsport)
         atexit.register(run_cmd,"worker_manager.py --ns "+self.localIP+":"+str(self.nsport)+" --stop "+" ".join(self.hosts))
         atexit.register(self._stop)
 
