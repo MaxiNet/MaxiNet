@@ -6,6 +6,7 @@ part of maxinet which needs to be used by the user or third-party applications
 
 import os,re, sys
 import logging
+import tools
 from mininet.node import RemoteController, OVSSwitch, UserSwitch
 from mininet.topo import Topo
 from functools import partial
@@ -277,8 +278,12 @@ class Cluster:
                 rhost = config.cfg[self.hosts[1]]["ip"]
             else:
                 rhost = config.cfg[self.hosts[0]]["ip"]
-        route = subprocess.check_output("ip route get "+rhost+" | head -n1", shell=True).strip()
-        m = re.search(r'src (\d+\.\d+\.\d+\.\d+)', route)
+        if sys.platform == "darwin":
+            route = subprocess.check_output(["route", "-vn", "get", rhost]).splitlines()[-1]
+            m = re.search(r' (\d+\.\d+\.\d+\.\d+)$', route)
+        else:
+            route = subprocess.check_output("ip route get "+rhost+" | head -n1", shell=True).strip()
+            m = re.search(r'src (\d+\.\d+\.\d+\.\d+)', route)
         if m is not None:
             self.localIP = m.group(1)
         else:
@@ -324,6 +329,7 @@ class Cluster:
         start maxinet on assigned worker machines and establish communication. Returns True in case of successful startup.
         """
         self.logger.info("starting worker processes")
+        os.environ['PATH']+=":MaxiNet/Worker/bin/"
         if self.frontend.hmac_key():
             self.logger.debug(run_cmd("worker_manager.py --ns "+self.localIP+":"+str(self.nsport)+" --hmac "+self.frontend.hmac_key() + " --start "+" ".join(self.hosts)))
         else:
