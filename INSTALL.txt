@@ -36,7 +36,11 @@ sudo make install
 sudo apt-get install pip
 sudo pip install Pyro4
 
-4. Configure ssh access
+4. Install screen
+apt-get install screen
+(or similar depending or your distribution)
+
+5. Configure ssh access
 The Frontend starts mininet at the workers by using ssh. It is important that at
 all workers there is one user configured that is in the sudoers list with 
 NO_PASSWORD option. For this tutorial we assume this user is called "mininet".
