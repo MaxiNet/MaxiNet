@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """
-This module is the central part of maxinet and is intended to be the only
-part of maxinet which needs to be used by the user or third-party applications
+This module is the central part of MaxiNet and is intended to be the only
+part of MaxiNet which needs to be used by the user or third-party applications
 """
 
 import os,re, sys
@@ -111,7 +111,7 @@ class Worker:
     @log_and_reraise_remote_exception
     def daemonize(self,cmd):
         """
-        run command in background and terminate when maxinet is shut down
+        run command in background and terminate when MaxiNet is shut down
         """
         self.cmd.daemonize(cmd)
     
@@ -259,7 +259,7 @@ class Cluster:
     """
     def __init__(self,*hosts):
         """
-        create Cluster object. Starting with Maxinet 0.2 the hosts parameter is
+        create Cluster object. Starting with MaxiNet 0.2 the hosts parameter is
         optional. If None is given all configured hosts will be used
         """
         self.running=False
@@ -326,7 +326,7 @@ class Cluster:
 
     def start(self):
         """
-        start maxinet on assigned worker machines and establish communication. Returns True in case of successful startup.
+        start MaxiNet on assigned worker machines and establish communication. Returns True in case of successful startup.
         """
         self.logger.info("starting worker processes")
         os.environ['PATH']+=":MaxiNet/Worker/bin/"
@@ -776,7 +776,7 @@ class Experiment:
         """
         run cmd on emulated host specified by host name and return output
         This function is deprecated and will be removed in a future version of
-        maxinet. Use experiment.get(node).cmd() instead
+        MaxiNet. Use experiment.get(node).cmd() instead
         """
         return self.get_worker(host).run_cmd_on_host(host,cmd)
 
@@ -795,7 +795,7 @@ class Experiment:
 class NodeWrapper:
     """
     wrapper that allows most commands that can be used in mininet to be used
-    in maxinet
+    in MaxiNet
     """
 
     # this feels like doing rpc via rpc...
