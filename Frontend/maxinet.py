@@ -46,11 +46,15 @@ def deprecated(func):
     return new_func
 
 
-
-
 def run_cmd(cmd):
     """
-    run cmd on frontend machine 
+    run cmd on frontend machine
+    """
+    return subprocess.check_output(cmd,shell=False)
+
+def run_cmd_shell(cmd):
+    """
+    run cmd on frontend machine with the shell
     """
     return subprocess.check_output(cmd,shell=True)
 
@@ -138,12 +142,19 @@ class Worker:
         return self.creator.runCmdOnHost(host,cmd)
     
     @log_and_reraise_remote_exception
-    def run_cmd(self,cmd):
+    def run_script(self,cmd):
         """
         run cmd on worker machine and return output
         """
         return self.cmd.check_output(cmd)
-    
+
+    @log_and_reraise_remote_exception
+    def run_script(self,cmd):
+        """
+        run cmd on worker machine from the Worker/bin directory return output
+        """
+        return self.cmd.script_check_output(cmd)
+
     @log_and_reraise_remote_exception
     def rpc(self, host, cmd, *params1, **params2):
         """
@@ -293,8 +304,16 @@ class Cluster:
         self.nsport=9090
         self.frontend = Frontend(self.localIP, self.nsport)
         self.config = tools.Config(self.localIP,self.nsport)
-        atexit.register(run_cmd,"worker_manager.py --ns "+self.localIP+":"+str(self.nsport)+" --stop "+" ".join(self.hosts))
+        atexit.register(run_cmd, self.getWorkerMangerCMD("--stop"))
         atexit.register(self._stop)
+
+    def getWorkerMangerCMD(self,cmd):
+        return [self.config.getWorkerScript("worker_manager.py", True), "--ns",
+                self.localIP+":" +  str(self.nsport),
+                "--workerDir",  self.config.getWorkerDir(),
+                cmd] + self.hosts
+
+
 
     def is_running(self):
         return self.running
@@ -329,11 +348,13 @@ class Cluster:
         start MaxiNet on assigned worker machines and establish communication. Returns True in case of successful startup.
         """
         self.logger.info("starting worker processes")
-        os.environ['PATH']+=":MaxiNet/Worker/bin/"
+
+        cmd = self.getWorkerMangerCMD("--start")
         if self.frontend.hmac_key():
-            self.logger.debug(run_cmd("worker_manager.py --ns "+self.localIP+":"+str(self.nsport)+" --hmac "+self.frontend.hmac_key() + " --start "+" ".join(self.hosts)))
-        else:
-            self.logger.debug(run_cmd("worker_manager.py --ns "+self.localIP+":"+str(self.nsport)+"  --start "+" ".join(self.hosts)))
+            cmd.extend(["--hmac",self.frontend.hmac_key()])
+
+        self.logger.debug(run_cmd(cmd))
+
         timeout = 10
         for i in range(0,len(self.hosts)):
             self.logger.info("waiting for Worker "+str(i+1)+" to register on nameserver...")
@@ -365,7 +386,7 @@ class Cluster:
                     self.logger.error("Host "+host+" is not reachable with an MTU > 1500.")
                     raise RuntimeError("Host "+host+" is not reachable with an MTU > 1500.")
         for worker in self.worker:
-            worker.run_cmd("load_tunneling.sh")
+            worker.run_script("load_tunneling.sh")
         self.logger.info("worker processes started")
         self.running = True
         return True
@@ -421,8 +442,8 @@ class Cluster:
         ip1=w1.ip()
         ip2=w2.ip()
         self.logger.debug("invoking tunnel create commands on "+ip1+" and "+ip2)
-        w1.run_cmd("create_tunnel.sh "+ip1+" "+ip2+" "+intf+" "+str(tkey))
-        w2.run_cmd("create_tunnel.sh "+ip2+" "+ip1+" "+intf+" "+str(tkey))
+        w1.run_script("create_tunnel.sh "+ip1+" "+ip2+" "+intf+" "+str(tkey))
+        w2.run_script("create_tunnel.sh "+ip2+" "+ip1+" "+intf+" "+str(tkey))
         self.logger.debug("done")
         return intf
 
@@ -431,7 +452,7 @@ class Cluster:
         shut down all tunnels created in this cluster
         """
         for worker in self.workers():
-            worker.run_cmd("delete_tunnels.sh")
+            worker.run_script("delete_tunnels.sh")
         self.tunhelper = TunHelper()
 
 
@@ -706,6 +727,7 @@ class Experiment:
     def get_node(self, nodename):
         """
         return node that is specified by nodename
+        :rtype : NodeWrapper
         """
         if(self.node_to_wrapper.has_key(nodename)):
             return self.node_to_wrapper[nodename]

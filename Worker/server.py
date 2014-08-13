@@ -32,14 +32,17 @@ class PyroServer():
 
 
 if __name__ == "__main__":
-    params = sys.argv[1].split(":")
+    params = sys.argv[2].split(":")
     ns = params[0]
     hmac=None
-    if(len(sys.argv)>=3):
-        hmac = sys.argv[2]
+    if(len(sys.argv)>=4):
+        hmac = sys.argv[3]
     if(len(params)>1):
         nsp=int(params[1])
+    else:
+        nsp=9090
     logger = logging.getLogger(__name__)
+    workerDir = sys.argv[1]
 
     if(hmac):
         Pyro4.config.HMAC_KEY=hmac
@@ -56,6 +59,9 @@ if __name__ == "__main__":
     server = PyroServer(host=hostIP, nsaddress=ns, nsport=nsp)
     logger.debug("Registering Objects...")
     server.register_obj(MininetCreator(), 'worker{0}.mnCreator'.format(workerID))
-    server.register_obj(CmdListener(), 'worker{0}.cmd'.format(workerID))
+    server.register_obj(CmdListener(workerDir), 'worker{0}.cmd'.format(workerID))
     logger.debug("Entering request loop")
     server.requestLoop()
+    # Successful exit
+    logger.debug("Exiting server")
+    sys.exit(0)

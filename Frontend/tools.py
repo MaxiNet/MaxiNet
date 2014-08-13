@@ -1,4 +1,5 @@
 import atexit
+import os
 import sys
 import thread
 import threading
@@ -65,4 +66,15 @@ class Config:
         x = self.last_id
         self.lock.release()
         return x
+
+    def getWorkerDir(self):
+        return os.path.join(config.maxinetBasedir, "Worker")
+
+    def getWorkerScript(self, cmd, expand=False):
+        if expand:
+            d=os.path.expanduser(config.maxinetBasedir)
+        else:
+            d= config.maxinetBasedir
+
+        return os.path.join(d,"Worker", "bin", cmd)
 

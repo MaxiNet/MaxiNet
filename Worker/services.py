@@ -117,18 +117,23 @@ class MininetCreator():
         self.logger.info('network stopped')
     
 class CmdListener:
-    def __init__(self):
+    def __init__(self, workerDir):
         self.logger = logging.getLogger(__name__)
+        self.workerDir = workerDir
         pass
 
     def get_hostname(self):
         return socket.gethostname()
 
     def check_output(self, data):
-        try:
-            return subprocess.check_output(data,shell=True,stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError, e:
-            return e.output
+        self.logger.debug("Executing %s" % data)
+        return subprocess.check_output(data,shell=True,stderr=subprocess.STDOUT)
+
+    def script_check_output(self, data):
+        # Prefix command by our worker directory
+        data= self.workerDir + "/bin/"  + data
+        return self.check_output(data)
+
 
     def run_cmd(self, command):
         os.system(command)
