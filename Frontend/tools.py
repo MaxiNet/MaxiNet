@@ -78,3 +78,8 @@ class Config:
 
         return os.path.join(d,"Worker", "bin", cmd)
 
+    def debugPyroOnWorker(self):
+        return config.debugPyroOnWorker
+
+    def keepScreenOpenOnError(self):
+        return config.keepScreenOpenOnError

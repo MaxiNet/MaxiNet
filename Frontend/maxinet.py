@@ -142,7 +142,7 @@ class Worker:
         return self.creator.runCmdOnHost(host,cmd)
     
     @log_and_reraise_remote_exception
-    def run_script(self,cmd):
+    def run_cmd(self,cmd):
         """
         run cmd on worker machine and return output
         """
@@ -308,12 +308,18 @@ class Cluster:
         atexit.register(self._stop)
 
     def getWorkerMangerCMD(self,cmd):
-        return [self.config.getWorkerScript("worker_manager.py", True), "--ns",
+        cmdline =  [self.config.getWorkerScript("worker_manager.py", True), "--ns",
                 self.localIP+":" +  str(self.nsport),
                 "--workerDir",  self.config.getWorkerDir(),
-                cmd] + self.hosts
+                cmd]
+        if self.config.debugPyroOnWorker():
+            cmdline.append("--debugPyro")
 
+        if self.config.keepScreenOpenOnError():
+            cmdline.append("--keepScreenOpenOnError")
 
+        cmdline.extend(self.hosts)
+        return cmdline
 
     def is_running(self):
         return self.running
