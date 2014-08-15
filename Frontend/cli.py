@@ -113,7 +113,8 @@ class CLI(Cmd):
         else:
             pid = self.experiment.get_worker(self.experiment.get(node)).run_cmd("ps ax | grep \"bash -ms mininet:"+node+"\" -m1 | awk '{print $1}'").strip()
             if self.experiment.get_worker(self.experiment.get(node)).tunnelX11(node):
-                rcmd = "ssh -q -X -t "+self.experiment.get_worker(self.experiment.get(node)).hn()+" sudo mnexec -a "+pid+" "+cmd
+                user = subprocess.check_output("ssh -q -t "+self.experiment.get_worker(self.experiment.get(node)).hn()+" echo $USER", shell=True).strip()
+                rcmd = "ssh -q -X -t "+self.experiment.get_worker(self.experiment.get(node)).hn()+" sudo  XAUTHORITY=/home/"+user+"/.Xauthority mnexec -a "+pid+" "+cmd
             else:
                 rcmd = "ssh -q -t "+self.experiment.get_worker(self.experiment.get(node)).hn()+" sudo mnexec -a "+pid+" "+cmd
             subprocess.call(rcmd,shell=True)
