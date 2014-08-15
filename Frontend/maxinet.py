@@ -142,7 +142,7 @@ class Worker:
         return self.creator.runCmdOnHost(host,cmd)
     
     @log_and_reraise_remote_exception
-    def run_script(self,cmd):
+    def run_cmd(self,cmd):
         """
         run cmd on worker machine and return output
         """
