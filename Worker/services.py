@@ -4,7 +4,7 @@ from mininet.util import dumpNodeConnections
 from mininet.log import setLogLevel as mnSetLogLevel
 from mininet.topo import Topo, SingleSwitchTopo
 from mininet.node import UserSwitch, OVSSwitch
-from mininet.link import Link, TCLink, Intf
+from mininet.link import Link, TCLink, TCIntf
 import mininet.term
 import logging
 import subprocess, os, socket, atexit
@@ -21,9 +21,9 @@ class MininetCreator():
         if not topo:
             topo=SingleSwitchTopo(k=2)
         if controller:
-            self.net = Mininet(topo=topo, link=TCLink, switch=switch, controller=controller)
+            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink, switch=switch, controller=controller)
         else:
-            self.net = Mininet(topo=topo, link=TCLink, switch=switch)
+            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink, switch=switch)
         self.logger.info("Adding tunnels to mininet instance")
         for tunnel in tunnels:
             port=None
@@ -86,7 +86,7 @@ class MininetCreator():
         switch=self.net.get(switch)
         #self.net.addTunnel(name, switch, port, cls, **params)
         if not cls:
-            cls=Intf
+            cls=TCIntf
         cls(name, node=switch, port=port, link=None, **params)
     def tunnelX11(self, node,display):
         node = self.net.get(node)
