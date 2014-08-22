@@ -20,4 +20,4 @@ maxinetBasedir = "~/MaxiNet"
 keepScreenOpenOnError = False
 # Start pryo on the worker with debug
 # To debug the Fronted pyro use PYRO_LOGFILE='{stderr}' PYRO_LOGLEVEL=DEBUG python ...
-debugPyroWorker = False
+debugPyroOnWorker = False
