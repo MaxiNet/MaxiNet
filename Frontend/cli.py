@@ -44,7 +44,7 @@ class CLI(Cmd):
         "Print all switchnames"
         h=""
         for switch in self.experiment.switches:
-            h=h+" "+self.experiment.get(switch).name
+            h=h+" "+switch.name
         print h
     
     def do_pingall(self,s):
