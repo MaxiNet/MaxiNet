@@ -40,11 +40,18 @@ class CLI(Cmd):
             h=h+" "+host.name
         print h
         
+    def do_workers(self,s):
+        "Print all workers"
+        h=""
+        for worker in self.experiment.cluster.worker:
+            h=h+" "+worker.hn()
+        print h
+
     def do_switches(self,s):
         "Print all switchnames"
         h=""
         for switch in self.experiment.switches:
-            h=h+" "+switch.name
+            h=h+" "+switch.name+"["+str(self.experiment.get_worker(switch).wid)+"]"
         print h
     
     def do_pingall(self,s):
