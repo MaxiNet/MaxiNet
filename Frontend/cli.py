@@ -86,6 +86,17 @@ class CLI(Cmd):
                         received+=1.0
                         print ""
         print "*** Results: %.2f%% dropped (%d/%d received)" % ((1.0-received/sent), int(received), int(sent))
+
+    def do_dpctl(self, s):
+        "execute dpctl at switch"
+        sp = s.split(" ")
+        sw = sp[0]
+        cmd = " ".join(sp[1:len(sp)])
+        switch = self.experiment.get(sw)
+        if(switch == None):
+            print "Error: Switch "+sw+" does not exist"
+        else:
+            print switch.dpctl(cmd)
         
     def do_ip(self,s):
         "Print ip of host"
