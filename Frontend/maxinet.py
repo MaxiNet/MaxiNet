@@ -569,7 +569,8 @@ class Experiment:
         subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
         for worker in self.cluster.workers():
             atexit.register(worker.get_file,"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
-            worker.daemonize("getMemoryUsage.sh > \"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log\"")
+            memmon = worker.config.getWorkerScript("getMemoryUsage.sh", True)
+            worker.daemonize(memmon + " > \"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log\"")
             atexit.register(self._print_log_info)
             
     def log_interfaces_of_node(self,node):
@@ -592,7 +593,8 @@ class Experiment:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
         atexit.register(worker.get_file,"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
-        worker.daemonize("getRxTx.sh "+intf+" > \"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log\"")
+        ethmon = worker.config.getWorkerScript("getRxTx.sh", True)
+        worker.daemonize(ethmon + " "+intf+" > \"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log\"")
         atexit.register(self._print_log_info)
         
         
