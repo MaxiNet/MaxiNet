@@ -1,5 +1,21 @@
 MaxiNet
 
+MaxiNet 0.3.1:
+ * bugfix: tc parameters were ignored on Tunnels if interface wasn't explicitly
+           set to TCIntf
+ * bugfix: first start of MaxiNet sometimes failed because tun module was not 
+           properly loaded
+ * bugfix: running MaxiNet on one single Worker now supported
+ * feature: X-forwarding for command line interface
+ * feature: improved command line interface
+ * feature: configuration and functionality in config.py was seperated
+ * feature: config.py.sample provided instead of config.py
+ * feature: scripts do not need to be installed in /usr/local/bin anymore
+ * feature: installation folder of MaxiNet can be configured now
+ * feature: improved debug functionality of Pyro
+ * feature: improved debug functionality for worker screens
+ * feature: added example for usage of openflow 1.3 with OpenVSwitch
+
 MaxiNet 0.3:
  * bugfix: installer wont fail because of outdated repositorys
  * bugfix: paritioner wont create invalid partitions
