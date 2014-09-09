@@ -44,7 +44,8 @@ def start(hn, wc, debugPyro, keepScreenOpenOnError):
 
 def stop(hn, wc):
     dnull = open("/dev/null", "w")
-    cmd = "ssh " + hn + " \"sudo pkill -f '^python " + wc + "server.py'\""
+    cmd = "ssh " + hn + " \"sudo pkill -f '^python " + os.path.join(wc,"server.py")+"'\""
+    print cmd
     subprocess.call(cmd, stdout=dnull, stderr=dnull, shell=True)
     cmd = "ssh " + hn + " \"sudo mn --clean\""
     subprocess.call(cmd, stdout=dnull, stderr=dnull, shell=True)
@@ -58,7 +59,7 @@ for vm in hosts:
     print vm + "..."
     hn = vm
     chkcmd = "ssh " + hn + " screen -ls | grep MNWorker"
-    wc = args.workerDir[0]
+    wc = os.path.expanduser(args.workerDir[0])
     dnull = open("/dev/null", "w")
     debugPyro=args.debugPyro
     keepScreenOpenOnError=args.keepScreenOpenOnError
