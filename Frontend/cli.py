@@ -114,7 +114,14 @@ class CLI(Cmd):
             exec(cmd, self.pglobals, self.plocals)
         except Exception, e:
             traceback.print_exc()
-            
+
+    def do_xterm(self,s):
+        "Start xterm on host"
+        node = s
+        if(self.experiment.get(node)==None):
+            print "Error: Node "+s+" does not exist"
+        self.default(node+" xterm -title MaxiNet-"+node)
+                 
     def do_exit(self,s):
         "Exit"
         return "exited by user command"
