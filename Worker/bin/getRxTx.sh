@@ -11,7 +11,7 @@ tx_pkt_old=0
 
 while [ 1 ]
 do
-	s=`cat /proc/net/dev | grep $eth`
+	s=`cat /proc/net/dev | grep "[[:space:]]${eth}:"`
 	rx=`echo ${s} | awk '{print $2}'`
 	tx=`echo ${s} | awk '{print $10}'`
 	rx_pkt=`echo ${s} | awk '{print $3}'`
