@@ -85,7 +85,7 @@ class CLI(Cmd):
                     else:
                         received+=1.0
                         print ""
-        print "*** Results: %.2f%% dropped (%d/%d received)" % ((1.0-received/sent), int(received), int(sent))
+        print "*** Results: %.2f%% dropped (%d/%d received)" % ((1.0-received/sent)*100.0, int(received), int(sent))
 
     def do_dpctl(self, s):
         "execute dpctl at switch"
