@@ -68,14 +68,13 @@ class Config:
         return x
 
     def getWorkerDir(self):
-        return os.path.join(config.maxinetBasedir, "Worker")
+        return os.path.join(self.getMaxiNetBasedir(), "Worker")
 
-    def getWorkerScript(self, cmd, expand=False):
-        if expand:
-            d=os.path.expanduser(config.maxinetBasedir)
-        else:
-            d= config.maxinetBasedir
-
+    def getMaxiNetBasedir(self):
+        return os.path.abspath(os.path.dirname(os.path.abspath(__file__))+os.sep+".."+os.sep)
+        
+    def getWorkerScript(self, cmd):
+        d= self.getMaxiNetBasedir()
         return os.path.join(d,"Worker", "bin", cmd)
 
     def debugPyroOnWorker(self):

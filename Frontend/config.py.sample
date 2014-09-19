@@ -13,8 +13,6 @@ defaults = { "ip":None, "share": 1 }
 runWith1500MTU = False
 
 
-maxinetBasedir = "~/MaxiNet"
-
 
 # Keep screen session on workers open
 keepScreenOpenOnError = False
