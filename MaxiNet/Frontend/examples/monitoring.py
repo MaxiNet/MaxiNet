@@ -8,7 +8,7 @@
 
 import sys
 sys.path.append("..")
-import maxinet
+from MaxiNet.Frontend import maxinet
 import time
 import subprocess
 from fatTree import FatTree

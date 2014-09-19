@@ -7,7 +7,6 @@ part of MaxiNet which needs to be used by the user or third-party applications
 import os,re, sys
 import logging
 import tools
-import config
 from mininet.node import RemoteController, OVSSwitch, UserSwitch
 from mininet.topo import Topo
 from functools import partial
@@ -19,7 +18,7 @@ import random
 import atexit
 import traceback
 from partitioner import Partitioner
-from cli import CLI
+from MaxiNet.Frontend.cli import CLI
 
 
 
@@ -276,19 +275,21 @@ class Cluster:
         self.running=False
         self.logger = logging.getLogger(__name__)
         self.tunhelper = TunHelper()
+        self.config = tools.Config("","",register = False)
+        logging.basicConfig(level=self.config.getLoggingLevel())
         if hosts:
             self.hosts = hosts
         else:
-            self.hosts = config.cfg.keys()
+            self.hosts = self.config.getHosts()
         self.worker=[]
         
         if(self.hosts[0]!=subprocess.check_output(["hostname"]).strip()):
-            rhost = config.cfg[self.hosts[0]]["ip"]
+            rhost = self.config.getIP(self.hosts[0])
         else:
             if(len(self.hosts)>1):
-                rhost = config.cfg[self.hosts[1]]["ip"]
+                rhost = self.config.getIP(self.hosts[1])
             else:
-                rhost = config.cfg[self.hosts[0]]["ip"]
+                rhost = self.config.getIP(self.hosts[0])
         if sys.platform == "darwin":
             route = subprocess.check_output(["route", "-vn", "get", rhost]).splitlines()[-1]
             m = re.search(r' (\d+\.\d+\.\d+\.\d+)$', route)
@@ -308,9 +309,8 @@ class Cluster:
         atexit.register(self._stop)
 
     def getWorkerMangerCMD(self,cmd):
-        cmdline =  [self.config.getWorkerScript("worker_manager.py", True), "--ns",
+        cmdline =  [self.config.getWorkerScript("worker_manager.py"), "--ns",
                 self.localIP+":" +  str(self.nsport),
-                "--workerDir",  self.config.getWorkerDir(),
                 cmd]
         if self.config.debugPyroOnWorker():
             cmdline.append("--debugPyro")
@@ -386,9 +386,9 @@ class Cluster:
                         raise RuntimeError("Timed out waiting for worker "+str(i+1)+".cmd to register.")
             self.worker.append(Worker(self.frontend,"worker"+str(i+1)))
             
-        if(not config.runWith1500MTU):
+        if(not self.config.runWith1500MTU()):
             for host in self.hosts:
-                if(not self.check_reachability(config.cfg[host]["ip"])):
+                if(not self.check_reachability(self.config.getIP(host))):
                     self.logger.error("Host "+host+" is not reachable with an MTU > 1500.")
                     raise RuntimeError("Host "+host+" is not reachable with an MTU > 1500.")
         for worker in self.worker:
@@ -472,6 +472,7 @@ class Experiment:
         self.cluster = cluster
         self.logger = logging.getLogger(__name__)
         self.topology=None
+        self.config = tools.Config(register = False)
         self.starttime = time.localtime()
         self.printed_log_info = False
         self.isMonitoring = False
@@ -491,7 +492,7 @@ class Experiment:
         if controller:
             contr = controller
         else:
-            contr = config.controller
+            contr = self.config.getController()
         if contr.find(":")>=0:
             (host, port) = contr.split(":")
         else:
@@ -569,7 +570,7 @@ class Experiment:
         subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
         for worker in self.cluster.workers():
             atexit.register(worker.get_file,"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
-            memmon = worker.config.getWorkerScript("getMemoryUsage.sh", True)
+            memmon = worker.config.getWorkerScript("getMemoryUsage.sh")
             worker.daemonize(memmon + " > \"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log\"")
             atexit.register(self._print_log_info)
             
@@ -593,7 +594,7 @@ class Experiment:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
         atexit.register(worker.get_file,"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
-        ethmon = worker.config.getWorkerScript("getRxTx.sh", True)
+        ethmon = worker.config.getWorkerScript("getRxTx.sh")
         worker.daemonize(ethmon + " "+intf+" > \"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log\"")
         atexit.register(self._print_log_info)
         
@@ -722,7 +723,7 @@ class Experiment:
                     node2.attach(l[1][1])
                 else:
                     node2.configDefault()
-        if(config.runWith1500MTU):
+        if(self.config.runWith1500MTU()):
             self.setMTU(node1,1450)
             self.setMTU(node2,1450)
     
@@ -791,7 +792,7 @@ class Experiment:
                 self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)], controller=self.controller)
             else:
                 self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)])
-        if (config.runWith1500MTU):
+        if (self.config.runWith1500MTU()):
             for topo in subtopos:
                 for host in topo.nodes():
                     self.setMTU(host,1450)

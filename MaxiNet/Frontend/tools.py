@@ -4,7 +4,8 @@ import sys
 import thread
 import threading
 import Pyro4
-import config
+import logging
+from ConfigParser import RawConfigParser
 
 # Make Mininets classes import on OS X
 if sys.platform == "darwin":
@@ -19,14 +20,17 @@ if sys.platform == "darwin":
 
 
 class Config:
-    def __init__(self,nameserverip,nameserverport):
-        self.nameserver = Pyro4.locateNS(nameserverip,nameserverport)
-        self.nsIP=nameserverip
-        self.nsPort=nameserverport
-        self.last_id=0
-        self.lock = thread.allocate_lock()
-        self.register()
-        atexit.register(self._stop)
+    def __init__(self,nameserverip="127.0.0.1",nameserverport=9090,register = True):
+        self.userconfig = RawConfigParser()
+        self.userconfig.read([os.path.expanduser("~/.MaxiNet"),])
+        if(register):
+            self.nameserver = Pyro4.locateNS(nameserverip,nameserverport)
+            self.nsIP=nameserverip
+            self.nsPort=nameserverport
+            self.last_id=0
+            self.lock = thread.allocate_lock()
+            self.register()
+            atexit.register(self._stop)
 
     def register(self):
         ownip=self.nsIP
@@ -46,19 +50,15 @@ class Config:
         self.daemon_thread = None
 
     def getIP(self,hn):
-        if(hn in config.cfg):
-            return config.cfg[hn]["ip"]
-        else:
-            return config.defaults["ip"]
+        if(self.userconfig.has_section(hn)):
+            return self.userconfig.get(hn,"ip")
 
     def getShare(self,hn):
-        if((hn in config.cfg) and ("share" in config.cfg[hn].keys())):
-            return config.cfg[hn]["share"]
-        else:
-            return config.defaults["share"]
-
+        if(self.userconfig.has_section(hn)):
+            return self.userconfig.getint(hn,"share")
+            
     def runWith1500MTU(self):
-        return config.runWith1500MTU
+        return self.userconfig.getboolean("MaxiNet","runWith1500MTU")
 
     def getID(self,hn):
         self.lock.acquire()
@@ -77,8 +77,23 @@ class Config:
         d= self.getMaxiNetBasedir()
         return os.path.join(d,"Worker", "bin", cmd)
 
+    def getHosts(self):
+        return filter(lambda x: x!="MaxiNet",self.userconfig.sections())
+        
+    def getController(self):
+        return self.userconfig.get("MaxiNet","controller")
+        
     def debugPyroOnWorker(self):
-        return config.debugPyroOnWorker
+        return self.userconfig.get("MaxiNet","debugPyroOnWorker")
 
     def keepScreenOpenOnError(self):
-        return config.keepScreenOpenOnError
+        return self.userconfig.get("MaxiNet","keepScreenOpenOnError")
+        
+    def getLoggingLevel(self):
+        lvl = self.userconfig.get("MaxiNet","debugLevel")
+        lvls = {"CRITICAL": logging.CRITICAL,
+                "ERROR": logging.ERROR,
+                "WARNING": logging.WARNING,
+                "INFO": logging.INFO,
+                "DEBUG": logging.DEBUG }
+        return lvls[lvl]

@@ -7,8 +7,7 @@
 #
 
 import sys
-sys.path.append("..") # maxinet.py is located in parent folder
-import maxinet
+from MaxiNet.Frontend import maxinet
 from fatTree import FatTree
 import time
 import subprocess

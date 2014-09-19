@@ -6,8 +6,8 @@
 #
 
 import sys
-sys.path.append("..")
-import maxinet,subprocess
+from MaxiNet.Frontend import maxinet
+import subprocess
 from mininet.topo import Topo
 from mininet.node import OVSSwitch
 topo = Topo()

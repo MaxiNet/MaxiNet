@@ -1,5 +1,4 @@
 import sys, random,re
-sys.path.append("..")
 
 #
 # Fat-tree topology implemention for mininet

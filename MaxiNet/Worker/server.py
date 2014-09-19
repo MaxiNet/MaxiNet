@@ -2,7 +2,7 @@ __author__ = 'm'
 
 import Pyro4
 import logging
-import sys
+import sys, os
 import socket 
 if hasattr(Pyro4.config, 'SERIALIZERS_ACCEPTED'):
     # From Pyro 4.25, pickle is not supported by default due to security.
@@ -31,18 +31,18 @@ class PyroServer():
 
 
 
-if __name__ == "__main__":
-    params = sys.argv[2].split(":")
-    ns = params[0]
+def main():
+    nss = sys.argv[1].split(":")
+    ns = nss[0]
     hmac=None
-    if(len(sys.argv)>=4):
-        hmac = sys.argv[3]
-    if(len(params)>1):
-        nsp=int(params[1])
+    if(len(sys.argv)>=3):
+        hmac = sys.argv[2]
+    if(len(nss)>1):
+        nsp=int(nss[1])
     else:
         nsp=9090
     logger = logging.getLogger(__name__)
-    workerDir = sys.argv[1]
+    workerDir = os.path.abspath(os.path.split(__file__)[0])
 
     if(hmac):
         Pyro4.config.HMAC_KEY=hmac
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     hostname = socket.gethostname()
     hostIP = config.getIP(hostname)
     workerID= config.getID(hostname)
-    from services import MininetCreator, CmdListener
+    from MaxiNet.Worker.services import MininetCreator, CmdListener
     logger.info("Starting server....")
     logger.info("IP: %s, ID: %s, Nameserver: %s", hostIP, workerID, ns)
     server = PyroServer(host=hostIP, nsaddress=ns, nsport=nsp)

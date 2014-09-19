@@ -7,7 +7,7 @@
 
 import sys
 sys.path.append("..")
-import maxinet
+from MaxiNet.Frontend import maxinet
 import time
 from mininet.node import OVSSwitch
 from fatTree import FatTree

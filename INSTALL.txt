@@ -70,14 +70,13 @@ cd ~
 git clone git@github.com:MaxiNet/MaxiNet.git
 
 6. Configure MaxiNet
-on the frontend copy the Frontend/config.py.sample to Frontend/config.py and edit the file.
-Every worker will need a line in the cfg section, starting with the hostname of the worker and
-the ip address of the host.
+on the frontend copy the MaxiNet-cfg-sample file to ~/.MaxiNet and edit the file.
+Every worker will need a config section, named with the hostname of the worker.
 
-7. Test your installation
+7. Test your installation 
 at the Frontend:
 
-cd Frontend/example/
+cd MaxiNet/examples/
 Now, exec the experiment by calling (as user mininet)
 
 python simplePing.py
