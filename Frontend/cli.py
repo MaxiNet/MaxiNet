@@ -4,6 +4,7 @@ from cmd import Cmd
 import traceback
 import subprocess
 import sys
+import time
 
 
 class CLI(Cmd):
@@ -116,11 +117,14 @@ class CLI(Cmd):
             traceback.print_exc()
 
     def do_xterm(self,s):
-        "Start xterm on host"
-        node = s
-        if(self.experiment.get(node)==None):
-            print "Error: Node "+s+" does not exist"
-        self.default(node+" xterm -title MaxiNet-"+node)
+        "Start xterm on the list of given hosts (separated through spaces)"
+        nodes = s.split()
+        for node in nodes :
+            if(self.experiment.get(node)==None):
+                print "Error: Node "+s+" does not exist"
+            else:
+                self.default(node+" xterm -title MaxiNet-"+node+" &")
+                time.sleep(0.2)
                  
     def do_exit(self,s):
         "Exit"
