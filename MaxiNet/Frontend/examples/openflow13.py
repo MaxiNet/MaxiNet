@@ -6,7 +6,6 @@
 #
 
 import sys
-sys.path.append("..")
 from MaxiNet.Frontend import maxinet
 import time
 from mininet.node import OVSSwitch

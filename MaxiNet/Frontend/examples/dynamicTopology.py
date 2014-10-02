@@ -8,11 +8,10 @@
 
 
 import sys
-sys.path.append("..") # needed to import maxinet.py from parent-folder
-import maxinet
+from MaxiNet.Frontend import maxinet
 import time
 from mininet.topo import Topo
-from maxinet import Tools
+from MaxiNet.Frontend.maxinet import Tools
 from mininet.node import OVSSwitch
 
 # create topology
