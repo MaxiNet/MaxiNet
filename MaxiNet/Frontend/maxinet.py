@@ -623,7 +623,7 @@ class Experiment:
             self.logger.info("Log files will be placed in /tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/. You might want to save them somewhere else.")
             
     def _print_monitor_info(self):
-        self.logger.info("You monitored this experiment. To generate a graph from your logs call \"maxinet_plot.py /tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/ plot.png\" ")
+        self.logger.info("You monitored this experiment. To generate a graph from your logs call \"/usr/local/share/MaxiNet/maxinet_plot.py /tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/ plot.png\" ")
         
     
     def CLI(self,plocals,pglobals):

@@ -68,6 +68,8 @@ where 192.168.0.2 is the ip-address of the host.
 
 cd ~
 git clone git@github.com:MaxiNet/MaxiNet.git
+cd MaxiNet
+sudo make install
 
 6. Configure MaxiNet
 on the frontend copy the MaxiNet-cfg-sample file to ~/.MaxiNet and edit the file.
