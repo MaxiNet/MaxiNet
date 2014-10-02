@@ -10,12 +10,14 @@ from MaxiNet.Frontend import maxinet
 import subprocess
 from mininet.topo import Topo
 from mininet.node import OVSSwitch
+from MaxiNet.Frontend.tools import Tools
+
 topo = Topo()
 
 topo.addSwitch("s1")
 topo.addSwitch("s2")
-topo.addHost("h1",ip=maxinet.Tools.makeIP(1), mac=maxinet.Tools.makeMAC(1))
-topo.addHost("h2",ip=maxinet.Tools.makeIP(2), mac=maxinet.Tools.makeMAC(2))
+topo.addHost("h1",ip=Tools.makeIP(1), mac=Tools.makeMAC(1))
+topo.addHost("h2",ip=Tools.makeIP(2), mac=Tools.makeMAC(2))
 topo.addLink("h1","s1")
 topo.addLink("s1","s2")
 topo.addLink("h2","s2")

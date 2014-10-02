@@ -11,10 +11,11 @@ import sys
 from MaxiNet.Frontend import maxinet
 import time
 from mininet.topo import Topo
-from MaxiNet.Frontend.maxinet import Tools
 from mininet.node import OVSSwitch
 
 # create topology
+from MaxiNet.Frontend.tools import Tools
+
 topo = Topo()
 topo.addHost("h1",ip=Tools.makeIP(1), mac=Tools.makeMAC(1))
 topo.addHost("h2",ip=Tools.makeIP(2), mac=Tools.makeMAC(2))

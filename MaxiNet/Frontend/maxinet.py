@@ -4,21 +4,24 @@ This module is the central part of MaxiNet and is intended to be the only
 part of MaxiNet which needs to be used by the user or third-party applications
 """
 
-import os,re, sys
+import re
+import sys
 import logging
-import tools
-from mininet.node import RemoteController, OVSSwitch, UserSwitch
-from mininet.topo import Topo
 from functools import partial
-from client import Frontend, log_and_reraise_remote_exception, remote_exceptions_logged_and_reraised
 import time
-import Pyro4
 import subprocess
 import random
 import atexit
-import traceback
+
+from mininet.node import RemoteController, UserSwitch
+import Pyro4
+
+from MaxiNet.Frontend.tools import Tools
+import tools
+from client import Frontend, log_and_reraise_remote_exception
 from partitioner import Partitioner
 from MaxiNet.Frontend.cli import CLI
+
 
 
 
@@ -861,33 +864,6 @@ class NodeWrapper:
             raise AttributeError(name)
     def __repr__(self):
         return "NodeWrapper ("+self.nn+" at "+str(self.worker)+")"
-
-class Tools:
-    
-    @staticmethod
-    def randByte():
-        return hex(random.randint(0,255))[2:]
-
-    @staticmethod
-    def makeMAC(i):
-        return Tools.randByte()+":"+Tools.randByte()+":"+Tools.randByte()+":00:00:" + hex(i)[2:]
-    
-    @staticmethod
-    def makeDPID(i):
-        a = Tools.makeMAC(i)
-        dp = "".join(re.findall(r'[a-f0-9]+',a))
-        return "0" * ( 12 - len(dp)) + dp
-
-    @staticmethod
-    def makeIP(i):
-        return "10.0.0."+str(i)
-
-    @staticmethod
-    def time_to_string(t):
-        if(t):
-            return time.strftime("%Y-%m-%d_%H:%M:%S",t)
-        else:
-            return time.strftime("%Y-%m-%d_%H:%M:%S")
 
 
 

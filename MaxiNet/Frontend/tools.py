@@ -1,8 +1,11 @@
 import atexit
 import os
+import random
+import re
 import sys
 import thread
 import threading
+import time
 import Pyro4
 import logging
 from ConfigParser import RawConfigParser
@@ -97,3 +100,31 @@ class Config:
                 "INFO": logging.INFO,
                 "DEBUG": logging.DEBUG }
         return lvls[lvl]
+
+
+class Tools:
+
+    @staticmethod
+    def randByte():
+        return hex(random.randint(0,255))[2:]
+
+    @staticmethod
+    def makeMAC(i):
+        return Tools.randByte()+":"+Tools.randByte()+":"+Tools.randByte()+":00:00:" + hex(i)[2:]
+
+    @staticmethod
+    def makeDPID(i):
+        a = Tools.makeMAC(i)
+        dp = "".join(re.findall(r'[a-f0-9]+',a))
+        return "0" * ( 12 - len(dp)) + dp
+
+    @staticmethod
+    def makeIP(i):
+        return "10.0.0."+str(i)
+
+    @staticmethod
+    def time_to_string(t):
+        if(t):
+            return time.strftime("%Y-%m-%d_%H:%M:%S",t)
+        else:
+            return time.strftime("%Y-%m-%d_%H:%M:%S")
