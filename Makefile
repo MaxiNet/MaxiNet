@@ -12,5 +12,7 @@ uninstall:
 	rm -rf /usr/local/lib/python2.7/dist-packages/MaxiNet-*/
 	rm -rf /usr/local/share/MaxiNet
 	rm /usr/local/bin/MaxiNetServer
- 
-.PHONY: clean install uninstall
+
+reinstall: uninstall clean install
+
+.PHONY: clean install uninstall reinstall
