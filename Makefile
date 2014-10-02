@@ -9,7 +9,7 @@ clean:
 	-rm -rf dist
 
 uninstall:
-	rm -rf /usr/local/lib/python2.7/MaxiNet-*/
+	rm -rf /usr/local/lib/python2.7/dist-packages/MaxiNet-*/
 	rm -rf /usr/local/share/MaxiNet
 	rm /usr/local/bin/MaxiNetServer
  
