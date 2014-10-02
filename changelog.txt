@@ -1,5 +1,11 @@
 MaxiNet
 
+MaxiNet 0.4:
+ * cleanup: MaxiNet is now installed as a python module. Use "from MaxiNet.Frontend import maxinet" instead of old
+            "import maxinet"
+ * cleanup: configuration is now done in a config file instead of config.py. See MaxiNet-cfg-sample
+ * cleanup: Tools class has been moved from maxinet.py to tools.py
+
 MaxiNet 0.3.1:
  * bugfix: tc parameters were ignored on Tunnels if interface wasn't explicitly
            set to TCIntf

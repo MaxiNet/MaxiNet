@@ -75,12 +75,6 @@ sudo make install
 on the frontend copy the MaxiNet-cfg-sample file to ~/.MaxiNet and edit the file.
 Every worker will need a config section, named with the hostname of the worker.
 
-7. Test your installation 
-at the Frontend:
-
-cd MaxiNet/examples/
-Now, exec the experiment by calling (as user mininet)
-
-python simplePing.py
-
-and watch the output.
+7. Test your installation
+call "python2 /usr/local/share/MaxiNet/examples/simplePing.py" at the frontend (as
+user mininet) and watch the output.
