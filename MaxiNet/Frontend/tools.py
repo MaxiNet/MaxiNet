@@ -87,7 +87,7 @@ class Config:
         return self.userconfig.get("MaxiNet","debugPyroOnWorker")
 
     def keepScreenOpenOnError(self):
-        return self.userconfig.get("MaxiNet","keepScreenOpenOnError")
+        return self.userconfig.getboolean("MaxiNet","keepScreenOpenOnError")
         
     def getLoggingLevel(self):
         lvl = self.userconfig.get("MaxiNet","debugLevel")
