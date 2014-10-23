@@ -561,7 +561,7 @@ class Experiment:
         """
         subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
         atexit.register(worker.get_file,"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
-        worker.daemonize("mpstat 1 | while read l; do echo -n \"`date +%s`    \" ; echo \"$l \" ; done > \"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log\"")
+        worker.daemonize("LANG=en_EN.UTF-8 mpstat 1 | while read l; do echo -n \"`date +%s`    \" ; echo \"$l \" ; done > \"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log\"")
         atexit.register(self._print_log_info)
         
     def log_free_memory(self):
