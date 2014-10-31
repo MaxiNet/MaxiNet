@@ -140,7 +140,7 @@ class CLI(Cmd):
         if(self.experiment.get(node)==None):
             print "Error: Node "+s+" does not exist"
         else:
-            pid = self.experiment.get_worker(self.experiment.get(node)).run_cmd("ps ax | grep \"bash -ms mininet:"+node+"\" -m1 | awk '{print $1}'").strip()
+            pid = self.experiment.get_worker(self.experiment.get(node)).run_cmd("ps ax | grep \"bash.*mininet:"+node+"$\" | grep -v grep | awk '{print $1}'").strip()
             if self.experiment.get_worker(self.experiment.get(node)).tunnelX11(node):
                 user = subprocess.check_output("ssh -q -t "+self.experiment.get_worker(self.experiment.get(node)).hn()+" echo $USER", shell=True).strip()
                 rcmd = "ssh -q -X -t "+self.experiment.get_worker(self.experiment.get(node)).hn()+" sudo  XAUTHORITY=/home/"+user+"/.Xauthority mnexec -a "+pid+" "+cmd
