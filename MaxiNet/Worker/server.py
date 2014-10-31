@@ -65,3 +65,6 @@ def main():
     # Successful exit
     logger.debug("Exiting server")
     sys.exit(0)
+
+if (__name__ == "__main__"):
+    main()
