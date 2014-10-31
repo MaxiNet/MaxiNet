@@ -44,7 +44,6 @@ def start(hn, debugPyro, keepScreenOpenOnError):
 def stop(hn):
     dnull = open("/dev/null", "w")
     path = subprocess.check_output(["whereis","MaxiNetServer"]).split(":")[1].strip()
-    cmd = "ssh " + hn + " \"sudo pkill -f '^MaxiNetServer'\""
     cmd = "ssh " + hn + " \"sudo pkill -f '"+path+"'\""
     subprocess.call(cmd, stdout=dnull, stderr=dnull, shell=True)
     cmd = "ssh " + hn + " \"sudo mn --clean\""
