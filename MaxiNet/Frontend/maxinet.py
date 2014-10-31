@@ -801,8 +801,8 @@ class Experiment:
                     self.setMTU(host,1450)
     
     def setMTU(self,host,mtu):
-        for intf in self.get(host).intfNames():
-            self.get(host).cmd("ifconfig "+intf+" mtu "+str(mtu))
+        for intf in host.intfNames():
+            host.cmd("ifconfig "+intf+" mtu "+str(mtu))
         
     
     @deprecated
