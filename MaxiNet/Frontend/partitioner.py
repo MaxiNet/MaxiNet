@@ -114,7 +114,15 @@ class Partitioner:
             
         return Clustering(self.partitions,self.tunnels)
 
-        
+    def partition_using_map(self,mapping):
+        self.tunnels=[]
+        self.partitions=[]
+        switch_to_part={}
+        for(switch in self.switches):
+            switch_to_part[switch]=mapping[switch]
+            self.partitions[mapping[switch]-1].addNode(switch,**self.topo.nodeInfo(switch))
+        self._add_links(switch_to_part)
+    
     def _write_to_file(self,pstr):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -138,6 +146,9 @@ class Partitioner:
             self.partitions[part].addNode(self.pos[i],**self.topo.nodeInfo(self.pos[i]))
             i=i+1
         f.close()
+        self._add_links(switch_to_part)
+        
+    def _add_links(self,switch_to_part):
         for node in self.topo.nodes():
             if not self.topo.isSwitch(node):
                 for edge in self.topo.links():
