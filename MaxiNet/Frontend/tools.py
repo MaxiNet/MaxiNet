@@ -65,8 +65,15 @@ class Config:
 
     def getID(self,hn):
         self.lock.acquire()
-        self.last_id = self.last_id +1
-        x = self.last_id
+        x=0
+        # Note: User must either:
+        #              * Use preconfigured ids for ALL workers
+        # or           * Use no preconfigured ids AT ALL. 
+        if (self.userconfig.has_option(hn,"id")):
+            x = self.userconfig.get(hn,"id")
+        else:
+            self.last_id = self.last_id +1
+            x = self.last_id
         self.lock.release()
         return x
 
