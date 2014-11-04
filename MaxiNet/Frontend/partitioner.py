@@ -115,13 +115,24 @@ class Partitioner:
         return Clustering(self.partitions,self.tunnels)
 
     def partition_using_map(self,mapping):
+        """
+        Partition loaded topology without metis but with mapping dictionary.
+        Dictionary has to contain reference "nodename"->workerid for every node
+        in topology.
+        """
         self.tunnels=[]
         self.partitions=[]
+        for i in range(0,max(mapping.values())):
+            self.partitions.append(Topo())
+        print mapping
         switch_to_part={}
-        for(switch in self.switches):
-            switch_to_part[switch]=mapping[switch]
+        for switch in self.switches:
+            if(not switch in mapping):
+                raise RuntimeError("no mapping for "+switch+" found")
+            switch_to_part[switch]=mapping[switch]-1
             self.partitions[mapping[switch]-1].addNode(switch,**self.topo.nodeInfo(switch))
         self._add_links(switch_to_part)
+        return Clustering(self.partitions,self.tunnels)
     
     def _write_to_file(self,pstr):
         with warnings.catch_warnings():

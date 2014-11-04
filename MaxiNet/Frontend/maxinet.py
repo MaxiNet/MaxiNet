@@ -471,7 +471,14 @@ class Experiment:
     one-time-usage and have to be stopped in the end. One cluster instance can
     run several experiments in sequence
     """
-    def __init__(self,cluster, topology,controller=None, is_partitioned=False, switch=UserSwitch):
+    def __init__(self,cluster, topology,controller=None, is_partitioned=False, switch=UserSwitch, nodemapping=None):
+        """
+        initialize Experiment object.
+        If is_partitioned==True it is assumed that topo is a MaxiNet.Frontend.tools.Clustering object which will not be
+        partitioned again.
+        nodemapping can be used to map nodes to specific workers (using a "nodename"->workerid dict).
+        If nodemapping is used it must hold a workerid for any node in the topology.
+        """
         self.cluster = cluster
         self.logger = logging.getLogger(__name__)
         self.topology=None
@@ -479,6 +486,7 @@ class Experiment:
         self.starttime = time.localtime()
         self.printed_log_info = False
         self.isMonitoring = False
+        self.nodemapping = nodemapping
         if is_partitioned:
             self.topology = topology
         else:
@@ -765,7 +773,10 @@ class Experiment:
         if(not self.topology):
             parti = Partitioner()
             parti.loadtopo(self.origtopology)
-            self.topology = parti.partition(self.cluster.num_workers(),self.cluster.get_worker_shares()) # assigning shares to workers requires that the workers are already startet. elsewise we don't have a way to determine the workerid of the worker. topologies are assigned to workers in ascending workerid order
+            if(self.nodemapping):
+                self.topology = parti.partition_using_map(self.nodemapping)
+            else:
+                self.topology = parti.partition(self.cluster.num_workers(),self.cluster.get_worker_shares()) # assigning shares to workers requires that the workers are already startet. elsewise we don't have a way to determine the workerid of the worker. topologies are assigned to workers in ascending workerid order
             self.logger.debug("Tunnels: "+str(self.topology.getTunnels()))
         subtopos = self.topology.getTopos()
         if(len(subtopos) > self.cluster.num_workers()):
