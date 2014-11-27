@@ -802,10 +802,15 @@ class Experiment:
                 tunnels[self.node_to_workerid[tunnel[i]]].append([intf, tunnel[i], tunnel[2]]) # Assumes that workerid = subtopoid
         for topo in subtopos:
             self.cluster.workers()[subtopos.index(topo)].set_switch(self.switch)
-            if(self.controller):
-                self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)], controller=self.controller)
-            else:
-                self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)])
+            thn = self.cluster.workers()[subtopos.index(topo)].hn()
+            try:
+                if(self.controller):
+                    self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)], controller=self.controller)
+                else:
+                    self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)])
+            except Pyro4.errors.ConnectionClosedError:
+                self.logger.error("Remote "+thn+" exited abnormally. This is probably due to mininet not starting up. Have a look at https://github.com/MaxiNet/MaxiNet/wiki/Debugging-MaxiNet#retrieving-worker-output to debug this.")
+                raise
         if (self.config.runWith1500MTU()):
             for topo in subtopos:
                 for host in topo.nodes():
