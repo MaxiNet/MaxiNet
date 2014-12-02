@@ -5,25 +5,24 @@
 #
 
 import sys
-from MaxiNet.Frontend import maxinet
 import time
-from fatTree import FatTree
 
-topo = FatTree(4,10,0.1)
+from MaxiNet.Frontend import maxinet
+from MaxiNet.Frontend.tools import FatTree
+
+topo = FatTree(4, 10, 0.1)
 cluster = maxinet.Cluster()
 cluster.start()
 
 exp = maxinet.Experiment(cluster, topo)
 exp.setup()
 
-
-print exp.get_node("h1").cmd("ifconfig") # call mininet cmd function of h1
+print exp.get_node("h1").cmd("ifconfig")  # call mininet cmd function of h1
 print exp.get_node("h4").cmd("ifconfig")
 
 print "waiting 5 seconds for routing algorithms on the controller to converge"
 time.sleep(5)
 
 print exp.get_node("h1").cmd("ping -c 5 10.0.0.4")
-
 
 exp.stop()

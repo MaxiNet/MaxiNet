@@ -6,21 +6,26 @@
 #
 
 import sys
-from MaxiNet.Frontend import maxinet
 import time
-from mininet.node import OVSSwitch
-from fatTree import FatTree
 
-topo = FatTree(4,10,0.1)
+from mininet.node import OVSSwitch
+
+from MaxiNet.Frontend import maxinet
+from MaxiNet.Frontend.tools import FatTree
+
+
+topo = FatTree(4, 10, 0.1)
 cluster = maxinet.Cluster()
 cluster.start()
 
-exp = maxinet.Experiment(cluster, topo,switch=OVSSwitch)
+exp = maxinet.Experiment(cluster, topo, switch=OVSSwitch)
 exp.setup()
 
 #Enable OpenFlow 1.3 on all switches
 for switch in exp.switches:
-    exp.get_worker(switch).run_cmd('ovs-vsctl -- set Bridge %s protocols=OpenFlow10,OpenFlow12,OpenFlow13' % switch.name) 
+    exp.get_worker(switch).run_cmd(
+                            'ovs-vsctl -- set Bridge %s ' % switch.name +
+                            'protocols=OpenFlow10,OpenFlow12,OpenFlow13')
 
 #Create some Flows
 print exp.get_node("h1").cmd("ping -c 5 10.0.0.4")

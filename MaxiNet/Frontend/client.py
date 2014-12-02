@@ -1,23 +1,32 @@
 # coding=utf-8
 
+import atexit
 import contextlib
-import Pyro4
-import subprocess
-import time
+import functools
+import logging
+import random
 from socket import error
+import subprocess
+import sys
+import threading
+import time
+
+import Pyro4
+import Pyro4.util
+
+
 Pyro4.config.SOCK_REUSE = True
+
+
 if hasattr(Pyro4.config, 'SERIALIZERS_ACCEPTED'):
     # From Pyro 4.25, pickle is not supported by default due to security.
     # However, it is required to serialise some objects used by maxinet.
     Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
+
+
 Pyro4.config.SERIALIZER = 'pickle'
-import Pyro4.util
-import sys
-import threading
-import atexit
-import logging
-import random
-import functools
+
+
 sys.excepthook = Pyro4.util.excepthook
 
 
@@ -32,8 +41,9 @@ def remote_exceptions_logged_and_reraised(logger=logger, level=logging.INFO):
     try:
         yield
     except Exception as e:
-        # Pyro remote exceptions have a _pyroTraceback attribute attached. By default, this is
-        # not incorporated into the exception message or local traceback.
+        # Pyro remote exceptions have a _pyroTraceback attribute attached.
+        # By default, this is not incorporated into the exception message
+        # or local traceback.
         if hasattr(e, "_pyroTraceback"):
             logger.log(level, "".join(Pyro4.util.getPyroTraceback()))
         # Reraise the original exception
@@ -52,7 +62,7 @@ def log_and_reraise_remote_exception(func, logger=logger, level=logging.INFO):
 
 
 class Frontend(object):
-    def __init__(self, nameserver, port=9090):#, namerServerIP=None):
+    def __init__(self, nameserver, port=9090):
         self.ownns_running = False
         self.logger = logger
         self.nameServerIP = nameserver
@@ -61,7 +71,6 @@ class Frontend(object):
         if(not self.ns_is_running()):
             self.start_nameserver()
         self.locateNS()
-
 
     def locateNS(self):
         """
@@ -82,56 +91,59 @@ class Frontend(object):
 
     def getObjectProxy(self, objectName):
         """
-            If you have already called locateNS there is no need to path nameServerIP
+            If you have already called locateNS there is no need to path
+            nameServerIP
         """
         objectURI = self.lookup(objectName)
-        proxy =  Pyro4.Proxy(objectURI)
+        proxy = Pyro4.Proxy(objectURI)
         atexit.register(proxy._pyroRelease)
         return proxy
 
     def ns_is_running(self):
-        ps=""
+        ps = ""
         if(self.ownns_running):
             return True
         try:
-            ps = subprocess.check_output(["ps aux | grep \"Pyro[4].naming\""], shell=True).strip()
+            ps = subprocess.check_output(["ps aux | grep \"Pyro[4].naming\""],
+                                         shell=True).strip()
         except subprocess.CalledProcessError:
             pass
-        if (len(ps)==0):
+        if (len(ps) == 0):
             return False
         else:
             return True
+
     def hmac_key(self):
         if(self.ns_is_running() and not self.ownns_running):
             return None
         return self._hmac_key
 
     def start_nameserver(self):
-        Pyro4.config.SERVERTYPE="thread"
-        Pyro4.config.HMAC_KEY=self.hmac_key()
-        self.ns=None
+        Pyro4.config.SERVERTYPE = "thread"
+        Pyro4.config.HMAC_KEY = self.hmac_key()
+        self.ns = None
         slept = 0
         while(not self.ns):
             try:
-                self.ns=Pyro4.naming.startNS(host=self.nameServerIP,port=self.nsport)
+                self.ns = Pyro4.naming.startNS(host=self.nameServerIP,
+                                               port=self.nsport)
             except error as e:
-                if e.errno!=98:
+                if e.errno != 98:
                     raise e
                 elif slept >= 30:
                     raise Exception("Timed out waiting for Pyro nameserver")
                 else:
-                    self.logger.warning("waiting for nameserver port to become free...")
+                    self.logger.warning("waiting for nameserver port to " +
+                                        "become free...")
                     time.sleep(2)
-                    slept+=2
-        #subprocess.call(['export PYRO_SERIALIZER=pickle && export  && python2 -m Pyro4.naming -x -n '+ self.nameServerIP + ' -p ' + str(self.nsport) +" &"],shell=True)
+                    slept += 2
         self.ns_thread = threading.Thread(target=self.ns[1].requestLoop)
         self.ns_thread.daemon = True
-        self.ns_thread.start()        
-        self.ownns_running=True
+        self.ns_thread.start()
+        self.ownns_running = True
         atexit.register(self._stop_nameserver)
-    
+
     def _stop_nameserver(self):
-        #subprocess.call(["pkill","-f","python2 -m Pyro4.naming"])
         if(self.ownns_running):
             self.ns[1].shutdown()
             self.ns[1].close()
@@ -139,7 +151,7 @@ class Frontend(object):
             self.ns_thread = None
             self.ns[2].close()
             self.ns = None
-            self.ownns_running=False
+            self.ownns_running = False
 
     def stop(self):
         self._stop_nameserver()
