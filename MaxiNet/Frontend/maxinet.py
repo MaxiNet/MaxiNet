@@ -14,6 +14,7 @@ import random
 import atexit
 
 from mininet.node import RemoteController, UserSwitch
+from mininet.link import TCIntf, Intf, Link, TCLink
 import Pyro4
 
 from MaxiNet.Frontend.tools import Tools
@@ -229,11 +230,11 @@ class Worker:
         return self.creator.addHost(name,controller,**params)
     
     @log_and_reraise_remote_exception
-    def addTunnel(self,name, switch, port, cls, **params):
+    def addTunnel(self,name, switch, port, intf, **params):
         """
         add tunnel at runtime. you probably want to use Experiment.addLink
         """
-        return self.creator.addTunnel(name, switch, port, cls,**params)
+        return self.creator.addTunnel(name, switch, port, intf,**params)
 
     @log_and_reraise_remote_exception
     def addLink(self, node1, node2, port1 = None, port2 = None, cls = None, **params):
@@ -721,10 +722,17 @@ class Experiment:
             if(not ((node1 in self.switches) and (node2 in self.switches))):
                 self.logger.error("We cannot create tunnels between switches and hosts. Sorry.")
                 raise RuntimeError("Can't create tunnel between switch and host")
-            intf = self.cluster.create_tunnel(w1,w2)
-            w1.addTunnel(intf,self.name(node1), port1, cls, **params)
-            w2.addTunnel(intf,self.name(node2), port2, cls, **params)
-            l=((self.name(node1),intf),(self.name(node2),intf))
+            if(not (cls==None or isinstance(cls, Link) or isinstance(cls,TCLink))):
+                self.logger.error("Only Link or TCLink instances are supported by MaxiNet")
+                raise RuntimeError("Only Link or TCLink instances are supported by MaxiNe")
+            intfn = self.cluster.create_tunnel(w1,w2)
+            if(cls == None or isinstance(cls,TCLink)):
+                intf = TCIntf
+            else:
+                intf = Intf
+            w1.addTunnel(intfn,self.name(node1), port1, intf, **params)
+            w2.addTunnel(intfn,self.name(node2), port2, intf, **params)
+            l=((self.name(node1),intfn),(self.name(node2),intfn))
         if(autoconf):
                 if(node1 in self.switches):
                     node1.attach(l[0][1])

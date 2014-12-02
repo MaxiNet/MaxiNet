@@ -82,12 +82,11 @@ class MininetCreator():
         self.net.addController(name, controller,**params)
         return name
 
-    def addTunnel(self, name, switch, port, cls, **params):
+    def addTunnel(self, name, switch, port, intf, **params):
         switch=self.net.get(switch)
-        #self.net.addTunnel(name, switch, port, cls, **params)
-        if not cls:
-            cls=TCIntf
-        cls(name, node=switch, port=port, link=None, **params)
+        if not intf:
+            intf=TCIntf
+        intf(name, node=switch, port=port, link=None, **params)
     def tunnelX11(self, node,display):
         node = self.net.get(node)
         mininet.term.tunnelX11(node,display)
