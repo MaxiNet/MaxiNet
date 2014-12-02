@@ -54,7 +54,7 @@ for filename in cpulogs:
     axis_y = []
     for line in open(os.path.join(folder, filename)):
         line = line.split()
-        if(len(line) == 13 and line[3] == "all"):
+        if(len(line) == 12 and line[2] == "all"):
             timestamp = int(line[0])
             idle = float(line[-1])
             used = 100 - idle
