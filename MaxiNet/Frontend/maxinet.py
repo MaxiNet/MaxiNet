@@ -1,8 +1,9 @@
 #!/usr/bin/python
-"""
+"""MaxiNet main module
+
 This module is the central part of MaxiNet and is intended to be the
 only part of MaxiNet which needs to be used by the user or third-party
-applications
+applications.
 """
 
 import atexit
@@ -49,67 +50,105 @@ def deprecated(func):
 
 
 def run_cmd(cmd):
-    """
-    run cmd on frontend machine
+    """Run cmd on frontend machine.
+
+    See also: rum_cmd_shell(cmd)
+
+    Args:
+        cmd: Either a string of program name or sequence of program
+            arguments.
+
+    Returns:
+        Stdout of cmd call as string.
     """
     return subprocess.check_output(cmd, shell=False)
 
 
 def run_cmd_shell(cmd):
-    """
-    run cmd on frontend machine with the shell
+    """Run cmd on frontend machine.
+
+    See also: rum_cmd(cmd)
+
+    Args:
+        cmd: Either a string of program name and arguments or sequence
+            of program arguments.
+
+    Returns:
+        Stdout of cmd call as string.
     """
     return subprocess.check_output(cmd, shell=True)
 
 
 class Worker:
-    """
-    represents a worker machine in an running experiment
+    """Worker class used to manage an individual Worker host.
+
+    A Worker is part of a Cluster and runs a part of the emulated
+    network.
+
+    Attributes:
+        cmd: remote instance of class CmdListener which is used to run
+            commands on the Worker machine.
+        config: remote instance of class Config which is used to query
+            configuration settings etc.
+        creator: remote instance of class MininetCreator which is used
+                to create and manage mininet instances.
+        switch: default mininet switch class to use in mininet instances.
+        wid: worker id.
     """
 
     def __init__(self, frontend, wid, switch=UserSwitch):
+        """inits Worker class"""
         self.creator = frontend.getObjectProxy(wid + ".mnCreator")
         self.cmd = frontend.getObjectProxy(wid + ".cmd")
         self.config = frontend.getObjectProxy("config")
         if(not self.config.runWith1500MTU()):
             self._fix_mtus()
         self.switch = switch
-        self.x11tunnels = []
+        self._x11tunnels = []
         self.wid = int(wid[6:])
 
     @log_and_reraise_remote_exception
     def hn(self):
-        """
-        return hostname of worker machine
-        """
+        """Get hostname of worker machine."""
         return self.cmd.get_hostname()
 
     def set_switch(self, switch):
-        """
-        set default switch class
-        """
+        """Set default switch class."""
         self.switch = switch
 
     @log_and_reraise_remote_exception
     def configLinkStatus(self, src, dst, status):
+        """Wrapper for configLinkStatus method on remote mininet.
+
+        Used to enable and disable links.
+
+        Args:
+            src: name of source node
+            dst: name of destination node
+            status: string {up|down}
+
         """
-        wrapper for configLinkStatus method on remote mininet"""
         self.creator.configLinkStatus(src, dst, status)
 
     @log_and_reraise_remote_exception
     def ip(self):
-        """
-        return public ip adress of worker machine
-        """
+        """Get public ip adress of worker machine."""
         return self.config.getIP(self.hn())
 
     @log_and_reraise_remote_exception
     def start(self, topo, tunnels, controller=None):
-        """
-        start mininet instance on worker machine emulating the in topo
-        specified topology.
+        """Start mininet instance on worker machine.
+
+        Start mininet emulating the in  argument topo specified topology.
         if controller is not specified mininet will start an own
         controller for this net.
+
+        Args:
+            topo: Topology to emulate on this worker.
+            tunnels: List of tunnels in format: [[tunnelname, switch,
+                    options],].
+            controller: optional mininet controller class to use in this
+                    network.
         """
         if controller:
             self.creator.create_mininet(topo=topo, tunnels=tunnels,
@@ -120,67 +159,119 @@ class Worker:
 
     @log_and_reraise_remote_exception
     def daemonize(self, cmd):
-        """
-        run command in background and terminate when MaxiNet is shut
-        down
-        """
+        """run command in background and terminate when MaxiNet is shut
+        down."""
         self.cmd.daemonize(cmd)
 
     @log_and_reraise_remote_exception
     def tunnelX11(self, node):
+        """Create X11 tunnel from Frontend to node on worker to make
+        x-forwarding work.
+
+        This is used in CLI class to allow calls to wireshark etc.
+        For each node only one tunnel will be created.
+
+        Args:
+            node: nodename
+
+        Returns:
+            boolean whether tunnel was successfully created.
         """
-        create X11 tunnel on worker to make x-forwarding work
-        """
-        if(not node in self.x11tunnels):
+        if(not node in self._x11tunnels):
             try:
                 display = subprocess.check_output("ssh -Y " + self.hn() +
                     " env | grep DISPLAY", shell=True)[8:]
                 self.creator.tunnelX11(node, display)
-                self.x11tunnels.append(node)
+                self._x11tunnels.append(node)
             except subprocess.CalledProcessError:
                 return False
         return True
 
     @log_and_reraise_remote_exception
     def run_cmd_on_host(self, host, cmd):
-        """
-        run cmd in context of host and return output, where host is the
-        name of an host in the mininet instance running on the worker
-        machine
+        """Run cmd in context of host and return output.
+
+        Args:
+            host: nodename
+            cmd: string of program name and arguments to call.
+
+        Returns:
+            Stdout of program call.
         """
         return self.creator.runCmdOnHost(host, cmd)
 
     @log_and_reraise_remote_exception
     def run_cmd(self, cmd):
-        """
-        run cmd on worker machine and return output
+        """run cmd on worker machine and return output.
+
+        Args:
+            cmd: string of program name and arguments to call.
+
+        Returns:
+            Stdout of program call.
         """
         return self.cmd.check_output(cmd)
 
     @log_and_reraise_remote_exception
     def run_script(self, cmd):
-        """
-        run cmd on worker machine from the Worker/bin directory return
-        output
+        """Run MaxiNet script on worker machine and return output.
+
+        Args:
+            cmd: String of name of MaxiNet script and arguments.
+
+        Returns:
+            Stdout of program call.
         """
         return self.cmd.script_check_output(cmd)
 
     @log_and_reraise_remote_exception
     def rpc(self, host, cmd, *params1, **params2):
-        """
-        internal function to do rpc calls
+        """Do rpc call to mininet node.
+
+        MaxiNet uses this function to do rpc calls on remote nodes in
+        NodeWrapper class.
+
+        Args:
+            host: Nodename
+            cmd: Method of node to call.
+            *params1: Unnamed parameters to call.
+            **params2: Named parameters to call.
+
+        Returns:
+            Return of host.cmd(*params1,**params2).
+            WARNING: if returned object is not serializable this might
+                     crash.
         """
         return self.creator.rpc(host, cmd, *params1, **params2)
 
     @log_and_reraise_remote_exception
     def rattr(self, host, name):
-        """
-        internal function to get attributes of objects
+        """Get attributes of mininet node.
+
+        MaxiNet uses this function to get attributes of remote nodes in
+        NodeWrapper class.
+
+        Args:
+            host: Nodename
+
+        Returns:
+            host.name
+            WARNING: if the attribute is not serializable this might
+                     crash.
         """
         return self.creator.attr(host, name)
 
     @log_and_reraise_remote_exception
     def _fix_mtus(self):
+        """If mtu of Worker is lower than 1600 set it to 1600.
+
+        In order to transfer 1500 byte long packets over GRE tunnels
+        the MTU of the interface which "transfers" the tunnel has to be
+        set to 1600.
+        This method tries to determine the correct network interface and
+        sets its MTU. This method is not needed if MaxiNet is configured
+        to use MTUs lower than 1451 in the MaxiNet configuration file.
+        """
         if self.ip() is None:
             logger.warn("no ip configured - can not fix MTU ")
             return 0
@@ -196,88 +287,185 @@ class Worker:
 
     @log_and_reraise_remote_exception
     def stop(self):
-        """
-        stop mininet instance on this worker
-        """
+        """Stop mininet instance on this worker."""
         return self.creator.stop()
 
     def get_file(self, src, dst):
-        """
-        transfer file specified by src on worker to dst on frontend.
-        uses scp command to transfer file
+        """Transfer file specified by src on worker to dst on Frontend.
+
+        Transfers file src to filename or folder dst on Frontend machine
+        via scp.
+
+        Args:
+            src: string of path to file on Worker
+            dst: string of path to file or folder on Frontend
         """
         cmd_get = ["scp", self.hn() + ":\"" + src + "\"", dst]
         subprocess.call(cmd_get)
 
     def put_file(self, src, dst):
-        """
-        transfer file specified by src on frontend to dst on worker.
-        uses scp command to transfer file
+        """transfer file specified by src on Frontend to dst on worker.
+
+        Transfers file src to filename or folder dst on Worker machine
+        via scp.
+        Args:
+            src: string of path to file on Frontend
+            dst: string of path to file or folder on Worker
         """
         cmd_put = ["scp", src, self.hn() + ":" + dst]
         subprocess.call(cmd_put)
 
     @log_and_reraise_remote_exception
     def addHost(self, name, cls=None, **params):
-        """
-        add host at runtime. you probably want to use Experiment.addHost
+        """Add host at runtime.
+
+        You probably want to use Experiment.addHost as this does some
+        bookkeeping of nodes etc.
+
+        Args:
+            name: Nodename to add. Must not already exist on Worker.
+            cls: Node class to use.
+            **params: Additional parameters for cls instanciation.
+
+        Returns:
+            nodename
         """
         return self.creator.addHost(name, cls, **params)
 
     @log_and_reraise_remote_exception
     def addSwitch(self, name, cls=None, **params):
-        """
-        add switch at runtime. you probably want to use
-        Experiment.addSwitch
+        """Add switch at runtime.
+
+        You probably want to use Experiment.addSwitch as this does some
+        bookkeeping on nodes etc.
+
+        Args:
+            name: switchname to add. Must not already exist on Worker.
+            cls: Node class to use.
+            **params: Additional parameters for cls instanciation.
+
+        Returns:
+            nodename
         """
         return self.creator.addSwitch(name, cls, **params)
 
     @log_and_reraise_remote_exception
     def addController(self, name="c0", controller=None, **params):
-        """
-        add controller at runtime. you probably want to use
-        Experiment.addController
+        """Add controller at runtime.
+
+        You probably want to use Experiment.addController as this does
+        some bookkeeping on nodes etc.
+
+        Args:
+            name: controllername to add. Must not already exist on Worker.
+            controller: mininet controller class to use.
+            **params: Additional parameters for cls instanciation.
+
+        Returns:
+            controllername
         """
         return self.creator.addHost(name, controller, **params)
 
     @log_and_reraise_remote_exception
     def addTunnel(self, name, switch, port, intf, **params):
+        """Add tunnel at runtime.
+
+        You probably want to use Experiment.addLink as this does some
+        bookkeeping on tunnels etc.
+
+        Args:
+            name: tunnelname (must be unique on Worker)
+            switch: name of switch to which tunnel will be connected.
+            port: port number to use on switch.
+            intf: Intf class to use when creating the tunnel.
         """
-        add tunnel at runtime. you probably want to use
-        Experiment.addLink
-        """
-        return self.creator.addTunnel(name, switch, port, intf, **params)
+        self.creator.addTunnel(name, switch, port, intf, **params)
 
     @log_and_reraise_remote_exception
     def addLink(self, node1, node2, port1=None, port2=None,
                 cls=None, **params):
-        """
-        add link at runtime. you probably want to use Experiment.addLink
+        """Add link at runtime.
+
+        You probably want to use Experiment.addLink as this does some
+        bookkeeping.
+
+        Args:
+            node1: nodename
+            node2: nodename
+            port1: optional port number to use on node1.
+            port2: optional port number to use on node2.
+            cls: optional class to use when creating the link.
+
+        Returns:
+            Tuple of the following form: ((node1,intfname1),
+            (node2,intfname2)) where intfname1 and intfname2 are the
+            names of the interfaces which where created for the link.
         """
         return self.creator.addLink(node1, node2, port1, port2, cls,
                                     **params)
 
 
 class TunHelper:
+    """Class to manage tunnel interface names.
+
+    This class is used by MaxiNet to make sure that tunnel interace
+    names are unique.
+    WARNING: This class is not designed for concurrent use!
+
+    Attributes:
+        tunnr: counter which increases with each tunnel.
+        keynr: counter which increases with each tunnel.
     """
-    internal class to manage tunnel interface names
-    """
+
     def __init__(self):
+        """Inits TunHelper"""
         self.tunnr = 0
         self.keynr = 0
 
     def get_tun_nr(self):
+        """Get tunnel number.
+
+        Returns a number to use when creating a new tunnel.
+        This number will only be returned once by this method.
+        (see get_last_tun_nr)
+
+        Returns:
+            Number to use for tunnel creation.
+        """
         self.tunnr = self.tunnr + 1
         return self.tunnr - 1
 
     def get_key_nr(self):
+        """Get key number.
+
+        Returns a number to use when creating a new tunnel.
+        This number will only be returned once by this method.
+        (see get_last_key_nr)
+
+        Returns:
+            Number to use for key in tunnel creation.
+        """
         self.keynr = self.keynr + 1
         return self.keynr - 1
 
     def get_last_tun_nr(self):
+        """Get last tunnel number.
+
+        Returns the last number returned by get_tun_nr.
+
+        Returns:
+            Number to use for tunnel creation.
+        """
         return self.tunnr - 1
 
     def get_last_key_nr(self):
+        """Get last key number.
+
+        Returns the last number returned by get_key_nr.
+
+        Returns:
+            Number to use for key in tunnel creation.
+        """
         return self.keynr - 1
 
 
