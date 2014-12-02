@@ -5,6 +5,7 @@ MaxiNet 0.4:
             "import maxinet"
  * cleanup: configuration is now done in a config file instead of config.py. See MaxiNet-cfg-sample
  * cleanup: Tools class has been moved from maxinet.py to tools.py
+ * cleanup: FatTree class has been moved from examples.fatTree to tools.py
 
 MaxiNet 0.3.1:
  * bugfix: tc parameters were ignored on Tunnels if interface wasn't explicitly
