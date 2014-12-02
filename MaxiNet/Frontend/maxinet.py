@@ -1,36 +1,36 @@
 #!/usr/bin/python
 """
-This module is the central part of MaxiNet and is intended to be the only
-part of MaxiNet which needs to be used by the user or third-party applications
+This module is the central part of MaxiNet and is intended to be the
+only part of MaxiNet which needs to be used by the user or third-party
+applications
 """
 
-import re
-import sys
-import logging
-from functools import partial
-import time
-import subprocess
-import random
 import atexit
+import functools
+import logging
+import random
+import re
+import subprocess
+import sys
+import time
+import warnings
 
 from mininet.node import RemoteController, UserSwitch
 from mininet.link import TCIntf, Intf, Link, TCLink
 import Pyro4
 
-from MaxiNet.Frontend.tools import Tools
-import tools
-from client import Frontend, log_and_reraise_remote_exception
-from partitioner import Partitioner
 from MaxiNet.Frontend.cli import CLI
+from MaxiNet.Frontend.client import Frontend, log_and_reraise_remote_exception
+from MaxiNet.Frontend.tools import Tools, Config
+from MaxiNet.Frontend.partitioner import Partitioner
 
 
-
-
-# the following block is to support deprecation warnings. this is really not
-# solved nicely and should probably be somewhere else
-import warnings
-import functools
 logger = logging.getLogger(__name__)
+
+
+# the following block is to support deprecation warnings. this is really
+# not solved nicely and should probably be somewhere else
+
 def deprecated(func):
     '''This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emitted
@@ -43,8 +43,7 @@ def deprecated(func):
             "Call to deprecated function {}.".format(func.__name__),
             category=DeprecationWarning,
             filename=func.func_code.co_filename,
-            lineno=func.func_code.co_firstlineno + 1
-        )
+            lineno=func.func_code.co_firstlineno + 1)
         return func(*args, **kwargs)
     return new_func
 
@@ -53,29 +52,31 @@ def run_cmd(cmd):
     """
     run cmd on frontend machine
     """
-    return subprocess.check_output(cmd,shell=False)
+    return subprocess.check_output(cmd, shell=False)
+
 
 def run_cmd_shell(cmd):
     """
     run cmd on frontend machine with the shell
     """
-    return subprocess.check_output(cmd,shell=True)
+    return subprocess.check_output(cmd, shell=True)
+
 
 class Worker:
     """
     represents a worker machine in an running experiment
     """
 
-    def __init__(self,frontend,wid,switch=UserSwitch):
-        self.creator = frontend.getObjectProxy(wid+".mnCreator")
-        self.cmd = frontend.getObjectProxy(wid+".cmd")
+    def __init__(self, frontend, wid, switch=UserSwitch):
+        self.creator = frontend.getObjectProxy(wid + ".mnCreator")
+        self.cmd = frontend.getObjectProxy(wid + ".cmd")
         self.config = frontend.getObjectProxy("config")
         if(not self.config.runWith1500MTU()):
             self._fix_mtus()
-        self.switch=switch
-        self.x11tunnels=[]
-        self.wid=int(wid[6:])
-    
+        self.switch = switch
+        self.x11tunnels = []
+        self.wid = int(wid[6:])
+
     @log_and_reraise_remote_exception
     def hn(self):
         """
@@ -83,78 +84,84 @@ class Worker:
         """
         return self.cmd.get_hostname()
 
-    def set_switch(self,switch):
+    def set_switch(self, switch):
         """
         set default switch class
         """
-        self.switch=switch
+        self.switch = switch
 
     @log_and_reraise_remote_exception
     def configLinkStatus(self, src, dst, status):
         """
         wrapper for configLinkStatus method on remote mininet"""
-        self.creator.configLinkStatus(src,dst,status)
-    
+        self.creator.configLinkStatus(src, dst, status)
+
     @log_and_reraise_remote_exception
     def ip(self):
         """
         return public ip adress of worker machine
         """
         return self.config.getIP(self.hn())
-    
-    @log_and_reraise_remote_exception
-    def start(self,topo,tunnels, controller=None):
-        """
-        start mininet instance on worker machine emulating the in topo specified
-        topology.
-        if controller is not specified mininet will start an own controller for
-        this net
-        """
-        if controller:
-            self.creator.create_mininet(topo=topo, tunnels=tunnels, controller = controller, switch=self.switch)
-        else:
-            self.creator.create_mininet(topo=topo, tunnels=tunnels, switch=self.switch)
 
     @log_and_reraise_remote_exception
-    def daemonize(self,cmd):
+    def start(self, topo, tunnels, controller=None):
         """
-        run command in background and terminate when MaxiNet is shut down
+        start mininet instance on worker machine emulating the in topo
+        specified topology.
+        if controller is not specified mininet will start an own
+        controller for this net.
+        """
+        if controller:
+            self.creator.create_mininet(topo=topo, tunnels=tunnels,
+                controller=controller, switch=self.switch)
+        else:
+            self.creator.create_mininet(topo=topo, tunnels=tunnels,
+                switch=self.switch)
+
+    @log_and_reraise_remote_exception
+    def daemonize(self, cmd):
+        """
+        run command in background and terminate when MaxiNet is shut
+        down
         """
         self.cmd.daemonize(cmd)
-    
+
     @log_and_reraise_remote_exception
-    def tunnelX11(self,node):
+    def tunnelX11(self, node):
         """
         create X11 tunnel on worker to make x-forwarding work
         """
         if(not node in self.x11tunnels):
             try:
-                display = subprocess.check_output("ssh -Y "+self.hn()+ " env | grep DISPLAY",shell=True)[8:]
-                self.creator.tunnelX11(node,display)
+                display = subprocess.check_output("ssh -Y " + self.hn() +
+                    " env | grep DISPLAY", shell=True)[8:]
+                self.creator.tunnelX11(node, display)
                 self.x11tunnels.append(node)
             except subprocess.CalledProcessError:
                 return False
         return True
-    
+
     @log_and_reraise_remote_exception
-    def run_cmd_on_host(self,host,cmd):
+    def run_cmd_on_host(self, host, cmd):
         """
-        run cmd in context of host and return output, where host is the name of an host in 
-        the mininet instance running on the worker machine
+        run cmd in context of host and return output, where host is the
+        name of an host in the mininet instance running on the worker
+        machine
         """
-        return self.creator.runCmdOnHost(host,cmd)
-    
+        return self.creator.runCmdOnHost(host, cmd)
+
     @log_and_reraise_remote_exception
-    def run_cmd(self,cmd):
+    def run_cmd(self, cmd):
         """
         run cmd on worker machine and return output
         """
         return self.cmd.check_output(cmd)
 
     @log_and_reraise_remote_exception
-    def run_script(self,cmd):
+    def run_script(self, cmd):
         """
-        run cmd on worker machine from the Worker/bin directory return output
+        run cmd on worker machine from the Worker/bin directory return
+        output
         """
         return self.cmd.script_check_output(cmd)
 
@@ -164,26 +171,28 @@ class Worker:
         internal function to do rpc calls
         """
         return self.creator.rpc(host, cmd, *params1, **params2)
-    
+
     @log_and_reraise_remote_exception
-    def rattr(self, host,name):
+    def rattr(self, host, name):
         """
         internal function to get attributes of objects
         """
         return self.creator.attr(host, name)
-    
+
     @log_and_reraise_remote_exception
     def _fix_mtus(self):
-        if self.ip() is None :
-             logger.warn("no ip configured - can not fix MTU ")
-             return 0
-        intf = self.run_cmd("ip addr show to "+self.ip()+"/24 | head -n1 | cut -d' ' -f2 | tr -d :").strip()
-        if intf == "" :
-             logger.warn("could not find eth device - can not fix MTU")
-             return 0
-        mtu = int(self.run_cmd("ip li show dev "+intf+" | head -n1 | cut -d ' ' -f5"))
-        if(mtu<1600):
-            self.run_cmd("ip li se dev "+intf+" mtu 1600")
+        if self.ip() is None:
+            logger.warn("no ip configured - can not fix MTU ")
+            return 0
+        intf = self.run_cmd("ip addr show to " + self.ip() +
+            "/24 | head -n1 | cut -d' ' -f2 | tr -d :").strip()
+        if intf == "":
+            logger.warn("could not find eth device - can not fix MTU")
+            return 0
+        mtu = int(self.run_cmd("ip li show dev " + intf +
+            " | head -n1 | cut -d ' ' -f5"))
+        if(mtu < 1600):
+            self.run_cmd("ip li se dev " + intf + " mtu 1600")
 
     @log_and_reraise_remote_exception
     def stop(self):
@@ -192,72 +201,78 @@ class Worker:
         """
         return self.creator.stop()
 
-    def get_file(self,src,dst):
+    def get_file(self, src, dst):
         """
         transfer file specified by src on worker to dst on frontend.
         uses scp command to transfer file
         """
-        cmd_get = ["scp",self.hn()+":\""+src+"\"",dst]
+        cmd_get = ["scp", self.hn() + ":\"" + src + "\"", dst]
         subprocess.call(cmd_get)
 
-    def put_file(self,src,dst):
+    def put_file(self, src, dst):
         """
         transfer file specified by src on frontend to dst on worker.
         uses scp command to transfer file
         """
-        cmd_put = ["scp",src,self.hn()+":"+dst]
+        cmd_put = ["scp", src, self.hn() + ":" + dst]
         subprocess.call(cmd_put)
 
     @log_and_reraise_remote_exception
-    def addHost(self,name, cls=None, **params):
+    def addHost(self, name, cls=None, **params):
         """
         add host at runtime. you probably want to use Experiment.addHost
         """
-        return self.creator.addHost(name,cls,**params)
-    
-    @log_and_reraise_remote_exception
-    def addSwitch(self,name, cls=None,**params):
-        """
-        add switch at runtime. you probably want to use Experiment.addSwitch
-        """
-        return self.creator.addSwitch(name,cls,**params)
+        return self.creator.addHost(name, cls, **params)
 
     @log_and_reraise_remote_exception
-    def addController(self,name="c0", controller=None, **params):
+    def addSwitch(self, name, cls=None, **params):
         """
-        add controller at runtime. you probably want to use Experiment.addController
+        add switch at runtime. you probably want to use
+        Experiment.addSwitch
         """
-        return self.creator.addHost(name,controller,**params)
-    
-    @log_and_reraise_remote_exception
-    def addTunnel(self,name, switch, port, intf, **params):
-        """
-        add tunnel at runtime. you probably want to use Experiment.addLink
-        """
-        return self.creator.addTunnel(name, switch, port, intf,**params)
+        return self.creator.addSwitch(name, cls, **params)
 
     @log_and_reraise_remote_exception
-    def addLink(self, node1, node2, port1 = None, port2 = None, cls = None, **params):
+    def addController(self, name="c0", controller=None, **params):
+        """
+        add controller at runtime. you probably want to use
+        Experiment.addController
+        """
+        return self.creator.addHost(name, controller, **params)
+
+    @log_and_reraise_remote_exception
+    def addTunnel(self, name, switch, port, intf, **params):
+        """
+        add tunnel at runtime. you probably want to use
+        Experiment.addLink
+        """
+        return self.creator.addTunnel(name, switch, port, intf, **params)
+
+    @log_and_reraise_remote_exception
+    def addLink(self, node1, node2, port1=None, port2=None,
+                cls=None, **params):
         """
         add link at runtime. you probably want to use Experiment.addLink
         """
-        return self.creator.addLink(node1, node2, port1, port2, cls, **params)
+        return self.creator.addLink(node1, node2, port1, port2, cls,
+                                    **params)
+
 
 class TunHelper:
     """
     internal class to manage tunnel interface names
     """
     def __init__(self):
-        self.tunnr = 0 
+        self.tunnr = 0
         self.keynr = 0
 
     def get_tun_nr(self):
-        self.tunnr = self.tunnr +1
-        return self.tunnr -1
+        self.tunnr = self.tunnr + 1
+        return self.tunnr - 1
 
     def get_key_nr(self):
-        self.keynr = self.keynr+1
-        return self.keynr -1
+        self.keynr = self.keynr + 1
+        return self.keynr - 1
 
     def get_last_tun_nr(self):
         return self.tunnr - 1
@@ -265,57 +280,61 @@ class TunHelper:
     def get_last_key_nr(self):
         return self.keynr - 1
 
+
 class Cluster:
     """
     manage a set of workers via this class.
-    to create several different topologys do not destroy/recreate this class but
-    define several Experiment instances running sequential
+    to create several different topologys do not destroy/recreate this
+    class but define several Experiment instances running sequential
     """
-    def __init__(self,*hosts):
+    def __init__(self, *hosts):
         """
-        create Cluster object. Starting with MaxiNet 0.2 the hosts parameter is
-        optional. If None is given all configured hosts will be used
+        create Cluster object. Starting with MaxiNet 0.2 the hosts
+        parameter is optional. If None is given all configured hosts
+        will be used
         """
-        self.running=False
+        self.running = False
         self.logger = logging.getLogger(__name__)
         self.tunhelper = TunHelper()
-        self.config = tools.Config("","",register = False)
+        self.config = Config("", "", register=False)
         logging.basicConfig(level=self.config.getLoggingLevel())
         if hosts:
             self.hosts = hosts
         else:
             self.hosts = self.config.getHosts()
-        self.worker=[]
-        
-        if(self.hosts[0]!=subprocess.check_output(["hostname"]).strip()):
+        self.worker = []
+
+        if(self.hosts[0] != subprocess.check_output(["hostname"]).strip()):
             rhost = self.config.getIP(self.hosts[0])
         else:
-            if(len(self.hosts)>1):
+            if(len(self.hosts) > 1):
                 rhost = self.config.getIP(self.hosts[1])
             else:
                 rhost = self.config.getIP(self.hosts[0])
         if sys.platform == "darwin":
-            route = subprocess.check_output(["route", "-vn", "get", rhost]).splitlines()[-1]
+            route = subprocess.check_output(["route", "-vn", "get", rhost])\
+                    .splitlines()[-1]
             m = re.search(r' (\d+\.\d+\.\d+\.\d+)$', route)
         else:
-            route = subprocess.check_output("ip route get "+rhost+" | head -n1", shell=True).strip()
+            route = subprocess.check_output("ip route get " + rhost +
+                    " | head -n1", shell=True).strip()
             m = re.search(r'src (\d+\.\d+\.\d+\.\d+)', route)
         if m is not None:
             self.localIP = m.group(1)
         else:
-            self.localIP="127.0.0.1"
-
-
-        self.nsport=9090
+            self.localIP = "127.0.0.1"
+        self.nsport = 9090
         self.frontend = Frontend(self.localIP, self.nsport)
-        self.config = tools.Config(self.localIP,self.nsport)
+        self.config = Config(self.localIP, self.nsport)
         atexit.register(run_cmd, self.getWorkerMangerCMD("--stop"))
         atexit.register(self._stop)
 
-    def getWorkerMangerCMD(self,cmd):
-        cmdline =  [self.config.getWorkerScript("worker_manager.py"), "--ns",
-                self.localIP+":" +  str(self.nsport),
-                cmd]
+    def getWorkerMangerCMD(self, cmd):
+        cmdline = [
+            self.config.getWorkerScript("worker_manager.py"), "--ns",
+            self.localIP + ":" + str(self.nsport),
+            cmd
+        ]
         if self.config.debugPyroOnWorker():
             cmdline.append("--debugPyro")
 
@@ -327,74 +346,77 @@ class Cluster:
 
     def is_running(self):
         return self.running
-        
+
     def get_worker_shares(self):
         """
         returns list of workload shares per worker
         """
-        shares=None
+        shares = None
         if(self.running):
-            shares=[]
+            shares = []
             for w in self.worker:
                 shares.append(self.config.getShare(w.hn()))
-            wsum=0
+            wsum = 0
             for w in shares:
-                wsum+=w
-            shares = map(lambda x: x/float(wsum),shares)
+                wsum += w
+            shares = map(lambda x: x / float(wsum), shares)
         return shares
-        
-    def check_reachability(self,ip):
+
+    def check_reachability(self, ip):
         """
         check whether ip is reachable for a packet with MTU > 1500
         """
-        cmd = ["ping","-c 2","-s 1520",ip]
-        if(subprocess.call(cmd,stdout=open("/dev/null"),) == 1):
+        cmd = ["ping", "-c 2", "-s 1520", ip]
+        if(subprocess.call(cmd, stdout=open("/dev/null"),) == 1):
             return False
         else:
             return True
 
     def start(self):
         """
-        start MaxiNet on assigned worker machines and establish communication. Returns True in case of successful startup.
+        start MaxiNet on assigned worker machines and establish
+        communication. Returns True in case of successful startup.
         """
         self.logger.info("starting worker processes")
-
         cmd = self.getWorkerMangerCMD("--start")
         if self.frontend.hmac_key():
-            cmd.extend(["--hmac",self.frontend.hmac_key()])
-
+            cmd.extend(["--hmac", self.frontend.hmac_key()])
         self.logger.debug(run_cmd(cmd))
-
         timeout = 10
-        for i in range(0,len(self.hosts)):
-            self.logger.info("waiting for Worker "+str(i+1)+" to register on nameserver...")
-            started=False
-            end = time.time()+timeout
+        for i in range(0, len(self.hosts)):
+            self.logger.info("waiting for Worker " + str(i + 1) +
+                             " to register on nameserver...")
+            started = False
+            end = time.time() + timeout
             while(not started):
                 try:
-                    self.frontend.lookup("worker"+str(i+1)+".mnCreator")
-                    started=True
+                    self.frontend.lookup("worker" + str(i + 1) + ".mnCreator")
+                    started = True
                 except Pyro4.errors.NamingError:
-                    if(time.time()>end):
-                        raise RuntimeError("Timed out waiting for worker "+str(i+1)+".mnCreator to register.")
+                    if(time.time() > end):
+                        raise RuntimeError("Timed out waiting for worker " +
+                                           str(i + 1) + ".mnCreator to " +
+                                           "register.")
                     time.sleep(0.1)
-            started=False
-            end=time.time()+timeout
+            started = False
+            end = time.time() + timeout
             while(not started):
                 try:
-                    self.frontend.lookup("worker"+str(i+1)+".cmd")
-                    started=True
+                    self.frontend.lookup("worker" + str(i + 1) + ".cmd")
+                    started = True
                 except Pyro4.errors.NamingError:
                     time.sleep(0.1)
-                    if(time.time()>end):
-                        raise RuntimeError("Timed out waiting for worker "+str(i+1)+".cmd to register.")
-            self.worker.append(Worker(self.frontend,"worker"+str(i+1)))
-            
+                    if(time.time() > end):
+                        raise RuntimeError("Timed out waiting for worker " +
+                                           str(i + 1) + ".cmd to register.")
+            self.worker.append(Worker(self.frontend, "worker" + str(i + 1)))
         if(not self.config.runWith1500MTU()):
             for host in self.hosts:
                 if(not self.check_reachability(self.config.getIP(host))):
-                    self.logger.error("Host "+host+" is not reachable with an MTU > 1500.")
-                    raise RuntimeError("Host "+host+" is not reachable with an MTU > 1500.")
+                    self.logger.error("Host " + host +
+                        " is not reachable with an MTU > 1500.")
+                    raise RuntimeError("Host " + host +
+                        " is not reachable with an MTU > 1500.")
         for worker in self.worker:
             worker.run_script("load_tunneling.sh")
         self.logger.info("worker processes started")
@@ -407,13 +429,13 @@ class Cluster:
             self.remove_all_tunnels()
             #self.logger.info("shutting cluster down...")
             self.logger.info("removing nameserver entries...")
-            for i in range(0,self.num_workers()):
-                self.frontend.remove("worker"+str(i)+".mnCreator")
-                self.frontend.remove("worker"+str(i)+".cmd")
+            for i in range(0, self.num_workers()):
+                self.frontend.remove("worker" + str(i) + ".mnCreator")
+                self.frontend.remove("worker" + str(i) + ".cmd")
             self.logger.info("shutting down frontend...")
             self.logger.info("Goodbye.")
-            self.running=False
-    
+            self.running = False
+
     def stop(self):
         """
         stop cluster and shut it down
@@ -428,7 +450,8 @@ class Cluster:
 
     def workers(self):
         """
-        return list of worker instances for this cluster, ordered by worker id
+        return list of worker instances for this cluster, ordered by
+        worker id
         """
         if(self.is_running()):
             return self.worker
@@ -441,19 +464,22 @@ class Cluster:
         """
         return self.workers()[wid]
 
-    def create_tunnel(self,w1,w2):
+    def create_tunnel(self, w1, w2):
         """
-        create gre tunnel connecting worker machine w1 and w2 and return name of
-        created network interface
+        create gre tunnel connecting worker machine w1 and w2 and return
+        name of created network interface
         """
         tid = self.tunhelper.get_tun_nr()
         tkey = self.tunhelper.get_key_nr()
-        intf = "mn_tun"+str(tid)
-        ip1=w1.ip()
-        ip2=w2.ip()
-        self.logger.debug("invoking tunnel create commands on "+ip1+" and "+ip2)
-        w1.run_script("create_tunnel.sh "+ip1+" "+ip2+" "+intf+" "+str(tkey))
-        w2.run_script("create_tunnel.sh "+ip2+" "+ip1+" "+intf+" "+str(tkey))
+        intf = "mn_tun" + str(tid)
+        ip1 = w1.ip()
+        ip2 = w2.ip()
+        self.logger.debug("invoking tunnel create commands on " + ip1 +
+                          " and " + ip2)
+        w1.run_script("create_tunnel.sh " + ip1 + " " + ip2 + " " + intf +
+                      " " + str(tkey))
+        w2.run_script("create_tunnel.sh " + ip2 + " " + ip1 + " " + intf +
+                      " " + str(tkey))
         self.logger.debug("done")
         return intf
 
@@ -469,21 +495,26 @@ class Cluster:
 class Experiment:
     """
     use this class to specify experiment. Experiments are created for
-    one-time-usage and have to be stopped in the end. One cluster instance can
-    run several experiments in sequence
+    one-time-usage and have to be stopped in the end. One cluster
+    instance can run several experiments in sequence
     """
-    def __init__(self,cluster, topology,controller=None, is_partitioned=False, switch=UserSwitch, nodemapping=None):
+    def __init__(self, cluster, topology, controller=None,
+                 is_partitioned=False, switch=UserSwitch,
+                 nodemapping=None):
         """
         initialize Experiment object.
-        If is_partitioned==True it is assumed that topo is a MaxiNet.Frontend.tools.Clustering object which will not be
+        If is_partitioned==True it is assumed that topo is a
+        MaxiNet.Frontend.tools.Clustering object which will not be
         partitioned again.
-        nodemapping can be used to map nodes to specific workers (using a "nodename"->workerid dict).
-        If nodemapping is used it must hold a workerid for any node in the topology.
+        nodemapping can be used to map nodes to specific workers (using
+        a "nodename"->workerid dict).
+        If nodemapping is used it must hold a workerid for any node in
+        the topology.
         """
         self.cluster = cluster
         self.logger = logging.getLogger(__name__)
-        self.topology=None
-        self.config = tools.Config(register = False)
+        self.topology = None
+        self.config = Config(register=False)
         self.starttime = time.localtime()
         self.printed_log_info = False
         self.isMonitoring = False
@@ -492,25 +523,24 @@ class Experiment:
             self.topology = topology
         else:
             self.origtopology = topology
-            
-
         self.node_to_workerid = {}
         self.node_to_wrapper = {}
         self.nodes = []
         self.hosts = []
         self.tunnellookup = {}
         self.switches = []
-        self.switch=switch
+        self.switch = switch
         if controller:
             contr = controller
         else:
             contr = self.config.getController()
-        if contr.find(":")>=0:
+        if contr.find(":") >= 0:
             (host, port) = contr.split(":")
         else:
             host = contr
             port = "6633"
-        self.controller = partial(RemoteController, ip=host, port=int(port))
+        self.controller = functools.partial(RemoteController, ip=host,
+                                            port=int(port))
 
     def configLinkStatus(self, src, dst, status):
         """Change status of src <-> dst links.
@@ -519,38 +549,38 @@ class Experiment:
            status: string {up, down}"""
         ws = self.get_worker(src)
         wd = self.get_worker(dst)
-        if(ws==wd): # src and dst are on same worker. let mininet handle this
-               ws.configLinkStatus(src,dst,status)
+        if(ws == wd):
+            # src and dst are on same worker. let mininet handle this
+            ws.configLinkStatus(src, dst, status)
         else:
-               src=self.get(src)
-               dst=self.get(dst)
-               intf = self.tunnellookup[(src.name,dst.name)]
-               src.cmd("ifconfig "+intf+" "+status)
-               dst.cmd("ifconfig "+intf+" "+status)
-
-
+            src = self.get(src)
+            dst = self.get(dst)
+            intf = self.tunnellookup[(src.name, dst.name)]
+            src.cmd("ifconfig " + intf + " " + status)
+            dst.cmd("ifconfig " + intf + " " + status)
 
     @deprecated
-    def find_worker(self,node):
+    def find_worker(self, node):
         """
         return worker which emulates the specified node.
         Replaced by get_worker
         """
         return self.get_worker(node)
 
-    def get_worker(self,node):
+    def get_worker(self, node):
         """
         return worker which emulates the specified node.
         """
-        if(isinstance(node,NodeWrapper)):
+        if(isinstance(node, NodeWrapper)):
             return node.worker
         return self.cluster.get_worker(self.node_to_workerid[node])
-        
+
     def get_log_folder(self):
         """
         returns folder to which log files will be saved
         """
-        return "/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"
+        return "/tmp/maxinet_logs/" + Tools.time_to_string(self.starttime) +\
+               "/"
 
     def terminate_logging(self):
         for worker in self.cluster.workers():
@@ -563,129 +593,153 @@ class Experiment:
         """
         for worker in self.cluster.workers():
             self.log_cpu_of_worker(worker)
-            
-    def log_cpu_of_worker(self,worker):
+
+    def log_cpu_of_worker(self, worker):
         """
         log cpu usage of worker and place log file in /tmp/maxinet_logs/
         """
-        subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
-        atexit.register(worker.get_file,"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
-        worker.daemonize("LANG=en_EN.UTF-8 mpstat 1 | while read l; do echo -n \"`date +%s`    \" ; echo \"$l \" ; done > \"/tmp/maxinet_cpu_"+str(worker.wid)+"_("+worker.hn()+").log\"")
+        subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
+                        Tools.time_to_string(self.starttime) + "/"])
+        atexit.register(worker.get_file, "/tmp/maxinet_cpu_" +
+                        str(worker.wid) + "_(" + worker.hn() + ").log",
+                        "/tmp/maxinet_logs/" +
+                        Tools.time_to_string(self.starttime) + "/")
+        worker.daemonize("LANG=en_EN.UTF-8 mpstat 1 | while read l; " +
+                         "do echo -n \"`date +%s`    \" ; echo \"$l \" ;" +
+                         " done > \"/tmp/maxinet_cpu_" + str(worker.wid) +
+                         "_(" + worker.hn() + ").log\"")
         atexit.register(self._print_log_info)
-        
+
     def log_free_memory(self):
         """
         log memory usage of workers and place log files in /tmp/maxinet_logs
         Format is:
         timestamp,FreeMemory,Buffers,Cached
         """
-        subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
+        subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
+                        Tools.time_to_string(self.starttime) + "/"])
         for worker in self.cluster.workers():
-            atexit.register(worker.get_file,"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
+            atexit.register(worker.get_file, "/tmp/maxinet_mem_" +
+                            str(worker.wid) + "_(" + worker.hn() + ").log",
+                            "/tmp/maxinet_logs/" +
+                            Tools.time_to_string(self.starttime) + "/")
             memmon = worker.config.getWorkerScript("getMemoryUsage.sh")
-            worker.daemonize(memmon + " > \"/tmp/maxinet_mem_"+str(worker.wid)+"_("+worker.hn()+").log\"")
+            worker.daemonize(memmon + " > \"/tmp/maxinet_mem_" +
+                             str(worker.wid) + "_(" + worker.hn() + ").log\"")
             atexit.register(self._print_log_info)
-            
-    def log_interfaces_of_node(self,node):
+
+    def log_interfaces_of_node(self, node):
         """
-        logs statistics of interfaces of node and places them in /tmp/maxinet_logs
+        logs statistics of interfaces of node and places them in
+        /tmp/maxinet_logs
         Format is:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
-        subprocess.call(["mkdir","-p","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/"])
+        subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
+                        Tools.time_to_string(self.starttime) + "/"])
         node = self.get(node)
         worker = self.get_worker(node)
         for intf in node.intfNames():
-            self.log_interface(worker,intf)
-            
-    
-    def log_interface(self,worker,intf):
+            self.log_interface(worker, intf)
+
+    def log_interface(self, worker, intf):
         """
-        logs statistics of interface of worker and places them in /tmp/maxinet_logs
+        logs statistics of interface of worker and places them in
+        /tmp/maxinet_logs
         Format is:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
-        atexit.register(worker.get_file,"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log","/tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/")
+        atexit.register(worker.get_file, "/tmp/maxinet_intf_" + intf + "_" +
+                        str(worker.wid) + "_(" + worker.hn() + ").log",
+                        "/tmp/maxinet_logs/" +
+                        Tools.time_to_string(self.starttime) + "/")
         ethmon = worker.config.getWorkerScript("getRxTx.sh")
-        worker.daemonize(ethmon + " "+intf+" > \"/tmp/maxinet_intf_"+intf+"_"+str(worker.wid)+"_("+worker.hn()+").log\"")
+        worker.daemonize(ethmon + " " + intf + " > \"/tmp/maxinet_intf_" +
+                         intf + "_" + str(worker.wid) + "_(" + worker.hn() +
+                         ").log\"")
         atexit.register(self._print_log_info)
-        
-        
+
     def monitor(self):
         """
-        logs statistics of worker interfaces and memory usage and places them in /tmp/maxinet_logs
+        logs statistics of worker interfaces and memory usage and places
+        them in /tmp/maxinet_logs
         """
         self.isMonitoring = True
         atexit.register(self._print_monitor_info)
         self.log_free_memory()
         self.log_cpu()
         for worker in self.cluster.workers():
-            intf = worker.run_cmd("ip addr show to "+worker.ip()+"/24 | head -n1 | cut -d' ' -f2 | tr -d :").strip()
+            intf = worker.run_cmd("ip addr show to " + worker.ip() + "/24 " +
+                                  "| head -n1 | cut -d' ' -f2 | tr -d :")\
+                                  .strip()
             if(intf == ""):
-                self.logger.warn("could not find main interface for "+worker.hn()+". no logging possible.")
+                self.logger.warn("could not find main interface for " +
+                                 worker.hn() + ". no logging possible.")
             else:
-                self.log_interface(worker,intf)
-                
+                self.log_interface(worker, intf)
+
     def _print_log_info(self):
         if(not self.printed_log_info):
-            self.printed_log_info=True
-            self.logger.info("Log files will be placed in /tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/. You might want to save them somewhere else.")
-            
+            self.printed_log_info = True
+            self.logger.info("Log files will be placed in /tmp/maxinet_logs/" +
+                             Tools.time_to_string(self.starttime) + "/." +
+                             " You might want to save them somewhere else.")
+
     def _print_monitor_info(self):
-        self.logger.info("You monitored this experiment. To generate a graph from your logs call \"/usr/local/share/MaxiNet/maxinet_plot.py /tmp/maxinet_logs/"+Tools.time_to_string(self.starttime)+"/ plot.png\" ")
-        
-    
-    def CLI(self,plocals,pglobals):
+        self.logger.info("You monitored this experiment. To generate a graph" +
+                         " from your logs call " +
+                         "\"/usr/local/share/MaxiNet/maxinet_plot.py " +
+                         "/tmp/maxinet_logs/" +
+                         Tools.time_to_string(self.starttime) +
+                         "/ plot.png\" ")
+
+    def CLI(self, plocals, pglobals):
         """
         open interactive command line interface
         """
-        CLI(self,plocals,pglobals)
-            
-        
-                
-    
-    def addNode(self, name,**params):
+        CLI(self, plocals, pglobals)
+
+    def addNode(self, name, **params):
         """
         add node at runtime.
         use parameter wid to specifiy worker id or pos to specify worker of
         existing node. otherwise random worker is chosen
         """
-        wid = random.randint(0,self.cluster.num_workers()-1)
+        wid = random.randint(0, self.cluster.num_workers() - 1)
         if "pos" in params.keys():
             wid = self.node_to_workerid[params["pos"]]
             del params["pos"]
         if "wid" in params.keys():
-            wid = int(params["wid"])-1
+            wid = int(params["wid"]) - 1
             del params["wid"]
         worker = self.cluster.get_worker(wid)
-        self.node_to_workerid[name]=wid
-        self.node_to_wrapper[name]=NodeWrapper(name,self.get_worker(name))
+        self.node_to_workerid[name] = wid
+        self.node_to_wrapper[name] = NodeWrapper(name, self.get_worker(name))
         self.nodes.append(self.node_to_wrapper[name])
-    
-          
-    def addHost(self, name, cls = None, **params):
+
+    def addHost(self, name, cls=None, **params):
         """
         add host at runtime.
         use parameter wid to specifiy worker id or pos to specify worker of
         existing node. otherwise random worker is chosen
         """
-        self.addNode(name,**params)
-        self.get_worker(name).addHost(name,cls, **params)
+        self.addNode(name, **params)
+        self.get_worker(name).addHost(name, cls, **params)
         self.hosts.append(self.get(name))
         return self.get(name)
-    
-    def addSwitch(self, name, cls = None,  **params):
+
+    def addSwitch(self, name, cls=None, **params):
         """
         add switch at runtime
         use parameter wid to specifiy worker id or pos to specify worker of
         existing node. otherwise random worker is chosen
         """
         self.addNode(name, **params)
-        self.get_worker(name).addSwitch(name,cls, **params)
+        self.get_worker(name).addSwitch(name, cls, **params)
         self.switches.append(self.get(name))
         return self.get(name)
 
-    def addController(self, name="c0",controller = None, **params):
+    def addController(self, name="c0", controller=None, **params):
         """
         add controller at runtime
         use parameter wid to specifiy worker id or pos to specify worker of
@@ -699,40 +753,48 @@ class Experiment:
         """
         return name assigned to specified network node.
         """
-        if(isinstance(node,NodeWrapper)):
+        if(isinstance(node, NodeWrapper)):
             return node.nn
         return node
 
-    def addLink(self, node1, node2, port1 = None, port2 = None, cls = None, autoconf=False, **params):
+    def addLink(self, node1, node2, port1=None, port2=None, cls=None,
+                autoconf=False, **params):
         """
         add links at runtime. will create tunnels between workers if necessary,
-        but can not create tunnels between hosts and switches. (links will work fine)
-        autoconf parameter handles attach() and config calls on switches and hosts
+        but can not create tunnels between hosts and switches. (links will work
+        fine)
+        autoconf parameter handles attach() and config calls on switches and
+        hosts
         """
         w1 = self.get_worker(node1)
         w2 = self.get_worker(node2)
         node1 = self.get(node1)
         node2 = self.get(node2)
-        if(w1==w2):
+        if(w1 == w2):
             self.logger.debug("no tunneling needed")
-            l=w1.addLink(self.name(node1),self.name(node2), port1, port2, cls, **params)
-
+            l = w1.addLink(self.name(node1), self.name(node2), port1, port2,
+                         cls, **params)
         else:
             self.logger.debug("tunneling needed")
             if(not ((node1 in self.switches) and (node2 in self.switches))):
-                self.logger.error("We cannot create tunnels between switches and hosts. Sorry.")
-                raise RuntimeError("Can't create tunnel between switch and host")
-            if(not (cls==None or isinstance(cls, Link) or isinstance(cls,TCLink))):
-                self.logger.error("Only Link or TCLink instances are supported by MaxiNet")
-                raise RuntimeError("Only Link or TCLink instances are supported by MaxiNe")
-            intfn = self.cluster.create_tunnel(w1,w2)
-            if(cls == None or isinstance(cls,TCLink)):
+                self.logger.error("We cannot create tunnels between switches" +
+                                  " and hosts. Sorry.")
+                raise RuntimeError("Can't create tunnel between switch and" +
+                                   "host")
+            if(not ((cls is None) or isinstance(cls, Link) or
+                    isinstance(cls, TCLink))):
+                self.logger.error("Only Link or TCLink instances are " +
+                                  "supported by MaxiNet")
+                raise RuntimeError("Only Link or TCLink instances are " +
+                                   "supported by MaxiNe")
+            intfn = self.cluster.create_tunnel(w1, w2)
+            if((cls is None) or isinstance(cls, TCLink)):
                 intf = TCIntf
             else:
                 intf = Intf
-            w1.addTunnel(intfn,self.name(node1), port1, intf, **params)
-            w2.addTunnel(intfn,self.name(node2), port2, intf, **params)
-            l=((self.name(node1),intfn),(self.name(node2),intfn))
+            w1.addTunnel(intfn, self.name(node1), port1, intf, **params)
+            w2.addTunnel(intfn, self.name(node2), port2, intf, **params)
+            l = ((self.name(node1), intfn), (self.name(node2), intfn))
         if(autoconf):
                 if(node1 in self.switches):
                     node1.attach(l[0][1])
@@ -743,35 +805,34 @@ class Experiment:
                 else:
                     node2.configDefault()
         if(self.config.runWith1500MTU()):
-            self.setMTU(node1,1450)
-            self.setMTU(node2,1450)
-    
-    def _find_topo_of_node(self,node, topos):
+            self.setMTU(node1, 1450)
+            self.setMTU(node2, 1450)
+
+    def _find_topo_of_node(self, node, topos):
         for topo in topos:
             if node in topo.g.nodes():
                 return topo
-
 
     def get_node(self, nodename):
         """
         return node that is specified by nodename
         :rtype : NodeWrapper
         """
-        if(self.node_to_wrapper.has_key(nodename)):
+        if(nodename in self.node_to_wrapper):
             return self.node_to_wrapper[nodename]
         else:
             return None
 
-    def get(self,nodename):
+    def get(self, nodename):
         """
         alias for get_node
         """
         return self.get_node(nodename)
-        
+
     def setup(self):
         """
-        start cluster if not yet started, assign topology parts to workers and
-        start workers
+        start cluster if not yet started, assign topology parts to
+        workers and start workers
         """
         if(not self.cluster.is_running()):
             self.cluster.start()
@@ -784,59 +845,77 @@ class Experiment:
             if(self.nodemapping):
                 self.topology = parti.partition_using_map(self.nodemapping)
             else:
-                self.topology = parti.partition(self.cluster.num_workers(),self.cluster.get_worker_shares()) # assigning shares to workers requires that the workers are already startet. elsewise we don't have a way to determine the workerid of the worker. topologies are assigned to workers in ascending workerid order
-            self.logger.debug("Tunnels: "+str(self.topology.getTunnels()))
+                # assigning shares to workers requires that the workers
+                # are already startet. elsewise we don't have a way to
+                # determine the workerid of the worker. topologies are
+                # assigned to workers in ascending workerid order
+                self.topology = parti.partition(self.cluster.num_workers(),
+                                self.cluster.get_worker_shares())
+            self.logger.debug("Tunnels: " + str(self.topology.getTunnels()))
         subtopos = self.topology.getTopos()
         if(len(subtopos) > self.cluster.num_workers()):
-            raise RuntimeError("Cluster does not have enough workers for given topology")
+            raise RuntimeError("Cluster does not have enough workers for " +
+                               "given topology")
         for subtopo in subtopos:
             for node in subtopo.nodes():
-                self.node_to_workerid[node]=subtopos.index(subtopo)
+                self.node_to_workerid[node] = subtopos.index(subtopo)
                 self.nodes.append(NodeWrapper(node, self.get_worker(node)))
-                self.node_to_wrapper[node]=self.nodes[-1]
+                self.node_to_wrapper[node] = self.nodes[-1]
                 if (not subtopo.isSwitch(node)):
                     self.hosts.append(self.nodes[-1])
                 else:
                     self.switches.append(self.nodes[-1])
-        self.logger.debug("Nodemapping: %s",self.node_to_workerid)
+        self.logger.debug("Nodemapping: %s", self.node_to_workerid)
         tunnels = [[] for x in range(len(subtopos))]
         for tunnel in self.topology.getTunnels():
             w1 = self.get_worker(tunnel[0])
             w2 = self.get_worker(tunnel[1])
-            intf = self.cluster.create_tunnel(w1,w2)
-            self.tunnellookup[(tunnel[0],tunnel[1])]=intf
-            self.tunnellookup[(tunnel[1],tunnel[0])]=intf
-            for i in range(0,2):
-                tunnels[self.node_to_workerid[tunnel[i]]].append([intf, tunnel[i], tunnel[2]]) # Assumes that workerid = subtopoid
+            intf = self.cluster.create_tunnel(w1, w2)
+            self.tunnellookup[(tunnel[0], tunnel[1])] = intf
+            self.tunnellookup[(tunnel[1], tunnel[0])] = intf
+            for i in range(0, 2):
+                # Assumes that workerid = subtopoid
+                tunnels[self.node_to_workerid[tunnel[i]]].append([intf,
+                        tunnel[i], tunnel[2]])
         for topo in subtopos:
-            self.cluster.workers()[subtopos.index(topo)].set_switch(self.switch)
+            self.cluster.workers()[subtopos.index(topo)]\
+                .set_switch(self.switch)
             thn = self.cluster.workers()[subtopos.index(topo)].hn()
             try:
                 if(self.controller):
-                    self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)], controller=self.controller)
+                    self.cluster.workers()[subtopos.index(topo)]\
+                        .start(topo=topo,
+                               tunnels=tunnels[subtopos.index(topo)],
+                               controller=self.controller)
                 else:
-                    self.cluster.workers()[subtopos.index(topo)].start(topo=topo, tunnels=tunnels[subtopos.index(topo)])
+                    self.cluster.workers()[subtopos.index(topo)]\
+                        .start(topo=topo,
+                               tunnels=tunnels[subtopos.index(topo)])
             except Pyro4.errors.ConnectionClosedError:
-                self.logger.error("Remote "+thn+" exited abnormally. This is probably due to mininet not starting up. Have a look at https://github.com/MaxiNet/MaxiNet/wiki/Debugging-MaxiNet#retrieving-worker-output to debug this.")
+                self.logger.error("Remote " + thn + " exited abnormally. " +
+                    "This is probably due to mininet not starting up. " +
+                    "Have a look at " +
+                    "https://github.com/MaxiNet/MaxiNet/wiki/Debugging-MaxiNet#retrieving-worker-output" +
+                    " to debug this.")
                 raise
         if (self.config.runWith1500MTU()):
             for topo in subtopos:
                 for host in topo.nodes():
-                    self.setMTU(host,1450)
-    
-    def setMTU(self,host,mtu):
+                    self.setMTU(host, 1450)
+
+    def setMTU(self, host, mtu):
         for intf in host.intfNames():
-            host.cmd("ifconfig "+intf+" mtu "+str(mtu))
-        
-    
+            host.cmd("ifconfig " + intf + " mtu " + str(mtu))
+
     @deprecated
-    def run_cmd_on_host(self,host, cmd):
+    def run_cmd_on_host(self, host, cmd):
         """
-        run cmd on emulated host specified by host name and return output
-        This function is deprecated and will be removed in a future version of
-        MaxiNet. Use experiment.get(node).cmd() instead
+        run cmd on emulated host specified by host name and return
+        output.
+        This function is deprecated and will be removed in a future
+        version of MaxiNet. Use experiment.get(node).cmd() instead
         """
-        return self.get_worker(host).run_cmd_on_host(host,cmd)
+        return self.get_worker(host).run_cmd_on_host(host, cmd)
 
     def stop(self):
         """
@@ -850,44 +929,47 @@ class Experiment:
             worker.stop()
         self.cluster.remove_all_tunnels()
 
+
 class NodeWrapper:
     """
-    wrapper that allows most commands that can be used in mininet to be used
-    in MaxiNet
+    wrapper that allows most commands that can be used in mininet to be
+    used in MaxiNet
     """
 
     # this feels like doing rpc via rpc...
 
-    def __init__(self,nodename,worker):
+    def __init__(self, nodename, worker):
         self.nn = nodename
         self.worker = worker
 
-    def _call(self,cmd, *params1, **params2):
+    def _call(self, cmd, *params1, **params2):
         return self.worker.rpc(self.nn, cmd, *params1, **params2)
 
-    def _get(self,name):
+    def _get(self, name):
         return self.worker.rattr(self.nn, name)
 
-    def __getattr__(self,name):
-        def method(*params1,**params2):
-            return self._call(name,*params1,**params2)
+    def __getattr__(self, name):
+        def method(*params1, **params2):
+            return self._call(name, *params1, **params2)
         # the following commands SHOULD work. no guarantee given
-        if name in [ "cleanup", "read", "readline", "write", "terminate", "stop",
-                   "waitReadable", "sendCmd", "sendInt", "monitor", "waitOutput",
-                   "cmd", "cmdPrint", "pexec", "newPort", "addIntf", "defaultIntf",
-                   "intf", "connectionsTo", "deleteIntfs", "setARP", "setIP", "IP",
-                   "MAC", "intfIsUp", "config", "configDefault",
-                   "intfNames", "cgroupSet", "cgroupGet", "cgroupDel", "chrt",
-                   "rtInfo", "cfsInfo", "setCPUFrac", "setCPUs", "defaultDpid",
-                   "defaultIntf", "connected", "setup", "dpctl", "start", "stop",
-                   "attach", "detach", "controllerUUIDs", "checkListening"]:
+        if name in [
+                    "cleanup", "read", "readline", "write", "terminate",
+                    "stop", "waitReadable", "sendCmd", "sendInt", "monitor",
+                    "waitOutput", "cmd", "cmdPrint", "pexec", "newPort",
+                    "addIntf", "defaultIntf", "intf", "connectionsTo",
+                    "deleteIntfs", "setARP", "setIP", "IP", "MAC", "intfIsUp",
+                    "config", "configDefault", "intfNames", "cgroupSet",
+                    "cgroupGet", "cgroupDel", "chrt", "rtInfo", "cfsInfo",
+                    "setCPUFrac", "setCPUs", "defaultDpid", "defaultIntf",
+                    "connected", "setup", "dpctl", "start", "stop", "attach",
+                    "detach", "controllerUUIDs", "checkListening"
+        ]:
             return method
-        elif name in [ "name","inNamespace","params","nameToIntf","waiting"]:
+        elif name in ["name", "inNamespace", "params", "nameToIntf",
+                       "waiting"]:
             return self._get(name)
         else:
             raise AttributeError(name)
+
     def __repr__(self):
-        return "NodeWrapper ("+self.nn+" at "+str(self.worker)+")"
-
-
-
+        return "NodeWrapper (" + self.nn + " at " + str(self.worker) + ")"
