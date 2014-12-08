@@ -4,6 +4,28 @@
 This file holds the main components of MaxiNet and is intended to be the
 only part of MaxiNet which needs to be used by the user or third-party
 applications.
+
+Classes in this file:
+
+Experiment: Use this class to specify an experiment. Experiments are
+    created for one-time-usage and have to be stopped in the end. One
+    cluster instance can run several experiments in sequence.
+
+Cluster: Manage a set of Workers via this class. A cluster can run one
+    Experiment at a time. If you've got several Experiments to run do
+    not destroy/recreate this class but define several Experiment
+    instances and run them sequentially.
+
+NodeWrapper: Wrapper that allows most commands that can be used in
+    mininet to be used in MaxiNet as well. Whenever you call for example
+    > exp.get("h1")
+    you'll get an instance of NodeWrapper which will forward calls to
+    the respective mininet node.
+
+TunHelper: Helper class to manage tunnel interface names.
+
+Worker: A Worker is part of a Cluster and runs a part of the emulated
+    network.
 """
 
 import atexit
@@ -1346,6 +1368,11 @@ class Experiment:
 class NodeWrapper:
     """Wrapper that allows most commands that can be used in mininet to be
     used in MaxiNet as well.
+
+    Whenever you call for example
+    > exp.get("h1")
+    you'll get an instance of NodeWrapper which will forward calls to
+    the respective mininet node.
 
     Mininet method calls that SHOULD work:
     "cleanup", "read", "readline", "write", "terminate",
