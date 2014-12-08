@@ -1,7 +1,7 @@
 #!/usr/bin/python
-"""MaxiNet main module
+"""MaxiNet main file
 
-This module is the central part of MaxiNet and is intended to be the
+This file holds the main components of MaxiNet and is intended to be the
 only part of MaxiNet which needs to be used by the user or third-party
 applications.
 """
@@ -756,30 +756,62 @@ class Cluster:
 
 
 class Experiment:
-    """
-    use this class to specify experiment. Experiments are created for
+    """Class to manage MaxiNet Experiment.
+
+    Use this class to specify an experiment. Experiments are created for
     one-time-usage and have to be stopped in the end. One cluster
-    instance can run several experiments in sequence
+    instance can run several experiments in sequence.
+
+    Attributes:
+        cluster: Cluster instance which will be used by this Experiment.
+        config: Config instance to queury config file.
+        controller: Controller class to use in Experiment.
+        hosts: List of host NodeWrapper instances.
+        isMonitoring: True if monitoring is in use.
+        logger: Logging instance.
+        nodemapping: optional dict to map nodes to specific workers ids.
+        nodes: List of NodeWrapper instances.
+        node_to_workerid: Dict to map node name (string) to worker id.
+        node_to_wrapper: Dict to map node name (string) to NodeWrapper
+            instance.
+        origtopology: Unpartitioned topology if topology was partitioned
+            by MaxiNet.
+        starttime: Time at which Experiment was instanciated. Used for
+            logfile creation.
+        switch: Default mininet switch class to use.
+        switches: List of switch NodeWrapper instances.
+        topology: instance of MaxiNet.Frontend.paritioner.Clustering
+        tunnellookup: Dict to map tunnel tuples (switchname1,switchname2)
+            to tunnel names. Order of switchnames can be ignored as both
+            directions are covered.
     """
     def __init__(self, cluster, topology, controller=None,
                  is_partitioned=False, switch=UserSwitch,
                  nodemapping=None):
-        """
-        initialize Experiment object.
-        If is_partitioned==True it is assumed that topo is a
-        MaxiNet.Frontend.tools.Clustering object which will not be
-        partitioned again.
-        nodemapping can be used to map nodes to specific workers (using
-        a "nodename"->workerid dict).
-        If nodemapping is used it must hold a workerid for any node in
-        the topology.
+        """Inits Experiment.
+
+        Args:
+            cluster: Cluster instance.
+            topology: mininet.topo.Topo (is_partitioned==False) or
+                MaxiNet.Frontend.partitioner.Clustering
+                (is_partitioned==True) instance.
+            controller: Optional IPv4 address of OpenFlow controller.
+                If not set controller IP from MaxiNet configuration will
+                be used.
+            is_partitioned: Optional flag to indicate whether topology
+                is already paritioned or not. Default is unpartitioned.
+            switch: Optional Switch class to use in Experiment. Default
+                is mininet.node.UserSwitch.
+            nodemapping: Optional dict to map nodes to specific worker
+                ids (nodename->workerid). If given needs to hold worker
+                ids for every node in topology.
         """
         self.cluster = cluster
         self.logger = logging.getLogger(__name__)
         self.topology = None
         self.config = Config(register=False)
         self.starttime = time.localtime()
-        self.printed_log_info = False
+        self._printed_log_info = False
         self.isMonitoring = False
         self.nodemapping = nodemapping
         if is_partitioned:
@@ -806,10 +838,15 @@ class Experiment:
                                             port=int(port))
 
     def configLinkStatus(self, src, dst, status):
-        """Change status of src <-> dst links.
-           src: node name
-           dst: node name
-           status: string {up, down}"""
+        """Change status of link.
+
+        Change status (up/down) of link between two nodes.
+
+        Args:
+           src: Node name.
+           dst: Node name.
+           status: String {up, down}.
+       """
         ws = self.get_worker(src)
         wd = self.get_worker(dst)
         if(ws == wd):
@@ -824,42 +861,58 @@ class Experiment:
 
     @deprecated
     def find_worker(self, node):
-        """
-        return worker which emulates the specified node.
-        Replaced by get_worker
+        """Get worker instance which emulates the specified node.
+
+        Replaced by get_worker.
+
+        Args:
+            node: nodename.
+
+        Returns:
+            Worker instance
         """
         return self.get_worker(node)
 
     def get_worker(self, node):
-        """
-        return worker which emulates the specified node.
+        """Get worker instance which emulates the specified node
+
+        Args:
+            node: Nodename or NodeWrapper instance.
+
+        Returns:
+            Worker instance
         """
         if(isinstance(node, NodeWrapper)):
             return node.worker
         return self.cluster.get_worker(self.node_to_workerid[node])
 
     def get_log_folder(self):
-        """
-        returns folder to which log files will be saved
+        """Get folder to which log files will be saved.
+
+        Returns:
+            Logfile folder as String.
         """
         return "/tmp/maxinet_logs/" + Tools.time_to_string(self.starttime) +\
                "/"
 
     def terminate_logging(self):
+        """Stop logging."""
         for worker in self.cluster.workers():
             worker.run_cmd("killall getRxTx.sh getMemoryUsage.sh")
         self.isMonitoring = False
 
     def log_cpu(self):
-        """
-        log cpu useage of workers and place log files in /tmp/maxinet_logs/
+        """Log cpu useage of workers.
+
+        Places log files in /tmp/maxinet_logs/.
         """
         for worker in self.cluster.workers():
             self.log_cpu_of_worker(worker)
 
     def log_cpu_of_worker(self, worker):
-        """
-        log cpu usage of worker and place log file in /tmp/maxinet_logs/
+        """Log cpu usage of worker.
+
+        Places log file in /tmp/maxinet_logs/.
         """
         subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
                         Tools.time_to_string(self.starttime) + "/"])
@@ -874,8 +927,9 @@ class Experiment:
         atexit.register(self._print_log_info)
 
     def log_free_memory(self):
-        """
-        log memory usage of workers and place log files in /tmp/maxinet_logs
+        """Log memory usage of workers.
+
+        Places log files in /tmp/maxinet_logs.
         Format is:
         timestamp,FreeMemory,Buffers,Cached
         """
@@ -892,9 +946,9 @@ class Experiment:
             atexit.register(self._print_log_info)
 
     def log_interfaces_of_node(self, node):
-        """
-        logs statistics of interfaces of node and places them in
-        /tmp/maxinet_logs
+        """Log statistics of interfaces of node.
+
+        Places logs in /tmp/maxinet_logs.
         Format is:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
@@ -906,9 +960,9 @@ class Experiment:
             self.log_interface(worker, intf)
 
     def log_interface(self, worker, intf):
-        """
-        logs statistics of interface of worker and places them in
-        /tmp/maxinet_logs
+        """Log statistics of interface of worker.
+
+        Places logs in /tmp/maxinet_logs.
         Format is:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
@@ -923,9 +977,9 @@ class Experiment:
         atexit.register(self._print_log_info)
 
     def monitor(self):
-        """
-        logs statistics of worker interfaces and memory usage and places
-        them in /tmp/maxinet_logs
+        """Log statistics of worker interfaces and memory usage.
+
+        Places log files in /tmp/maxinet_logs.
         """
         self.isMonitoring = True
         atexit.register(self._print_monitor_info)
@@ -942,13 +996,18 @@ class Experiment:
                 self.log_interface(worker, intf)
 
     def _print_log_info(self):
-        if(not self.printed_log_info):
-            self.printed_log_info = True
+        """Place log info message in log if log functions where used.
+
+        Prints info one time only even if called multiple times.
+        """
+        if(not self._printed_log_info):
+            self._printed_log_info = True
             self.logger.info("Log files will be placed in /tmp/maxinet_logs/" +
                              Tools.time_to_string(self.starttime) + "/." +
                              " You might want to save them somewhere else.")
 
     def _print_monitor_info(self):
+        """Place monitor info message in log if Experiment was monitored."""
         self.logger.info("You monitored this experiment. To generate a graph" +
                          " from your logs call " +
                          "\"/usr/local/share/MaxiNet/maxinet_plot.py " +
@@ -957,64 +1016,110 @@ class Experiment:
                          "/ plot.png\" ")
 
     def CLI(self, plocals, pglobals):
-        """
-        open interactive command line interface
+        """Open interactive command line interface.
+
+        Arguments are used to allow usage of python commands in the same
+        scope as the one where CLI was called.
+
+        Args:
+            plocals: Dictionary as returned by locals()
+            pglobals: Dictionary as returned by globals()
         """
         CLI(self, plocals, pglobals)
 
-    def addNode(self, name, **params):
+    def addNode(self, name, wid=None, pos=None):
+        """Do bookkeeping to add a node at runtime.
+
+        Use wid to specifiy worker id or pos to specify worker of
+        existing node. If none is given random worker is chosen.
+        This does NOT actually create a Node object on the mininet
+        instance but is a helper function for addHost etc.
+
+        Args:
+            name: Node name.
+            wid: Optional worker id to place node.
+            pos: Optional existing node name whose worker should be used
+                as host of node.
         """
-        add node at runtime.
-        use parameter wid to specifiy worker id or pos to specify worker of
-        existing node. otherwise random worker is chosen
-        """
-        wid = random.randint(0, self.cluster.num_workers() - 1)
-        if "pos" in params.keys():
-            wid = self.node_to_workerid[params["pos"]]
-            del params["pos"]
-        if "wid" in params.keys():
-            wid = int(params["wid"]) - 1
-            del params["wid"]
+        if (wid is None):
+            wid = random.randint(0, self.cluster.num_workers() - 1)
+        else:
+            wid = wid - 1  # internal worker id count starts with 0
+        if (not pos is None):
+            wid = self.node_to_workerid[pos]
         worker = self.cluster.get_worker(wid)
         self.node_to_workerid[name] = wid
         self.node_to_wrapper[name] = NodeWrapper(name, self.get_worker(name))
         self.nodes.append(self.node_to_wrapper[name])
 
-    def addHost(self, name, cls=None, **params):
+    def addHost(self, name, cls=None, wid=None, pos=None, **params):
+        """Add host at runtime.
+
+        Use wid to specifiy worker id or pos to specify worker of
+        existing node. If none is given random worker is chosen.
+
+        Args:
+            name: Host name.
+            cls: Optional mininet class to use for instanciation.
+            wid: Optional worker id to place node.
+            pos: Optional existing node name whose worker should be used
+                as host of node.
+            **params: parameters to use at mininet host class
+                instanciation.
         """
-        add host at runtime.
-        use parameter wid to specifiy worker id or pos to specify worker of
-        existing node. otherwise random worker is chosen
-        """
-        self.addNode(name, **params)
-        self.get_worker(name).addHost(name, cls, **params)
+        self.addNode(name, wid=wid, pos=pos)
+        self.get_worker(name).addHost(name, cls=cls, **params)
         self.hosts.append(self.get(name))
         return self.get(name)
 
-    def addSwitch(self, name, cls=None, **params):
+    def addSwitch(self, name, cls=None, wid=None, pos=None, **params):
+        """Add switch at runtime.
+
+        Use wid to specifiy worker id or pos to specify worker of
+        existing node. If none is given random worker is chosen.
+
+        Args:
+            name: Switch name.
+            cls: Optional mininet class to use for instanciation.
+            wid: Optional worker id to place node.
+            pos: Optional existing node name whose worker should be used
+                as host of node.
+            **params: parameters to use at mininet switch class
+                instanciation.
         """
-        add switch at runtime
-        use parameter wid to specifiy worker id or pos to specify worker of
-        existing node. otherwise random worker is chosen
-        """
-        self.addNode(name, **params)
+        self.addNode(name, wid=wid, pos=pos)
         self.get_worker(name).addSwitch(name, cls, **params)
         self.switches.append(self.get(name))
         return self.get(name)
 
-    def addController(self, name="c0", controller=None, **params):
+    def addController(self, name="c0", controller=None, wid=None, pos=None,
+            **params):
+        """Add controller at runtime.
+
+        Use wid to specifiy worker id or pos to specify worker of
+        existing node. If none is given random worker is chosen.
+
+        Args:
+            name: Controller name.
+            controller: Optional mininet class to use for instanciation.
+            wid: Optional worker id to place node.
+            pos: Optional existing node name whose worker should be used
+                as host of node.
+            **params: parameters to use at mininet controller class
+                instanciation.
         """
-        add controller at runtime
-        use parameter wid to specifiy worker id or pos to specify worker of
-        existing node. otherwise random worker is chosen
-        """
-        self.addNode(name, **params)
+        self.addNode(name, wid=wid, pos=pos)
         self.get_worker(name).addController(name, controller, **params)
         return self.get(name)
 
     def name(self, node):
-        """
-        return name assigned to specified network node.
+        """Get name of network node.
+
+        Args:
+            node: Node name or NodeWrapper instance.
+
+        Returns:
+            String of node name.
         """
         if(isinstance(node, NodeWrapper)):
             return node.nn
@@ -1022,12 +1127,31 @@ class Experiment:
 
     def addLink(self, node1, node2, port1=None, port2=None, cls=None,
                 autoconf=False, **params):
-        """
-        add links at runtime. will create tunnels between workers if necessary,
-        but can not create tunnels between hosts and switches. (links will work
-        fine)
+        """Add link at runtime.
+
+        Add link at runtime and create tunnels between workers if
+        necessary. Will not work for mininet.node.UserSwitch switches.
+        Be aware that tunnels will only work between switches so if you
+        want to create a link using a host at one side make sure that
+        both nodes are located on the same worker.
         autoconf parameter handles attach() and config calls on switches and
-        hosts
+        hosts.
+
+        Args:
+            node1: Node name or NodeWrapper instance.
+            node2: Node name or NodeWrapper instance.
+            port1: Optional port number of link on node1.
+            port2: Optional port number of link on node2.
+            cls: Optional class to use on Link creation. Be aware that
+                only mininet.link.Link and mininet.link.TCLink are
+                supported for tunnels.
+            autoconf: mininet requires some calls to make newly added
+                tunnels work. If autoconf is set to True MaxiNet will
+                issue these calls automatically.
+
+        Raises:
+            RuntimeError: If cls is not None or Link or TCLink and
+                tunneling is needed.
         """
         w1 = self.get_worker(node1)
         w2 = self.get_worker(node2)
@@ -1071,15 +1195,15 @@ class Experiment:
             self.setMTU(node1, 1450)
             self.setMTU(node2, 1450)
 
-    def _find_topo_of_node(self, node, topos):
-        for topo in topos:
-            if node in topo.g.nodes():
-                return topo
-
     def get_node(self, nodename):
-        """
-        return node that is specified by nodename
-        :rtype : NodeWrapper
+        """Return NodeWrapper instance that is specified by nodename.
+
+        Args:
+            nodename: Nodename.
+
+        Returns:
+            NodeWrapper instance with name nodename or None if none is
+            found.
         """
         if(nodename in self.node_to_wrapper):
             return self.node_to_wrapper[nodename]
@@ -1087,21 +1211,35 @@ class Experiment:
             return None
 
     def get(self, nodename):
-        """
-        alias for get_node
+        """Return NodeWrapper instance that is specified by nodename.
+
+        Alias for get_node.
+
+        Args:
+            nodename: Nodename.
+
+        Returns:
+            NodeWrapper instance with name nodename or None if none is
+            found.
         """
         return self.get_node(nodename)
 
     def setup(self):
+        """Start experiment.
+
+        Start cluster if not yet started, partition topology (if needed)
+        and assign topology parts to workers and start workers.
+
+        Raises:
+            RuntimeError: If Cluster is too small or won't start.
         """
-        start cluster if not yet started, assign topology parts to
-        workers and start workers
-        """
+        # start cluster
         if(not self.cluster.is_running()):
             self.cluster.start()
         if(not self.cluster.is_running()):
             raise RuntimeError("Cluster won't start")
         self.logger.info("Clustering topology...")
+        # partition topology (if needed)
         if(not self.topology):
             parti = Partitioner()
             parti.loadtopo(self.origtopology)
@@ -1119,6 +1257,7 @@ class Experiment:
         if(len(subtopos) > self.cluster.num_workers()):
             raise RuntimeError("Cluster does not have enough workers for " +
                                "given topology")
+        # initialize internal bookkeeping
         for subtopo in subtopos:
             for node in subtopo.nodes():
                 self.node_to_workerid[node] = subtopos.index(subtopo)
@@ -1129,6 +1268,7 @@ class Experiment:
                 else:
                     self.switches.append(self.nodes[-1])
         self.logger.debug("Nodemapping: %s", self.node_to_workerid)
+        # create tunnels
         tunnels = [[] for x in range(len(subtopos))]
         for tunnel in self.topology.getTunnels():
             w1 = self.get_worker(tunnel[0])
@@ -1140,9 +1280,11 @@ class Experiment:
                 # Assumes that workerid = subtopoid
                 tunnels[self.node_to_workerid[tunnel[i]]].append([intf,
                         tunnel[i], tunnel[2]])
+        # start mininet instances
         for topo in subtopos:
             self.cluster.workers()[subtopos.index(topo)]\
                 .set_switch(self.switch)
+            # cache hostname for possible error message
             thn = self.cluster.workers()[subtopos.index(topo)].hn()
             try:
                 if(self.controller):
@@ -1161,54 +1303,98 @@ class Experiment:
                     "https://github.com/MaxiNet/MaxiNet/wiki/Debugging-MaxiNet#retrieving-worker-output" +
                     " to debug this.")
                 raise
+        # configure network if needed
         if (self.config.runWith1500MTU()):
             for topo in subtopos:
                 for host in topo.nodes():
                     self.setMTU(host, 1450)
 
     def setMTU(self, host, mtu):
+        """Set MTUs of all Interfaces of mininet host.
+
+        Args:
+            host: NodeWrapper instance.
+            mtu: MTU value.
+        """
         for intf in host.intfNames():
             host.cmd("ifconfig " + intf + " mtu " + str(mtu))
 
     @deprecated
     def run_cmd_on_host(self, host, cmd):
-        """
-        run cmd on emulated host specified by host name and return
+        """Run cmd on mininet host.
+
+        Run cmd on emulated host specified by host and return
         output.
         This function is deprecated and will be removed in a future
-        version of MaxiNet. Use experiment.get(node).cmd() instead
+        version of MaxiNet. Use Experiment.get(node).cmd() instead.
+
+        Args:
+            host: Hostname or NodeWrapper instance.
+            cmd: Command to run as String.
         """
         return self.get_worker(host).run_cmd_on_host(host, cmd)
 
     def stop(self):
-        """
-        stop experiment and shut down emulation on workers
-        """
-
+        """Stop experiment and shut down emulation on workers."""
         if self.isMonitoring:
             self.terminate_logging()
-
         for worker in self.cluster.workers():
             worker.stop()
         self.cluster.remove_all_tunnels()
 
 
 class NodeWrapper:
-    """
-    wrapper that allows most commands that can be used in mininet to be
-    used in MaxiNet
+    """Wrapper that allows most commands that can be used in mininet to be
+    used in MaxiNet as well.
+
+    Mininet method calls that SHOULD work:
+    "cleanup", "read", "readline", "write", "terminate",
+    "stop", "waitReadable", "sendCmd", "sendInt", "monitor",
+    "waitOutput", "cmd", "cmdPrint", "pexec", "newPort",
+    "addIntf", "defaultIntf", "intf", "connectionsTo",
+    "deleteIntfs", "setARP", "setIP", "IP", "MAC", "intfIsUp",
+    "config", "configDefault", "intfNames", "cgroupSet",
+    "cgroupGet", "cgroupDel", "chrt", "rtInfo", "cfsInfo",
+    "setCPUFrac", "setCPUs", "defaultDpid", "defaultIntf",
+    "connected", "setup", "dpctl", "start", "stop", "attach",
+    "detach", "controllerUUIDs", "checkListening"
+
+    Mininet attributes that SHOULD be queryable:
+    "name", "inNamespace", "params", "nameToIntf", "waiting"
+
+    Attributes:
+        nn: Node name as String.
+        worker: Worker instance on which node is hosted.
     """
 
     # this feels like doing rpc via rpc...
 
     def __init__(self, nodename, worker):
+        """Inits NodeWrapper.
+
+        The NodeWrapper does not create a node on the worker. For this
+        reason the node should already exist on the Worker when
+        NodeWrapper.__init__ gets called.
+
+        Args:
+            nodename: Node name as String
+            worker: Worker instance
+        """
         self.nn = nodename
         self.worker = worker
 
     def _call(self, cmd, *params1, **params2):
+        """Send method call to remote mininet instance and get return.
+
+        Args:
+            cmd: method name as String.
+            *params1: unnamed parameters for call.
+            **params2: named parameters for call.
+        """
         return self.worker.rpc(self.nn, cmd, *params1, **params2)
 
     def _get(self, name):
+        """Return attribut name of remote node."""
         return self.worker.rattr(self.nn, name)
 
     def __getattr__(self, name):
