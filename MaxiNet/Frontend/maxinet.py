@@ -470,20 +470,42 @@ class TunHelper:
 
 
 class Cluster:
+    """Class used to manage a cluster of Workers.
+
+    Manage a set of Workers via this class. A cluster can run one
+    Experiment at a time. If you've got several Experiments to run do
+    not destroy/recreate this class but define several Experiment
+    instances and run them sequentially.
+
+    Attributes:
+        config: Instance of Tools.Config to query MaxiNet configuration.
+        frontend: Instance of MaxiNet.Frontend.client.Frontend which
+            is used to manage the pyro Server.
+        hosts: List of worker hostnames.
+        localIP: IPv4 address of the Frontend.
+        logger: Logging instance.
+        nsport: Nameserver port number.
+        running: Cluster is initialized and ready to run an experiment.
+            Can be queryd by Cluster.is_running() and gets set by
+            successfully calling Cluster.start().
+        tunhelper: Instance of TunHelper to enumerate tunnel instances.
+        worker: List of worker instances. Index of worker instance in
+            sequence must be equal to worker id.
     """
-    manage a set of workers via this class.
-    to create several different topologys do not destroy/recreate this
-    class but define several Experiment instances running sequential
-    """
+
     def __init__(self, *hosts):
-        """
-        create Cluster object. Starting with MaxiNet 0.2 the hosts
-        parameter is optional. If None is given all configured hosts
-        will be used
+        """Inits Cluster class.
+
+        Args:
+            *hosts: Optional list of Worker hostnames to use in this
+                cluster. If not set all configured Workers will be used.
         """
         self.running = False
         self.logger = logging.getLogger(__name__)
         self.tunhelper = TunHelper()
+        # we can't open our pyro server yet (we need the local ip first)
+        # but need to read the config file. Therefore we do not register
+        # the config instance and replace it later on.
         self.config = Config("", "", register=False)
         logging.basicConfig(level=self.config.getLoggingLevel())
         if hosts:
@@ -492,6 +514,7 @@ class Cluster:
             self.hosts = self.config.getHosts()
         self.worker = []
 
+        #Find local IP
         if(self.hosts[0] != subprocess.check_output(["hostname"]).strip()):
             rhost = self.config.getIP(self.hosts[0])
         else:
@@ -511,13 +534,31 @@ class Cluster:
             self.localIP = m.group(1)
         else:
             self.localIP = "127.0.0.1"
+
         self.nsport = 9090
         self.frontend = Frontend(self.localIP, self.nsport)
+        # now replace self.config with instance that connects to pyro
         self.config = Config(self.localIP, self.nsport)
         atexit.register(run_cmd, self.getWorkerMangerCMD("--stop"))
         atexit.register(self._stop)
 
     def getWorkerMangerCMD(self, cmd):
+        """Get string sequence to call worker_manager.py script with cmd
+        argument.
+
+        Returns a string sequence which contains the path to the
+        worker_manager.py script enhanced with the arguments nameserver
+        ip and port, debugPyro flag (if set in config) and
+        keepScreenOpenOnError flag (if set in config). Also includes cmd
+        as arguments.
+
+        Args:
+            cmd: Sequence of arguments to pass to worker_manager.py.
+
+        Returns:
+            Sequence of strings to be passed to eg subprocess.call to
+            call worker_manager.py script and configured arguments.
+        """
         cmdline = [
             self.config.getWorkerScript("worker_manager.py"), "--ns",
             self.localIP + ":" + str(self.nsport),
@@ -528,21 +569,29 @@ class Cluster:
 
         if self.config.keepScreenOpenOnError():
             cmdline.append("--keepScreenOpenOnError")
-
         cmdline.extend(self.hosts)
         return cmdline
 
     def is_running(self):
+        """Query self.running flag to check whether cluster was already
+        started."""
         return self.running
 
     def get_worker_shares(self):
-        """
-        returns list of workload shares per worker
+        """Returns sequence of workload shares per Worker.
+
+        Will return None if Cluster is not already running. This is due
+        to the fact that worker order is not final before Cluster
+        statup.
+
+        Returns:
+            Sequence of workload shares per worker. Order is same as
+            self.workers() order. None if Cluster is not already running.
         """
         shares = None
         if(self.running):
             shares = []
-            for w in self.worker:
+            for w in self.workers():
                 shares.append(self.config.getShare(w.hn()))
             wsum = 0
             for w in shares:
@@ -551,8 +600,10 @@ class Cluster:
         return shares
 
     def check_reachability(self, ip):
-        """
-        check whether ip is reachable for a packet with MTU > 1500
+        """Check whether ip is reachable for a packet with MTU > 1500.
+
+        If this check fails either the network needs to be reconfigured
+        or runWith1500MTU flag in MaxiNet config needs to be set.
         """
         cmd = ["ping", "-c 2", "-s 1520", ip]
         if(subprocess.call(cmd, stdout=open("/dev/null"),) == 1):
@@ -561,16 +612,23 @@ class Cluster:
             return True
 
     def start(self):
-        """
-        start MaxiNet on assigned worker machines and establish
-        communication. Returns True in case of successful startup.
+        """Start cluster (and Workers).
+
+        Start MaxiNet on assigned worker machines and establish
+        communication. Sets self.running flag in case of successful
+        startup.
+
+        Returns:
+            True if startup was successful.
         """
         self.logger.info("starting worker processes")
+        #start worker processes
         cmd = self.getWorkerMangerCMD("--start")
         if self.frontend.hmac_key():
             cmd.extend(["--hmac", self.frontend.hmac_key()])
         self.logger.debug(run_cmd(cmd))
-        timeout = 10
+        #connect to pyro instances of workers
+        timeout = 10  # timeout (seconds) for worker startup
         for i in range(0, len(self.hosts)):
             self.logger.info("waiting for Worker " + str(i + 1) +
                              " to register on nameserver...")
@@ -598,6 +656,7 @@ class Cluster:
                         raise RuntimeError("Timed out waiting for worker " +
                                            str(i + 1) + ".cmd to register.")
             self.worker.append(Worker(self.frontend, "worker" + str(i + 1)))
+        #check reachability
         if(not self.config.runWith1500MTU()):
             for host in self.hosts:
                 if(not self.check_reachability(self.config.getIP(host))):
@@ -605,6 +664,7 @@ class Cluster:
                         " is not reachable with an MTU > 1500.")
                     raise RuntimeError("Host " + host +
                         " is not reachable with an MTU > 1500.")
+        #load tunneling kernel modules on workers
         for worker in self.worker:
             worker.run_script("load_tunneling.sh")
         self.logger.info("worker processes started")
@@ -612,6 +672,12 @@ class Cluster:
         return True
 
     def _stop(self):
+        """Stop Cluster and shut it down.
+
+        Shuts down cluster and removes pyro nameserver entries but
+        DOES NOT shut down workers. Call this after shutting down
+        workers via worker_manager.py script.
+        """
         if(self.running):
             self.logger.info("removing tunnels...")
             self.remove_all_tunnels()
@@ -624,22 +690,18 @@ class Cluster:
             self.logger.info("Goodbye.")
             self.running = False
 
-    def stop(self):
-        """
-        stop cluster and shut it down
-        """
-        self._stop()
-
     def num_workers(self):
-        """
-        return number of worker nodes in this cluster
-        """
+        """Return number of worker nodes in this Cluster."""
         return len(self.workers())
 
     def workers(self):
-        """
-        return list of worker instances for this cluster, ordered by
-        worker id
+        """Return sqeuence of worker instances for this cluster.
+
+        Returns empty sequence if Cluster is not running.
+
+        Returns:
+            Sequence of worker instances. Empty sequence if cluster is
+            not running.
         """
         if(self.is_running()):
             return self.worker
@@ -647,15 +709,29 @@ class Cluster:
             return []
 
     def get_worker(self, wid):
-        """
-        return worker with id wid
+        """Return worker with id wid.
+
+        Args:
+            wid: worker id
+
+        Returns:
+            Worker with id wid.
         """
         return self.workers()[wid]
 
     def create_tunnel(self, w1, w2):
-        """
-        create gre tunnel connecting worker machine w1 and w2 and return
-        name of created network interface
+        """Create GRE tunnel between workers.
+
+        Create gre tunnel connecting worker machine w1 and w2 and return
+        name of created network interface. Querys TunHelper instance to
+        create name of tunnel.
+
+        Args:
+            w1: Worker instance.
+            w2: Woker instance.
+
+        Returns:
+            Network interface name of created tunnel.
         """
         tid = self.tunhelper.get_tun_nr()
         tkey = self.tunhelper.get_key_nr()
@@ -668,15 +744,14 @@ class Cluster:
                       " " + str(tkey))
         w2.run_script("create_tunnel.sh " + ip2 + " " + ip1 + " " + intf +
                       " " + str(tkey))
-        self.logger.debug("done")
+        self.logger.debug("tunnel " + intf + " created.")
         return intf
 
     def remove_all_tunnels(self):
-        """
-        shut down all tunnels created in this cluster
-        """
+        """Shut down all tunnels on all workers."""
         for worker in self.workers():
             worker.run_script("delete_tunnels.sh")
+        #replace tunhelper instance as tunnel names/keys can be reused now.
         self.tunhelper = TunHelper()
 
 
