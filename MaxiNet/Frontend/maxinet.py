@@ -174,10 +174,11 @@ class Worker:
         """
         if controller:
             self.creator.create_mininet(topo=topo, tunnels=tunnels,
-                controller=controller, switch=self.switch)
+                                        controller=controller,
+                                        switch=self.switch)
         else:
             self.creator.create_mininet(topo=topo, tunnels=tunnels,
-                switch=self.switch)
+                                        switch=self.switch)
 
     @log_and_reraise_remote_exception
     def daemonize(self, cmd):
@@ -202,7 +203,8 @@ class Worker:
         if(not node in self._x11tunnels):
             try:
                 display = subprocess.check_output("ssh -Y " + self.hn() +
-                    " env | grep DISPLAY", shell=True)[8:]
+                                                  " env | grep DISPLAY",
+                                                  shell=True)[8:]
                 self.creator.tunnelX11(node, display)
                 self._x11tunnels.append(node)
             except subprocess.CalledProcessError:
@@ -298,12 +300,12 @@ class Worker:
             logger.warn("no ip configured - can not fix MTU ")
             return 0
         intf = self.run_cmd("ip addr show to " + self.ip() +
-            "/24 | head -n1 | cut -d' ' -f2 | tr -d :").strip()
+                            "/24 | head -n1 | cut -d' ' -f2 | tr -d :").strip()
         if intf == "":
             logger.warn("could not find eth device - can not fix MTU")
             return 0
         mtu = int(self.run_cmd("ip li show dev " + intf +
-            " | head -n1 | cut -d ' ' -f5"))
+                               " | head -n1 | cut -d ' ' -f5"))
         if(mtu < 1600):
             self.run_cmd("ip li se dev " + intf + " mtu 1600")
 
@@ -550,7 +552,7 @@ class Cluster:
             m = re.search(r' (\d+\.\d+\.\d+\.\d+)$', route)
         else:
             route = subprocess.check_output("ip route get " + rhost +
-                    " | head -n1", shell=True).strip()
+                                            " | head -n1", shell=True).strip()
             m = re.search(r'src (\d+\.\d+\.\d+\.\d+)', route)
         if m is not None:
             self.localIP = m.group(1)
@@ -683,9 +685,9 @@ class Cluster:
             for host in self.hosts:
                 if(not self.check_reachability(self.config.getIP(host))):
                     self.logger.error("Host " + host +
-                        " is not reachable with an MTU > 1500.")
+                                      " is not reachable with an MTU > 1500.")
                     raise RuntimeError("Host " + host +
-                        " is not reachable with an MTU > 1500.")
+                                       " is not reachable with an MTU > 1500.")
         #load tunneling kernel modules on workers
         for worker in self.worker:
             worker.run_script("load_tunneling.sh")
@@ -1069,7 +1071,6 @@ class Experiment:
             wid = wid - 1  # internal worker id count starts with 0
         if (not pos is None):
             wid = self.node_to_workerid[pos]
-        worker = self.cluster.get_worker(wid)
         self.node_to_workerid[name] = wid
         self.node_to_wrapper[name] = NodeWrapper(name, self.get_worker(name))
         self.nodes.append(self.node_to_wrapper[name])
@@ -1115,7 +1116,7 @@ class Experiment:
         return self.get(name)
 
     def addController(self, name="c0", controller=None, wid=None, pos=None,
-            **params):
+                      **params):
         """Add controller at runtime.
 
         Use wid to specifiy worker id or pos to specify worker of
@@ -1182,7 +1183,7 @@ class Experiment:
         if(w1 == w2):
             self.logger.debug("no tunneling needed")
             l = w1.addLink(self.name(node1), self.name(node2), port1, port2,
-                         cls, **params)
+                           cls, **params)
         else:
             self.logger.debug("tunneling needed")
             if(not ((node1 in self.switches) and (node2 in self.switches))):
@@ -1273,7 +1274,7 @@ class Experiment:
                 # determine the workerid of the worker. topologies are
                 # assigned to workers in ascending workerid order
                 self.topology = parti.partition(self.cluster.num_workers(),
-                                self.cluster.get_worker_shares())
+                                                self.cluster.get_worker_shares())
             self.logger.debug("Tunnels: " + str(self.topology.getTunnels()))
         subtopos = self.topology.getTopos()
         if(len(subtopos) > self.cluster.num_workers()):
@@ -1301,7 +1302,8 @@ class Experiment:
             for i in range(0, 2):
                 # Assumes that workerid = subtopoid
                 tunnels[self.node_to_workerid[tunnel[i]]].append([intf,
-                        tunnel[i], tunnel[2]])
+                                                                  tunnel[i],
+                                                                  tunnel[2]])
         # start mininet instances
         for topo in subtopos:
             self.cluster.workers()[subtopos.index(topo)]\
@@ -1320,10 +1322,10 @@ class Experiment:
                                tunnels=tunnels[subtopos.index(topo)])
             except Pyro4.errors.ConnectionClosedError:
                 self.logger.error("Remote " + thn + " exited abnormally. " +
-                    "This is probably due to mininet not starting up. " +
-                    "Have a look at " +
-                    "https://github.com/MaxiNet/MaxiNet/wiki/Debugging-MaxiNet#retrieving-worker-output" +
-                    " to debug this.")
+                                  "This is probably due to mininet not" +
+                                  " starting up. Have a look at " +
+                                  "https://github.com/MaxiNet/MaxiNet/wiki/Debugging-MaxiNet#retrieving-worker-output" +
+                                  " to debug this.")
                 raise
         # configure network if needed
         if (self.config.runWith1500MTU()):
@@ -1429,20 +1431,20 @@ class NodeWrapper:
             return self._call(name, *params1, **params2)
         # the following commands SHOULD work. no guarantee given
         if name in [
-                    "cleanup", "read", "readline", "write", "terminate",
-                    "stop", "waitReadable", "sendCmd", "sendInt", "monitor",
-                    "waitOutput", "cmd", "cmdPrint", "pexec", "newPort",
-                    "addIntf", "defaultIntf", "intf", "connectionsTo",
-                    "deleteIntfs", "setARP", "setIP", "IP", "MAC", "intfIsUp",
-                    "config", "configDefault", "intfNames", "cgroupSet",
-                    "cgroupGet", "cgroupDel", "chrt", "rtInfo", "cfsInfo",
-                    "setCPUFrac", "setCPUs", "defaultDpid", "defaultIntf",
-                    "connected", "setup", "dpctl", "start", "stop", "attach",
-                    "detach", "controllerUUIDs", "checkListening"
+                "cleanup", "read", "readline", "write", "terminate",
+                "stop", "waitReadable", "sendCmd", "sendInt", "monitor",
+                "waitOutput", "cmd", "cmdPrint", "pexec", "newPort",
+                "addIntf", "defaultIntf", "intf", "connectionsTo",
+                "deleteIntfs", "setARP", "setIP", "IP", "MAC", "intfIsUp",
+                "config", "configDefault", "intfNames", "cgroupSet",
+                "cgroupGet", "cgroupDel", "chrt", "rtInfo", "cfsInfo",
+                "setCPUFrac", "setCPUs", "defaultDpid", "defaultIntf",
+                "connected", "setup", "dpctl", "start", "stop", "attach",
+                "detach", "controllerUUIDs", "checkListening"
         ]:
             return method
         elif name in ["name", "inNamespace", "params", "nameToIntf",
-                       "waiting"]:
+                      "waiting"]:
             return self._get(name)
         else:
             raise AttributeError(name)
