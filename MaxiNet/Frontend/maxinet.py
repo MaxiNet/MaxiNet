@@ -101,7 +101,8 @@ def run_cmd_shell(cmd):
     return subprocess.check_output(cmd, shell=True)
 
 
-class Worker:
+class Worker(object):
+
     """Worker class used to manage an individual Worker host.
 
     A Worker is part of a Cluster and runs a part of the emulated
@@ -119,7 +120,7 @@ class Worker:
     """
 
     def __init__(self, frontend, wid, switch=UserSwitch):
-        """inits Worker class"""
+        """Init Worker class."""
         self.creator = frontend.getObjectProxy(wid + ".mnCreator")
         self.cmd = frontend.getObjectProxy(wid + ".cmd")
         self.config = frontend.getObjectProxy("config")
