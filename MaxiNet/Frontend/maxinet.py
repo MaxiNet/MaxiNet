@@ -494,7 +494,7 @@ class TunHelper:
         return self.keynr - 1
 
 
-class Cluster:
+class Cluster(object):
     """Class used to manage a cluster of Workers.
 
     Manage a set of Workers via this class. A cluster can run one
@@ -780,7 +780,7 @@ class Cluster:
         self.tunhelper = TunHelper()
 
 
-class Experiment:
+class Experiment(object):
     """Class to manage MaxiNet Experiment.
 
     Use this class to specify an experiment. Experiments are created for
@@ -940,7 +940,7 @@ class Experiment:
         Places log file in /tmp/maxinet_logs/.
         """
         subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
-                        Tools.time_to_string(self.starttime) + "/"])
+                         Tools.time_to_string(self.starttime) + "/"])
         atexit.register(worker.get_file, "/tmp/maxinet_cpu_" +
                         str(worker.wid) + "_(" + worker.hn() + ").log",
                         "/tmp/maxinet_logs/" +
@@ -959,7 +959,7 @@ class Experiment:
         timestamp,FreeMemory,Buffers,Cached
         """
         subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
-                        Tools.time_to_string(self.starttime) + "/"])
+                         Tools.time_to_string(self.starttime) + "/"])
         for worker in self.cluster.workers():
             atexit.register(worker.get_file, "/tmp/maxinet_mem_" +
                             str(worker.wid) + "_(" + worker.hn() + ").log",
@@ -978,7 +978,7 @@ class Experiment:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
         subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
-                        Tools.time_to_string(self.starttime) + "/"])
+                         Tools.time_to_string(self.starttime) + "/"])
         node = self.get(node)
         worker = self.get_worker(node)
         for intf in node.intfNames():
@@ -1207,14 +1207,14 @@ class Experiment:
             w2.addTunnel(intfn, self.name(node2), port2, intf, **params)
             l = ((self.name(node1), intfn), (self.name(node2), intfn))
         if(autoconf):
-                if(node1 in self.switches):
-                    node1.attach(l[0][1])
-                else:
-                    node1.configDefault()
-                if(node2 in self.switches):
-                    node2.attach(l[1][1])
-                else:
-                    node2.configDefault()
+            if(node1 in self.switches):
+                node1.attach(l[0][1])
+            else:
+                node1.configDefault()
+            if(node2 in self.switches):
+                node2.attach(l[1][1])
+            else:
+                node2.configDefault()
         if(self.config.runWith1500MTU()):
             self.setMTU(node1, 1450)
             self.setMTU(node2, 1450)
@@ -1368,7 +1368,7 @@ class Experiment:
         self.cluster.remove_all_tunnels()
 
 
-class NodeWrapper:
+class NodeWrapper(object):
     """Wrapper that allows most commands that can be used in mininet to be
     used in MaxiNet as well.
 
