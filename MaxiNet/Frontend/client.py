@@ -1,4 +1,11 @@
-# coding=utf-8
+"""MaxiNet Pyro Frontend server.
+
+The code in this file is used to open and manage a pyro nameserver.
+
+Classes in this file:
+
+Frontend: Pyro Frontend class.
+"""
 
 import atexit
 import contextlib
@@ -35,9 +42,7 @@ logger = logging.getLogger(__name__)
 
 @contextlib.contextmanager
 def remote_exceptions_logged_and_reraised(logger=logger, level=logging.INFO):
-    """
-    Context manager for with statement handling of remote exceptions.
-    """
+    """Context manager for with statement handling of remote exceptions."""
     try:
         yield
     except Exception as e:
@@ -51,9 +56,7 @@ def remote_exceptions_logged_and_reraised(logger=logger, level=logging.INFO):
 
 
 def log_and_reraise_remote_exception(func, logger=logger, level=logging.INFO):
-    """
-    Decorator to log remote exceptions to a logger.
-    """
+    """Decorator to log remote exceptions to a logger."""
     @functools.wraps(func)
     def newfunc(*args, **kwargs):
         with remote_exceptions_logged_and_reraised(logger=logger, level=level):
@@ -62,7 +65,34 @@ def log_and_reraise_remote_exception(func, logger=logger, level=logging.INFO):
 
 
 class Frontend(object):
+
+    """Pyro Frontend class.
+
+    Management of the pyro nameserver is done here.
+    Usually MaxiNet will start a pyro nameserver and manage it by itself.
+    However, if it detects a running instance of a nameserver it will use this
+    one. Be aware that in this case no HMAC key is supported, which poses a
+    significant security risk!
+
+    Attributes:
+        logger: Loggin instance.
+        nameserver: Pyro nameserver instance.
+        nameServerIP: Local IPv4 address.
+        nsport: Nameserver port.
+        ownns_running: Flag whether nameserver was started by MaxiNet or
+                       "extern" namesever instance was used.
+        _hmac_key: HMAC key of the nameserver.
+    """
+
     def __init__(self, nameserver, port=9090):
+        """Init Frontend.
+
+        Starts nameserver and calculates random hmac key.
+
+        Args:
+            nameserver: Local IPv4 address.
+            port: Optional port to run nameserver on. Default: 9090
+        """
         self.ownns_running = False
         self.logger = logger
         self.nameServerIP = nameserver
@@ -73,26 +103,43 @@ class Frontend(object):
         self.locateNS()
 
     def locateNS(self):
-        """
-            locate and stores Pyro name server
+        """Locate and store Pyro name server.
+
+        Initializes nameserver attribute.
         """
         self.nameserver = Pyro4.locateNS(self.nameServerIP, self.nsport)
         atexit.register(self.nameserver._pyroRelease)
 
     def lookup(self, objectName):
-        """
-            lookup objectName in Pyro name server and returns its URI
-            locateNS must has already been called
+        """Get Pyro URI of object.
+
+        Looks up objectName on nameserver and return URI.
+        locateNS must has already been called.
+
+        Args:
+            objectname: Object name (string) to look up.
+
+        Returns:
+            URI of object on nameserver
         """
         return self.nameserver.lookup(objectName)
 
     def remove(self, objectName):
+        """Unregister object from nameserver.
+
+        Returns:
+            number of items removed.
+        """
         return self.nameserver.remove(objectName)
 
     def getObjectProxy(self, objectName):
-        """
-            If you have already called locateNS there is no need to path
-            nameServerIP
+        """Get pyro proxy object.
+
+        Args:
+            objectname: Object name to look up.
+
+        Returns:
+            Pyro proxy object.
         """
         objectURI = self.lookup(objectName)
         proxy = Pyro4.Proxy(objectURI)
@@ -100,6 +147,7 @@ class Frontend(object):
         return proxy
 
     def ns_is_running(self):
+        """Find out whether Pyro nameserver is already running."""
         ps = ""
         if(self.ownns_running):
             return True
@@ -114,11 +162,22 @@ class Frontend(object):
             return True
 
     def hmac_key(self):
+        """Get HMAC key of nameserver.
+
+        Returns:
+            HMAC key of pyro namserver if nameserver was started by MaxiNet.
+        """
         if(self.ns_is_running() and not self.ownns_running):
             return None
         return self._hmac_key
 
     def start_nameserver(self):
+        """Start namserver instance.
+
+        Will wait for up to 30 seconds if nameserver port is blocked by other
+        process. This sometimes happens when nameserver was not shut down
+        correctly and OS waits for timeout before freeing the port.
+        """
         Pyro4.config.SERVERTYPE = "thread"
         Pyro4.config.HMAC_KEY = self.hmac_key()
         self.ns = None
@@ -144,6 +203,10 @@ class Frontend(object):
         atexit.register(self._stop_nameserver)
 
     def _stop_nameserver(self):
+        """Stop nameserver.
+
+        Stops nameserver if it was started by MaxiNet.
+        """
         if(self.ownns_running):
             self.ns[1].shutdown()
             self.ns[1].close()
@@ -154,4 +217,8 @@ class Frontend(object):
             self.ownns_running = False
 
     def stop(self):
+        """Stop nameserver.
+
+        Stops nameserver if it was started by MaxiNet.
+        """
         self._stop_nameserver()

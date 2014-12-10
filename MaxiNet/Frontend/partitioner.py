@@ -1,3 +1,13 @@
+"""Partitioner code.
+
+This file holds everything related to partitioning a single mininet topology
+into multiple subtopologys interconnected by tunnels.
+Most of the partitioning work is done by the metis graph partitioning tool.
+
+Classes in this file:
+    Clustering:
+    Partitioner:
+"""
 import functools
 import logging
 import os
@@ -30,24 +40,70 @@ def deprecated(func):
     return new_func
 
 
-class Clustering:
+class Clustering(object):
+
+    """Cluster of topologys.
+
+    This class is used to hold a set of topologys interconnected by tunnels.
+
+    Attributes:
+        topos: Sequence of mininet.topo.Topo instances.
+        tunnels: Sequence of tunnels in the form of
+                 [[switchname1, switchname2, mininet linkInfo dict],...]
+    """
+
     def __init__(self, topologies, tunnels):
+        """Init Clustering."""
         self.topos = topologies
         self.tunnels = tunnels
 
     def getTunnels(self):
+        """Get tunnel list."""
         return self.tunnels
 
     def getTopos(self):
+        """Get topology list."""
         return self.topos
 
 
-class Partitioner:
+class Partitioner(object):
+
+    """Partitions mininet topology into multiple interconnected by tunnels.
+
+    The partitioner uses the graph partitioning tool metis to seperate a single
+    mininet topology into several. It trys to do a mincut partitioning while
+    keeping the partitions roughly equal (or equal accoring to a given set of
+    weights).
+
+    Attributes:
+        metisCMD: Command line string to call metis.
+        logger: Logging instance.
+        paritions: Sequence of mininet.topo.Topo instances
+        pos: Dict which maps line numbers in the metis in-/output file to
+             switches.
+        switches: Dict which maps switch names to line numbers in metis
+                  in-/output file.
+        topo: Original topology.
+        tunnels: Sequence of tunnels in the form of
+                 [[switchname1, switchname2, mininet linkInfo dict],...]
+    """
+
     def __init__(self, metis="gpmetis -ptype=rb"):
+        """Init partitioner.
+
+        Args:
+            metis: Command line string to call metis. Can be used to supply
+                   additional parameters to metis. Default: "gpmetis -ptype=rb"
+        """
         self.logger = logging.getLogger(__name__)
         self.metisCMD = metis
 
     def loadtopo(self, topo):
+        """Load topology into partitioner and write metis input file.
+
+        Args:
+            topo: mininet.topo.Topo instance.
+        """
         i = 1
         self.pos = {}
         self.switches = {}
@@ -88,6 +144,19 @@ class Partitioner:
         self.graph = self._write_to_file(ret)
 
     def _convert_to_plain_topo(self, topo):
+        """Convert topo to mininet.topo.Topo instance.
+
+        This helper function allows the user to use topologys which are not
+        direct instances of mininet.topo.Topo in MaxiNet. If the topology was
+        not converted to a Topo instance the transfer via pyro most likely
+        fails as the original class might not be available at the pyro remote.
+
+        Args:
+            topo: Instance which fullfills the interface of mininet.topo.Topo.
+
+        Returns:
+            Instance of mininet.topo.Topo,
+        """
         r = Topo()
         for node in topo.nodes():
             r.addNode(node, **topo.nodeInfo(node))
