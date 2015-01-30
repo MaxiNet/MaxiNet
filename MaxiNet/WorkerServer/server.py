@@ -1,6 +1,5 @@
 import atexit
 import logging
-import os
 import subprocess
 
 from mininet.link import TCLink, TCIntf
