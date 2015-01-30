@@ -44,7 +44,7 @@ import Pyro4
 
 from MaxiNet.Frontend.cli import CLI
 from MaxiNet.Frontend.client import Frontend, log_and_reraise_remote_exception
-from MaxiNet.Frontend.tools import Tools, Config
+from MaxiNet.tools import Tools, MaxiNetConfig
 from MaxiNet.Frontend.partitioner import Partitioner
 
 
@@ -109,31 +109,30 @@ class Worker(object):
     network.
 
     Attributes:
-        cmd: remote instance of class CmdListener which is used to run
+        config: instance of class MaxiNetConfig
+        mininet: remote instance of class MininetManager which is used to
+            create and manage mininet on the Worker machine.
+        server: remote instance of class WorkerServer which is used to run
             commands on the Worker machine.
-        config: remote instance of class Config which is used to query
-            configuration settings etc.
-        creator: remote instance of class MininetCreator which is used
-                to create and manage mininet instances.
         switch: default mininet switch class to use in mininet instances.
         wid: worker id.
     """
 
-    def __init__(self, frontend, wid, switch=UserSwitch):
+    def __init__(self, nameserver, pyroname, switch=UserSwitch):
         """Init Worker class."""
-        self.creator = frontend.getObjectProxy(wid + ".mnCreator")
-        self.cmd = frontend.getObjectProxy(wid + ".cmd")
-        self.config = frontend.getObjectProxy("config")
-        if(not self.config.runWith1500MTU()):
+        self.server = Pyro4.Proxy(nameserver.lookup(pyroname))
+        self.mininet = Pyro4.Proxy(nameserver.lookup(pyroname+".mnManager"))
+        self.config = Pyro4.Proxy(nameserver.lookup("config"))
+        if(not self.config.run_with_1500_mtu()):
             self._fix_mtus()
         self.switch = switch
         self._x11tunnels = []
-        self.wid = int(wid[6:])
+        self.run_script("load_tunneling.sh")
 
     @log_and_reraise_remote_exception
     def hn(self):
         """Get hostname of worker machine."""
-        return self.cmd.get_hostname()
+        return self.server.get_hostname()
 
     def set_switch(self, switch):
         """Set default switch class."""
@@ -151,12 +150,12 @@ class Worker(object):
             status: string {up|down}
 
         """
-        self.creator.configLinkStatus(src, dst, status)
+        self.mininet.configLinkStatus(src, dst, status)
 
     @log_and_reraise_remote_exception
-    def ip(self):
+    def ip(self, classifier=None):
         """Get public ip adress of worker machine."""
-        return self.config.getIP(self.hn())
+        return self.config.get_worker_ip(self.hn(), classifier)
 
     @log_and_reraise_remote_exception
     def start(self, topo, tunnels, controller=None):
@@ -174,18 +173,18 @@ class Worker(object):
                     network.
         """
         if controller:
-            self.creator.create_mininet(topo=topo, tunnels=tunnels,
+            self.mininet.create_mininet(topo=topo, tunnels=tunnels,
                                         controller=controller,
                                         switch=self.switch)
         else:
-            self.creator.create_mininet(topo=topo, tunnels=tunnels,
+            self.mininet.create_mininet(topo=topo, tunnels=tunnels,
                                         switch=self.switch)
 
     @log_and_reraise_remote_exception
     def daemonize(self, cmd):
         """run command in background and terminate when MaxiNet is shut
         down."""
-        self.cmd.daemonize(cmd)
+        self.server.daemonize(cmd)
 
     @log_and_reraise_remote_exception
     def tunnelX11(self, node):
@@ -206,7 +205,7 @@ class Worker(object):
                 display = subprocess.check_output("ssh -Y " + self.hn() +
                                                   " env | grep DISPLAY",
                                                   shell=True)[8:]
-                self.creator.tunnelX11(node, display)
+                self.mininet.tunnelX11(node, display)
                 self._x11tunnels.append(node)
             except subprocess.CalledProcessError:
                 return False
@@ -223,7 +222,7 @@ class Worker(object):
         Returns:
             Stdout of program call.
         """
-        return self.creator.runCmdOnHost(host, cmd)
+        return self.mininet.runCmdOnHost(host, cmd)
 
     @log_and_reraise_remote_exception
     def run_cmd(self, cmd):
@@ -235,7 +234,7 @@ class Worker(object):
         Returns:
             Stdout of program call.
         """
-        return self.cmd.check_output(cmd)
+        return self.server.check_output(cmd)
 
     @log_and_reraise_remote_exception
     def run_script(self, cmd):
@@ -247,7 +246,7 @@ class Worker(object):
         Returns:
             Stdout of program call.
         """
-        return self.cmd.script_check_output(cmd)
+        return self.server.script_check_output(cmd)
 
     @log_and_reraise_remote_exception
     def rpc(self, host, cmd, *params1, **params2):
@@ -267,7 +266,7 @@ class Worker(object):
             WARNING: if returned object is not serializable this might
                      crash.
         """
-        return self.creator.rpc(host, cmd, *params1, **params2)
+        return self.mininet.rpc(host, cmd, *params1, **params2)
 
     @log_and_reraise_remote_exception
     def rattr(self, host, name):
@@ -284,7 +283,7 @@ class Worker(object):
             WARNING: if the attribute is not serializable this might
                      crash.
         """
-        return self.creator.attr(host, name)
+        return self.miinet.attr(host, name)
 
     @log_and_reraise_remote_exception
     def _fix_mtus(self):
@@ -297,10 +296,10 @@ class Worker(object):
         sets its MTU. This method is not needed if MaxiNet is configured
         to use MTUs lower than 1451 in the MaxiNet configuration file.
         """
-        if self.ip() is None:
+        if self.ip(classifier="backend") is None:
             logger.warn("no ip configured - can not fix MTU ")
             return 0
-        intf = self.run_cmd("ip addr show to " + self.ip() +
+        intf = self.run_cmd("ip addr show to " + self.ip(classifier="backend") +
                             "/24 | head -n1 | cut -d' ' -f2 | tr -d :").strip()
         if intf == "":
             logger.warn("could not find eth device - can not fix MTU")
@@ -313,7 +312,7 @@ class Worker(object):
     @log_and_reraise_remote_exception
     def stop(self):
         """Stop mininet instance on this worker."""
-        return self.creator.stop()
+        return self.mininet.stop()
 
     def get_file(self, src, dst):
         """Transfer file specified by src on worker to dst on Frontend.
@@ -355,7 +354,7 @@ class Worker(object):
         Returns:
             nodename
         """
-        return self.creator.addHost(name, cls, **params)
+        return self.mininet.addHost(name, cls, **params)
 
     @log_and_reraise_remote_exception
     def addSwitch(self, name, cls=None, **params):
@@ -372,7 +371,7 @@ class Worker(object):
         Returns:
             nodename
         """
-        return self.creator.addSwitch(name, cls, **params)
+        return self.mininet.addSwitch(name, cls, **params)
 
     @log_and_reraise_remote_exception
     def addController(self, name="c0", controller=None, **params):
@@ -389,7 +388,7 @@ class Worker(object):
         Returns:
             controllername
         """
-        return self.creator.addHost(name, controller, **params)
+        return self.mininet.addHost(name, controller, **params)
 
     @log_and_reraise_remote_exception
     def addTunnel(self, name, switch, port, intf, **params):
@@ -404,7 +403,7 @@ class Worker(object):
             port: port number to use on switch.
             intf: Intf class to use when creating the tunnel.
         """
-        self.creator.addTunnel(name, switch, port, intf, **params)
+        self.mininet.addTunnel(name, switch, port, intf, **params)
 
     @log_and_reraise_remote_exception
     def addLink(self, node1, node2, port1=None, port2=None,
@@ -426,7 +425,7 @@ class Worker(object):
             (node2,intfname2)) where intfname1 and intfname2 are the
             names of the interfaces which where created for the link.
         """
-        return self.creator.addLink(node1, node2, port1, port2, cls,
+        return self.mininet.addLink(node1, node2, port1, port2, cls,
                                     **params)
 
 
@@ -518,183 +517,63 @@ class Cluster(object):
             sequence must be equal to worker id.
     """
 
-    def __init__(self, *hosts):
+    def __init__(self, ip, port, password):
         """Inits Cluster class.
 
         Args:
-            *hosts: Optional list of Worker hostnames to use in this
-                cluster. If not set all configured Workers will be used.
+
         """
         self.running = False
         self.logger = logging.getLogger(__name__)
         self.tunhelper = TunHelper()
+        Pyro4.config.HMAC_KEY = password
+        self.nameserver = Pyro4.locateNS(host=ip, port=port)
         # we can't open our pyro server yet (we need the local ip first)
         # but need to read the config file. Therefore we do not register
         # the config instance and replace it later on.
-        self.config = Config("", "", register=False)
-        logging.basicConfig(level=self.config.getLoggingLevel())
-        if hosts:
-            self.hosts = hosts
-        else:
-            self.hosts = self.config.getHosts()
+        self.config = Pyro4.Proxy(self.nameserver.lookup("config"))
+        self.manager = Pyro4.Proxy(self.nameserver.lookup("MaxiNetManager"))
+        self.hostname_to_worker={}
+        self.ident = random.randint(1, sys.maxint)
+        logging.basicConfig(level=self.config.get_loglevel())
+        self.hosts = []
         self.worker = []
-
-        #Find local IP
-        if(self.hosts[0] != subprocess.check_output(["hostname"]).strip()):
-            rhost = self.config.getIP(self.hosts[0])
-        else:
-            if(len(self.hosts) > 1):
-                rhost = self.config.getIP(self.hosts[1])
-            else:
-                rhost = self.config.getIP(self.hosts[0])
-        if sys.platform == "darwin":
-            route = subprocess.check_output(["route", "-vn", "get", rhost])\
-                    .splitlines()[-1]
-            m = re.search(r' (\d+\.\d+\.\d+\.\d+)$', route)
-        else:
-            route = subprocess.check_output("ip route get " + rhost +
-                                            " | head -n1", shell=True).strip()
-            m = re.search(r'src (\d+\.\d+\.\d+\.\d+)', route)
-        if m is not None:
-            self.localIP = m.group(1)
-        else:
-            self.localIP = "127.0.0.1"
-
-        self.nsport = 9090
-        self.frontend = Frontend(self.localIP, self.nsport)
-        # now replace self.config with instance that connects to pyro
-        self.config = Config(self.localIP, self.nsport)
-        atexit.register(run_cmd, self.getWorkerMangerCMD("--stop"))
         atexit.register(self._stop)
 
-    def getWorkerMangerCMD(self, cmd):
-        """Get string sequence to call worker_manager.py script with cmd
-        argument.
+    def get_available_workers(self):
+        return self.manager.get_free_workers()
 
-        Returns a string sequence which contains the path to the
-        worker_manager.py script enhanced with the arguments nameserver
-        ip and port, debugPyro flag (if set in config) and
-        keepScreenOpenOnError flag (if set in config). Also includes cmd
-        as arguments.
-
-        Args:
-            cmd: Sequence of arguments to pass to worker_manager.py.
-
-        Returns:
-            Sequence of strings to be passed to eg subprocess.call to
-            call worker_manager.py script and configured arguments.
-        """
-        cmdline = [
-            self.config.getWorkerScript("worker_manager.py"), "--ns",
-            self.localIP + ":" + str(self.nsport),
-            cmd
-        ]
-        if self.config.debugPyroOnWorker():
-            cmdline.append("--debugPyro")
-
-        if self.config.keepScreenOpenOnError():
-            cmdline.append("--keepScreenOpenOnError")
-        cmdline.extend(self.hosts)
-        return cmdline
-
-    def is_running(self):
-        """Query self.running flag to check whether cluster was already
-        started."""
-        return self.running
-
-    def get_worker_shares(self):
-        """Returns sequence of workload shares per Worker.
-
-        Will return None if Cluster is not already running. This is due
-        to the fact that worker order is not final before Cluster
-        statup.
-
-        Returns:
-            Sequence of workload shares per worker. Order is same as
-            self.workers() order. None if Cluster is not already running.
-        """
-        shares = None
-        if(self.running):
-            shares = []
-            for w in self.workers():
-                shares.append(self.config.getShare(w.hn()))
-            wsum = 0
-            for w in shares:
-                wsum += w
-            shares = map(lambda x: x / float(wsum), shares)
-        return shares
-
-    def check_reachability(self, ip):
-        """Check whether ip is reachable for a packet with MTU > 1500.
-
-        If this check fails either the network needs to be reconfigured
-        or runWith1500MTU flag in MaxiNet config needs to be set.
-        """
-        cmd = ["ping", "-c 2", "-s 1520", ip]
-        if(subprocess.call(cmd, stdout=open("/dev/null"),) == 1):
-            return False
-        else:
+    def add_worker_by_hostname(self, hostname):
+        pyname = self.manager.reserve_worker(hostname, self.ident)
+        if(pyname):
+            self.worker.append(Worker(self.nameserver, pyname))
+            self.hostname_to_worker[hostname] = self.worker[-1]
+            self.logger.info("added worker %s" % hostname)
             return True
+        else:
+            self.logger.warn("adding worker %s failed" % hostname)
+            return False
 
-    def start(self):
-        """Start cluster (and Workers).
+    def add_worker(self):
+        hns = self.get_available_workers().keys()
+        for hn in hns:
+            if(self.add_worker_by_hostname(hn)):
+                return True
+        return False
 
-        Start MaxiNet on assigned worker machines and establish
-        communication. Sets self.running flag in case of successful
-        startup.
+    def remove_worker(self, worker):
+        if(not isinstance(worker, Worker)):
+            worker = self.hostname_to_worker[worker]
+        del self.hostname_to_worker[worker.hn()]
+        self.worker.remove(worker)
+        worker.run_script("delete_tunnels.sh")
+        hn = worker.hn()
+        self.manager.free_worker(worker.hn(), self.ident)
+        self.logger.info("removed worker %s" % hn)
 
-        Returns:
-            True if startup was successful.
-        """
-        self.logger.info("starting worker processes")
-        #start worker processes
-        cmd = self.getWorkerMangerCMD("--start")
-        if self.frontend.hmac_key():
-            cmd.extend(["--hmac", self.frontend.hmac_key()])
-        self.logger.debug(run_cmd(cmd))
-        #connect to pyro instances of workers
-        timeout = 10  # timeout (seconds) for worker startup
-        for i in range(0, len(self.hosts)):
-            self.logger.info("waiting for Worker " + str(i + 1) +
-                             " to register on nameserver...")
-            started = False
-            end = time.time() + timeout
-            while(not started):
-                try:
-                    self.frontend.lookup("worker" + str(i + 1) + ".mnCreator")
-                    started = True
-                except Pyro4.errors.NamingError:
-                    if(time.time() > end):
-                        raise RuntimeError("Timed out waiting for worker " +
-                                           str(i + 1) + ".mnCreator to " +
-                                           "register.")
-                    time.sleep(0.1)
-            started = False
-            end = time.time() + timeout
-            while(not started):
-                try:
-                    self.frontend.lookup("worker" + str(i + 1) + ".cmd")
-                    started = True
-                except Pyro4.errors.NamingError:
-                    time.sleep(0.1)
-                    if(time.time() > end):
-                        raise RuntimeError("Timed out waiting for worker " +
-                                           str(i + 1) + ".cmd to register.")
-            self.worker.append(Worker(self.frontend, "worker" + str(i + 1)))
-        #check reachability
-        if(not self.config.runWith1500MTU()):
-            for host in self.hosts:
-                if(not self.check_reachability(self.config.getIP(host))):
-                    self.logger.error("Host " + host +
-                                      " is not reachable with an MTU > 1500.")
-                    raise RuntimeError("Host " + host +
-                                       " is not reachable with an MTU > 1500.")
-        #load tunneling kernel modules on workers
-        for worker in self.worker:
-            worker.run_script("load_tunneling.sh")
-        self.logger.info("worker processes started")
-        self.running = True
-        return True
+    def remove_workers(self):
+        while(len(self.worker) > 0):
+            self.remove_worker(self.worker[0])
 
     def _stop(self):
         """Stop Cluster and shut it down.
@@ -703,37 +582,21 @@ class Cluster(object):
         DOES NOT shut down workers. Call this after shutting down
         workers via worker_manager.py script.
         """
-        if(self.running):
-            self.logger.info("removing tunnels...")
-            self.remove_all_tunnels()
-            #self.logger.info("shutting cluster down...")
-            self.logger.info("removing nameserver entries...")
-            for i in range(0, self.num_workers()):
-                self.frontend.remove("worker" + str(i) + ".mnCreator")
-                self.frontend.remove("worker" + str(i) + ".cmd")
-            self.logger.info("shutting down frontend...")
-            self.logger.info("Goodbye.")
-            self.running = False
+        self.remove_workers()
 
     def num_workers(self):
         """Return number of worker nodes in this Cluster."""
         return len(self.workers())
 
     def workers(self):
-        """Return sqeuence of worker instances for this cluster.
-
-        Returns empty sequence if Cluster is not running.
+        """Return sequence of worker instances for this cluster.
 
         Returns:
-            Sequence of worker instances. Empty sequence if cluster is
-            not running.
+            Sequence of worker instances.
         """
-        if(self.is_running()):
-            return self.worker
-        else:
-            return []
+        return self.worker
 
-    def get_worker(self, wid):
+    def get_worker(self, hostname):
         """Return worker with id wid.
 
         Args:
@@ -742,7 +605,7 @@ class Cluster(object):
         Returns:
             Worker with id wid.
         """
-        return self.workers()[wid]
+        return self.hostname_to_worker[hostname]
 
     def create_tunnel(self, w1, w2):
         """Create GRE tunnel between workers.
@@ -761,8 +624,8 @@ class Cluster(object):
         tid = self.tunhelper.get_tun_nr()
         tkey = self.tunhelper.get_key_nr()
         intf = "mn_tun" + str(tid)
-        ip1 = w1.ip()
-        ip2 = w2.ip()
+        ip1 = w1.ip(classifier="backend")
+        ip2 = w2.ip(classifier="backend")
         self.logger.debug("invoking tunnel create commands on " + ip1 +
                           " and " + ip2)
         w1.run_script("create_tunnel.sh " + ip1 + " " + ip2 + " " + intf +
@@ -812,7 +675,7 @@ class Experiment(object):
     """
     def __init__(self, cluster, topology, controller=None,
                  is_partitioned=False, switch=UserSwitch,
-                 nodemapping=None):
+                 nodemapping=None, hostnamemapping=None):
         """Inits Experiment.
 
         Args:
@@ -834,7 +697,7 @@ class Experiment(object):
         self.cluster = cluster
         self.logger = logging.getLogger(__name__)
         self.topology = None
-        self.config = Config(register=False)
+        self.config = MaxiNetConfig(register=False)
         self.starttime = time.localtime()
         self._printed_log_info = False
         self.isMonitoring = False
@@ -843,8 +706,17 @@ class Experiment(object):
             self.topology = topology
         else:
             self.origtopology = topology
-        self.node_to_workerid = {}
+        self.node_to_worker = {}
         self.node_to_wrapper = {}
+        if(self.is_valid_hostname_mapping(hostnamemapping)):
+            self.hostname_to_workerid = hostnamemapping
+        else:
+            if(not hostnamemapping is None):
+                self.logger.error("invalid hostnamemapping!")
+            self.hostname_to_workerid = self.generate_hostname_mapping()
+        self.workerid_to_hostname = {}
+        for hn in self.hostname_to_workerid:
+            self.workerid_to_hostname[self.hostname_to_workerid[hn]] = hn
         self.nodes = []
         self.hosts = []
         self.tunnellookup = {}
@@ -861,6 +733,27 @@ class Experiment(object):
             port = "6633"
         self.controller = functools.partial(RemoteController, ip=host,
                                             port=int(port))
+
+    def generate_hostname_mapping(self):
+        i = 0
+        d = {}
+        for w in self.cluster.workers():
+            d[w.hn()] = i
+            i += 1
+        return d
+
+    def is_valid_hostname_mapping(self, d):
+        if(d is None):
+            return False
+        if(len(d) != len(self.cluster.workers())):
+            return False
+        for w in self.cluster.workers():
+            if(not w in d.keys()):
+                return False
+        for i in range(0, len(self.cluster.workers())):
+            if (d.values().count(i) != 1):
+                return False
+        return False
 
     def configLinkStatus(self, src, dst, status):
         """Change status of link.
@@ -909,7 +802,7 @@ class Experiment(object):
         """
         if(isinstance(node, NodeWrapper)):
             return node.worker
-        return self.cluster.get_worker(self.node_to_workerid[node])
+        return self.node_to_worker[node]
 
     def get_log_folder(self):
         """Get folder to which log files will be saved.
@@ -942,12 +835,12 @@ class Experiment(object):
         subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
                          Tools.time_to_string(self.starttime) + "/"])
         atexit.register(worker.get_file, "/tmp/maxinet_cpu_" +
-                        str(worker.wid) + "_(" + worker.hn() + ").log",
+                        str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
                         "/tmp/maxinet_logs/" +
                         Tools.time_to_string(self.starttime) + "/")
         worker.daemonize("LANG=en_EN.UTF-8 mpstat 1 | while read l; " +
                          "do echo -n \"`date +%s`    \" ; echo \"$l \" ;" +
-                         " done > \"/tmp/maxinet_cpu_" + str(worker.wid) +
+                         " done > \"/tmp/maxinet_cpu_" + str(self.hostname_to_workerid[worker.hn()]) +
                          "_(" + worker.hn() + ").log\"")
         atexit.register(self._print_log_info)
 
@@ -962,12 +855,12 @@ class Experiment(object):
                          Tools.time_to_string(self.starttime) + "/"])
         for worker in self.cluster.workers():
             atexit.register(worker.get_file, "/tmp/maxinet_mem_" +
-                            str(worker.wid) + "_(" + worker.hn() + ").log",
+                            str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
                             "/tmp/maxinet_logs/" +
                             Tools.time_to_string(self.starttime) + "/")
             memmon = worker.config.getWorkerScript("getMemoryUsage.sh")
             worker.daemonize(memmon + " > \"/tmp/maxinet_mem_" +
-                             str(worker.wid) + "_(" + worker.hn() + ").log\"")
+                             str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log\"")
             atexit.register(self._print_log_info)
 
     def log_interfaces_of_node(self, node):
@@ -992,12 +885,12 @@ class Experiment(object):
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
         atexit.register(worker.get_file, "/tmp/maxinet_intf_" + intf + "_" +
-                        str(worker.wid) + "_(" + worker.hn() + ").log",
+                        str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
                         "/tmp/maxinet_logs/" +
                         Tools.time_to_string(self.starttime) + "/")
         ethmon = worker.config.getWorkerScript("getRxTx.sh")
         worker.daemonize(ethmon + " " + intf + " > \"/tmp/maxinet_intf_" +
-                         intf + "_" + str(worker.wid) + "_(" + worker.hn() +
+                         intf + "_" + str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() +
                          ").log\"")
         atexit.register(self._print_log_info)
 
@@ -1011,7 +904,7 @@ class Experiment(object):
         self.log_free_memory()
         self.log_cpu()
         for worker in self.cluster.workers():
-            intf = worker.run_cmd("ip addr show to " + worker.ip() + "/24 " +
+            intf = worker.run_cmd("ip addr show to " + worker.ip(classifier="backend") + "/24 " +
                                   "| head -n1 | cut -d' ' -f2 | tr -d :")\
                                   .strip()
             if(intf == ""):
@@ -1068,13 +961,13 @@ class Experiment(object):
         """
         if (wid is None):
             wid = random.randint(0, self.cluster.num_workers() - 1)
-        else:
-            wid = wid - 1  # internal worker id count starts with 0
         if (not pos is None):
-            wid = self.node_to_workerid[pos]
-        self.node_to_workerid[name] = wid
+            wid = self.hostname_to_workerid[self.node_to_worker[pos].hn()]
+        self.node_to_worker[name] = self.cluster.get_worker(self.workerid_to_hostname[wid])
         self.node_to_wrapper[name] = NodeWrapper(name, self.get_worker(name))
         self.nodes.append(self.node_to_wrapper[name])
+        if (self.config.run_with_1500_mtu()):
+            self.setMTU(self.get_node(name), 1450)
 
     def addHost(self, name, cls=None, wid=None, pos=None, **params):
         """Add host at runtime.
@@ -1215,7 +1108,7 @@ class Experiment(object):
                 node2.attach(l[1][1])
             else:
                 node2.configDefault()
-        if(self.config.runWith1500MTU()):
+        if(self.config.run_with_1500_mtu()):
             self.setMTU(node1, 1450)
             self.setMTU(node2, 1450)
 
@@ -1257,11 +1150,6 @@ class Experiment(object):
         Raises:
             RuntimeError: If Cluster is too small or won't start.
         """
-        # start cluster
-        if(not self.cluster.is_running()):
-            self.cluster.start()
-        if(not self.cluster.is_running()):
-            raise RuntimeError("Cluster won't start")
         self.logger.info("Clustering topology...")
         # partition topology (if needed)
         if(not self.topology):
@@ -1270,12 +1158,7 @@ class Experiment(object):
             if(self.nodemapping):
                 self.topology = parti.partition_using_map(self.nodemapping)
             else:
-                # assigning shares to workers requires that the workers
-                # are already startet. elsewise we don't have a way to
-                # determine the workerid of the worker. topologies are
-                # assigned to workers in ascending workerid order
-                self.topology = parti.partition(self.cluster.num_workers(),
-                                                self.cluster.get_worker_shares())
+                self.topology = parti.partition(self.cluster.num_workers())
             self.logger.debug("Tunnels: " + str(self.topology.getTunnels()))
         subtopos = self.topology.getTopos()
         if(len(subtopos) > self.cluster.num_workers()):
@@ -1284,14 +1167,13 @@ class Experiment(object):
         # initialize internal bookkeeping
         for subtopo in subtopos:
             for node in subtopo.nodes():
-                self.node_to_workerid[node] = subtopos.index(subtopo)
+                self.node_to_worker[node] = self.cluster.get_worker(self.workerid_to_hostname[subtopos.index(subtopo)])
                 self.nodes.append(NodeWrapper(node, self.get_worker(node)))
                 self.node_to_wrapper[node] = self.nodes[-1]
                 if (not subtopo.isSwitch(node)):
                     self.hosts.append(self.nodes[-1])
                 else:
                     self.switches.append(self.nodes[-1])
-        self.logger.debug("Nodemapping: %s", self.node_to_workerid)
         # create tunnels
         tunnels = [[] for x in range(len(subtopos))]
         for tunnel in self.topology.getTunnels():
@@ -1302,25 +1184,26 @@ class Experiment(object):
             self.tunnellookup[(tunnel[1], tunnel[0])] = intf
             for i in range(0, 2):
                 # Assumes that workerid = subtopoid
-                tunnels[self.node_to_workerid[tunnel[i]]].append([intf,
+                tunnels[self.hostname_to_workerid[self.node_to_worker[tunnel[i]].hn()]].append([intf,
                                                                   tunnel[i],
                                                                   tunnel[2]])
         # start mininet instances
         for topo in subtopos:
-            self.cluster.workers()[subtopos.index(topo)]\
-                .set_switch(self.switch)
+            wid = subtopos.index(topo)
+            worker = self.cluster.get_worker(self.workerid_to_hostname[wid])
+            worker.set_switch(self.switch)
             # cache hostname for possible error message
-            thn = self.cluster.workers()[subtopos.index(topo)].hn()
+            thn = worker.hn()
             try:
                 if(self.controller):
-                    self.cluster.workers()[subtopos.index(topo)]\
-                        .start(topo=topo,
-                               tunnels=tunnels[subtopos.index(topo)],
-                               controller=self.controller)
+                    worker.start(
+                        topo=topo,
+                        tunnels=tunnels[subtopos.index(topo)],
+                        controller=self.controller)
                 else:
-                    self.cluster.workers()[subtopos.index(topo)]\
-                        .start(topo=topo,
-                               tunnels=tunnels[subtopos.index(topo)])
+                    worker.start(
+                        topo=topo,
+                        tunnels=tunnels[wid])
             except Pyro4.errors.ConnectionClosedError:
                 self.logger.error("Remote " + thn + " exited abnormally. " +
                                   "This is probably due to mininet not" +
@@ -1329,7 +1212,7 @@ class Experiment(object):
                                   " to debug this.")
                 raise
         # configure network if needed
-        if (self.config.runWith1500MTU()):
+        if (self.config.run_with_1500_mtu()):
             for topo in subtopos:
                 for host in topo.nodes():
                     self.setMTU(host, 1450)

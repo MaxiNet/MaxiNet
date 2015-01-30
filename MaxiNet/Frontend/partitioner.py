@@ -238,26 +238,36 @@ class Partitioner(object):
         f.close()
         self._add_links(switch_to_part)
 
+    def _remove_nodeinfo(self, d):
+        dr = d.copy()
+        if("node1" in dr):
+            del dr["node1"]
+        if("node2" in dr):
+            del dr["node2"]
+        return dr
+
     def _add_links(self, switch_to_part):
         for node in self.topo.nodes():
             if not self.topo.isSwitch(node):
                 for edge in self.topo.links():
                     if(edge[0] == node):
+                        info = self._remove_nodeinfo(self.topo.linkInfo(node, edge[1]))
                         self.partitions[switch_to_part[edge[1]]].addNode(node,
                                                    **self.topo.nodeInfo(node))
                         self.partitions[switch_to_part[edge[1]]].addLink(node,
-                                edge[1], **self.topo.linkInfo(node, edge[1]))
+                                edge[1], **info)
                     if(edge[1] == node):
+                        info = self._remove_nodeinfo(self.topo.linkInfo(edge[0], node))
                         self.partitions[switch_to_part[edge[0]]].addNode(node,
                                                    **self.topo.nodeInfo(node))
                         self.partitions[switch_to_part[edge[0]]]\
-                                .addLink(edge[0], node,
-                                         **self.topo.linkInfo(edge[0], node))
+                                .addLink(edge[0], node, **info)
         for edge in self.topo.links():
             if (self.topo.isSwitch(edge[0]) and self.topo.isSwitch(edge[1])):
+                info = self._remove_nodeinfo(self.topo.linkInfo(edge[0], edge[1]))
                 if(switch_to_part[edge[0]] == switch_to_part[edge[1]]):
                     self.partitions[switch_to_part[edge[0]]].addLink(edge[0],
-                               edge[1], **self.topo.linkInfo(edge[0], edge[1]))
+                               edge[1], **info)
                 else:
                     self.tunnels.append([edge[0], edge[1],
                                         self.topo.linkInfo(edge[0], edge[1])])

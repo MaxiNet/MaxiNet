@@ -1,6 +1,7 @@
 import atexit
 import logging
 import subprocess
+import sys
 
 from mininet.link import TCLink, TCIntf
 from mininet.net import Mininet
@@ -8,27 +9,29 @@ from mininet.node import UserSwitch, OVSSwitch
 import mininet.term
 import Pyro4
 
-from MaxiNet.tools import MaxiNetConfig
 from MaxiNet.tools import Tools
 
 class WorkerServer(object):
 
-    def __init__(self, config):
+    def __init__(self):
         self._ns = None
         self._pyrodaemon = None
         self.logger = logging.getLogger(__name__)
         self._manager = None
-        self.config = config
         self.mnManager = MininetManager()
+        logging.basicConfig(level=logging.DEBUG)
 
-    def start(self):
+    def start(self, ip, port, password):
         self.logger.info("starting up and connecting to  %s:%d"
-                         % (self.config.get_nameserver_ip(), self.config.get_namserver_port()))
-        Pyro4.config.HMAC_KEY = self.config.get_nameserver_password()
-        self._ns = Pyro4.locateNS(self.config.get_nameserver_ip(), self.config.get_namserver_port())
-        self._pyrodaemon = Pyro4.Daemon()
+                         % (ip, port))
+        Pyro4.config.HMAC_KEY = password
+        self._ns = Pyro4.locateNS(ip, port)
+        self.config = Pyro4.Proxy(self._ns.lookup("config"))
+        self._pyrodaemon = Pyro4.Daemon(host=self.config.get_worker_ip(self.get_hostname()))
         uri = self._pyrodaemon.register(self)
         self._ns.register(self._get_pyroname(), uri)
+        uri = self._pyrodaemon.register(self.mnManager)
+        self._ns.register(self._get_pyroname()+".mnManager", uri)
         atexit.register(self._stop)
         self.logger.info("looking for manager application...")
         manager_uri = self._ns.lookup("MaxiNetManager")
@@ -55,6 +58,7 @@ class WorkerServer(object):
             self._manager.worker_signout(self.get_hostname())
         self.logger.info("shutting down...")
         self._ns.remove(self._get_pyroname())
+        self._ns.remove(self._get_pyroname()+".mnManager")
         self._pyrodaemon.unregister(self)
         self._pyrodaemon.shutdown()
         self._pyrodaemon.close()
@@ -75,8 +79,8 @@ class WorkerServer(object):
 
     def script_check_output(self, cmd):
         # Prefix command by our worker directory
-        cmd = Tools.get_scripts_dir() + cmd
-        return self.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+        cmd = Tools.get_script_dir() + cmd
+        return self.check_output(cmd)
 
     def run_cmd(self, command):
         subprocess.call(command, shell=True)
@@ -94,7 +98,7 @@ class MininetManager(object):
 
     def create_mininet(self, topo, tunnels=[],  switch=UserSwitch,
                        controller=None):
-        if(not self.net is None):
+        if(self.net is None):
             self.logger.info("Creating mininet instance")
             if controller:
                 self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
@@ -180,7 +184,7 @@ class MininetManager(object):
 
 
 def main():
-    WorkerServer(config=MaxiNetConfig()).start()
+    WorkerServer().start(ip=sys.argv[1], port=int(sys.argv[2]), password=sys.argv[3])
 
 
 if(__name__ == "__main__"):

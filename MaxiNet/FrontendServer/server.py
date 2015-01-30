@@ -11,6 +11,8 @@ import Pyro4
 from MaxiNet.tools import MaxiNetConfig
 
 
+Pyro4.config.SOCK_REUSE = True
+
 class NameServer(object):
     def __init__(self, config=MaxiNetConfig()):
         self.config = config
@@ -43,6 +45,7 @@ class NameServer(object):
         self._ns_thread = threading.Thread(target=self._inst[1].requestLoop)
         self._ns_thread.daemon = True
         self._ns_thread.start()
+        self.config.register()
         atexit.register(self.stop)
 
     def stop(self):
@@ -53,7 +56,8 @@ class NameServer(object):
             self._inst[1].close()
             self._ns_thread.join()
             self._ns_thread = None
-            #self._inst[2].close()
+            self._inst[2].close()
+            self._inst = None
 
 
 class MaxiNetManager(object):
@@ -70,7 +74,9 @@ class MaxiNetManager(object):
                          % (self.config.get_nameserver_ip(), self.config.get_nameserver_port()))
         Pyro4.config.HMAC_KEY = self.config.get_nameserver_password()
         self._ns = Pyro4.locateNS(self.config.get_nameserver_ip(), self.config.get_nameserver_port())
-        self._pyrodaemon = Pyro4.Daemon()
+        #  replace local config with the one from nameserver
+        self.config = Pyro4.Proxy(self._ns.lookup("config"))
+        self._pyrodaemon = Pyro4.Daemon(host=self.config.get_nameserver_ip())
         uri = self._pyrodaemon.register(self)
         self._ns.register("MaxiNetManager", uri)
         atexit.register(self._stop)
@@ -165,6 +171,16 @@ class MaxiNetManager(object):
                               reserved or not reserved by freeing id %s"
                              % (worker_hostname, id))
             return False
+
+    def get_free_workers(self):
+        rd = {}
+        self._worker_dict_lock.acquire()
+        w = filter(lambda x: self._worker_dict[x]["assigned"] is None,
+                   self._worker_dict)
+        for x in w:
+            rd[x] = self._worker_dict[x]
+        self._worker_dict_lock.release()
+        return rd
 
 
 def main():
