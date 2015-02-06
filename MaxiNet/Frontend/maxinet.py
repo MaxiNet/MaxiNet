@@ -675,7 +675,7 @@ class Experiment(object):
     """
     def __init__(self, cluster, topology, controller=None,
                  is_partitioned=False, switch=UserSwitch,
-                 nodemapping=None, hostnamemapping=None):
+                 nodemapping=None, hostnamemapping=None, sharemapping=None):
         """Inits Experiment.
 
         Args:
@@ -693,14 +693,22 @@ class Experiment(object):
             nodemapping: Optional dict to map nodes to specific worker
                 ids (nodename->workerid). If given needs to hold worker
                 ids for every node in topology.
+            hostnamemapping: Optional dict to map workers by hostname to
+                worker ids. If provided every worker hostname has to be mapped
+                to exactly one id. If the cluster consists of N workers valid ids
+                are 0 to N-1.
+            sharemapping: Optional list to map worker ids to workload shares.
+                sharemapping[x] is used to obtain the share of worker id x. Takes
+                precedence over shares configured in config file.
         """
         self.cluster = cluster
         self.logger = logging.getLogger(__name__)
         self.topology = None
-        self.config = MaxiNetConfig(register=False)
+        self.config = self.cluster.config
         self.starttime = time.localtime()
         self._printed_log_info = False
         self.isMonitoring = False
+        self.shares = sharemapping
         self.nodemapping = nodemapping
         if is_partitioned:
             self.topology = topology
@@ -717,6 +725,7 @@ class Experiment(object):
         self.workerid_to_hostname = {}
         for hn in self.hostname_to_workerid:
             self.workerid_to_hostname[self.hostname_to_workerid[hn]] = hn
+        self._update_shares()
         self.nodes = []
         self.hosts = []
         self.tunnellookup = {}
@@ -733,6 +742,19 @@ class Experiment(object):
             port = "6633"
         self.controller = functools.partial(RemoteController, ip=host,
                                             port=int(port))
+
+    def _update_shares(self):
+        if(self.shares is None):
+            self.shares = [1] * self.cluster.num_workers()
+            for i in range(0, self.cluster.num_workers()):
+                if(self._get_config_share(i)):
+                    self.shares[i] = self._get_config_share(i)
+
+    def _get_config_share(self, wid):
+        hn = self.workerid_to_hostname[wid]
+        if(self.config.has_section(hn) and self.config.has_option(hn, "share")):
+            return self.config.getint(hn, "share")
+        return None
 
     def generate_hostname_mapping(self):
         i = 0
@@ -1158,7 +1180,8 @@ class Experiment(object):
             if(self.nodemapping):
                 self.topology = parti.partition_using_map(self.nodemapping)
             else:
-                self.topology = parti.partition(self.cluster.num_workers())
+                self.topology = parti.partition(self.cluster.num_workers(),
+                                                shares=self.shares)
             self.logger.debug("Tunnels: " + str(self.topology.getTunnels()))
         subtopos = self.topology.getTopos()
         if(len(subtopos) > self.cluster.num_workers()):
@@ -1215,7 +1238,7 @@ class Experiment(object):
         if (self.config.run_with_1500_mtu()):
             for topo in subtopos:
                 for host in topo.nodes():
-                    self.setMTU(host, 1450)
+                    self.setMTU(self.get(host), 1450)
 
     def setMTU(self, host, mtu):
         """Set MTUs of all Interfaces of mininet host.
@@ -1225,7 +1248,7 @@ class Experiment(object):
             mtu: MTU value.
         """
         for intf in host.intfNames():
-            host.cmd("ifconfig " + intf + " mtu " + str(mtu))
+            host.cmd("ifconfig %s mtu %i" % (intf, mtu))
 
     @deprecated
     def run_cmd_on_host(self, host, cmd):

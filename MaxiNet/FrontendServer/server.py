@@ -45,8 +45,8 @@ class NameServer(object):
         self._ns_thread = threading.Thread(target=self._inst[1].requestLoop)
         self._ns_thread.daemon = True
         self._ns_thread.start()
-        self.config.register()
         atexit.register(self.stop)
+        self.config.register()
 
     def stop(self):
         """Shut down nameserver instance.
@@ -84,6 +84,17 @@ class MaxiNetManager(object):
 
     def _stop(self):
         self.logger.info("shutting down...")
+        self._worker_dict_lock.acquire()
+        workers = self._worker_dict.keys()
+        for worker in workers:
+            pn = self._worker_dict[worker]["pyroname"]
+            self._worker_dict_lock.release()
+            Pyro4.Proxy(self._ns.lookup(pn)).remoteShutdown()
+            self._worker_dict_lock.acquire()
+        self._worker_dict_lock.release()
+        while(len(self.get_workers()) > 0):
+            self.logger.debug("waiting for workers to unregister...")
+            time.sleep(0.5)
         self._ns.remove("MaxiNetManager")
         self._pyrodaemon.unregister(self)
         self._pyrodaemon.shutdown()
@@ -100,6 +111,7 @@ class MaxiNetManager(object):
         else:
             self._worker_dict_lock.release()
             self._stop()
+            return True
 
     def worker_signin(self, worker_pyroname, worker_hostname):
         self._worker_dict_lock.acquire()
@@ -158,9 +170,9 @@ class MaxiNetManager(object):
                              % (worker_hostname, id))
             return pyname
 
-    def free_worker(self, worker_hostname, id):
+    def free_worker(self, worker_hostname, id, force=False):
         self._worker_dict_lock.acquire()
-        if(self._worker_dict[worker_hostname]["assigned"] == id):
+        if((self._worker_dict[worker_hostname]["assigned"] == id) or force):
             self._worker_dict[worker_hostname]["assigned"] = None
             self._worker_dict_lock.release()
             self.logger.info("worker %s was freed" % worker_hostname)
@@ -181,6 +193,12 @@ class MaxiNetManager(object):
             rd[x] = self._worker_dict[x]
         self._worker_dict_lock.release()
         return rd
+
+    def get_workers(self):
+        self._worker_dict_lock.acquire()
+        w = self._worker_dict.copy()
+        self._worker_dict_lock.release()
+        return w
 
 
 def main():

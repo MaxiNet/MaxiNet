@@ -20,6 +20,8 @@ class WorkerServer(object):
         self._manager = None
         self.mnManager = MininetManager()
         logging.basicConfig(level=logging.DEBUG)
+        self._shutdown = False
+        Pyro4.config.COMMTIMEOUT = 0.5
 
     def start(self, ip, port, password):
         self.logger.info("starting up and connecting to  %s:%d"
@@ -40,7 +42,8 @@ class WorkerServer(object):
             self.logger.info("signing in...")
             if(self._manager.worker_signin(self._get_pyroname(), self.get_hostname())):
                 self.logger.info("done. Entering requestloop.")
-                self._pyrodaemon.requestLoop()
+                self._started = True
+                self._pyrodaemon.requestLoop(loopCondition=(lambda: not self._check_shutdown()))
             else:
                 self.logger.error("signin failed.")
         else:
@@ -62,6 +65,12 @@ class WorkerServer(object):
         self._pyrodaemon.unregister(self)
         self._pyrodaemon.shutdown()
         self._pyrodaemon.close()
+
+    def remoteShutdown(self):
+        self._shutdown = True
+
+    def _check_shutdown(self):
+        return self._shutdown
 
     def stop(self):
         (signedin, assigned) = self._manager.get_worker_status(self.get_hostname())
