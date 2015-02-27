@@ -118,7 +118,7 @@ class Worker(object):
         wid: worker id.
     """
 
-    def __init__(self, nameserver, pyroname, switch=UserSwitch):
+    def __init__(self, nameserver, pyroname, sshtool, switch=UserSwitch):
         """Init Worker class."""
         self.server = Pyro4.Proxy(nameserver.lookup(pyroname))
         self.mininet = Pyro4.Proxy(nameserver.lookup(pyroname+".mnManager"))
@@ -126,6 +126,7 @@ class Worker(object):
         if(not self.config.run_with_1500_mtu()):
             self._fix_mtus()
         self.switch = switch
+        self.sshtool = sshtool
         self._x11tunnels = []
         self.run_script("load_tunneling.sh")
 
@@ -202,9 +203,10 @@ class Worker(object):
         """
         if(not node in self._x11tunnels):
             try:
-                display = subprocess.check_output("ssh -Y " + self.hn() +
-                                                  " env | grep DISPLAY",
-                                                  shell=True)[8:]
+                display = subprocess.check_output(
+                            self.sshtool.get_ssh_cmd(targethostname=self.hn(),
+                                                     cmd="env | grep DISPLAY",
+                                                     opts=["-Y"]))[8:]
                 self.mininet.tunnelX11(node, display)
                 self._x11tunnels.append(node)
             except subprocess.CalledProcessError:
@@ -324,7 +326,9 @@ class Worker(object):
             src: string of path to file on Worker
             dst: string of path to file or folder on Frontend
         """
-        cmd_get = ["scp", self.hn() + ":\"" + src + "\"", dst]
+        cmd_get = self.sshtool.get_scp_get_cmd(targethostname=self.hn()
+                                               remote=src
+                                               local=dst)
         subprocess.call(cmd_get)
 
     def put_file(self, src, dst):
@@ -336,7 +340,9 @@ class Worker(object):
             src: string of path to file on Frontend
             dst: string of path to file or folder on Worker
         """
-        cmd_put = ["scp", src, self.hn() + ":" + dst]
+        cmd_put = self.sshtool.get_scp_put_cmd(targethostname=self.hn()
+                                               local=src
+                                               remote=dst)
         subprocess.call(cmd_put)
 
     @log_and_reraise_remote_exception
@@ -533,6 +539,7 @@ class Cluster(object):
         # the config instance and replace it later on.
         self.config = Pyro4.Proxy(self.nameserver.lookup("config"))
         self.manager = Pyro4.Proxy(self.nameserver.lookup("MaxiNetManager"))
+        self.sshtool = Tools.SSH_Tool(self.config)
         self.hostname_to_worker={}
         self.ident = random.randint(1, sys.maxint)
         logging.basicConfig(level=self.config.get_loglevel())
@@ -546,7 +553,7 @@ class Cluster(object):
     def add_worker_by_hostname(self, hostname):
         pyname = self.manager.reserve_worker(hostname, self.ident)
         if(pyname):
-            self.worker.append(Worker(self.nameserver, pyname))
+            self.worker.append(Worker(self.nameserver, pyname, self.sshtool))
             self.hostname_to_worker[hostname] = self.worker[-1]
             self.logger.info("added worker %s" % hostname)
             return True

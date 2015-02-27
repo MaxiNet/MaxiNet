@@ -147,17 +147,22 @@ class CLI(Cmd):
             pid = self.experiment.get_worker(self.experiment.get(node))\
                     .run_cmd("ps ax | grep \"bash.*mininet:" + node +
                              "$\" | grep -v grep | awk '{print $1}'").strip()
+            sshtool = self.experiment.get_worker(self.experiment.get(node)).sshtool
+            hn = self.experiment.get_worker(self.experiment.get(node)).hn()
             if self.experiment.get_worker(self.experiment.get(node))\
                     .tunnelX11(node):
-                user = subprocess.check_output("ssh -q -t " +
-                        self.experiment.get_worker(self.experiment.get(node))
-                        .hn() + " echo $USER", shell=True).strip()
-                rcmd = "ssh -q -X -t " +\
-                       self.experiment.get_worker(self.experiment.get(node))\
-                       .hn() + " sudo  XAUTHORITY=/home/" + user +\
-                       "/.Xauthority mnexec -a " + pid + " " + cmd
+                user = subprocess.check_output(
+                        sshtool.get_ssh_cmd(targethostname=hn,
+                                            cmd="echo $USER", opts=["-t"])
+                       ).strip()
+                rcmd = sshtool.get_ssh_cmd(
+                        targethostname=hn,
+                        cmd="XAUTHORITY=/home/" + user + "/.Xauthority mnexec -a "
+                            + pid + " " + cmd,
+                        opts=["-t", "-X"]
+                       )
             else:
-                rcmd = "ssh -q -t " +\
-                       self.experiment.get_worker(self.experiment.get(node))\
-                       .hn() + " sudo mnexec -a " + pid + " " + cmd
-            subprocess.call(rcmd, shell=True)
+                rcmd = sshtool.get_ssh_cmd(targethostname=hn,
+                                           cmd="mnexec -a " + pid + " " + cmd,
+                                           opts=["-t"])
+            subprocess.call(rcmd)

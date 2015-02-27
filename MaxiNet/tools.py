@@ -4,6 +4,8 @@ import logging
 import os
 import random
 import re
+import subprocess
+import tempfile
 import threading
 import time
 
@@ -35,12 +37,15 @@ class MaxiNetConfig(RawConfigParser):
     def get_nameserver_port(self):
         return self.getint("all", "port_ns")
 
+    def get_sshd_port(self):
+        return self.getint("all", "port_sshd")
+
     def get_frontend_ip(self):
         return self.get("FrontendServer", "ip")
 
     def get_worker_ip(self, hostname, classifier=None):
         if(not self.has_section(hostname)):
-            self.logger.error("Unknown hostname: %s" % hostname)
+            self.logger.warn("Unknown hostname: %s" % hostname)
             return None
         else:
             if(classifier is None):
@@ -90,6 +95,57 @@ class MaxiNetConfig(RawConfigParser):
             self.daemon_thread.join()
             self.daemon_thread = None
 
+
+class SSH_Tool(object):
+
+    def __init__(self, config):
+        self.config = config
+        (self.key_priv, self.key_pub) = self._generate_ssh_key()
+
+    def _generate_ssh_key(self):
+        folder = tempfile.mkdtemp()
+        subprocess.call(["ssh-keygen", "-t", "rsa", "-q", "-N", "\"\"",
+                         os.path.join(folder, "sshkey")])
+        return (os.path.join(folder, "sshkey"), os.path.join(folder, "sshkey.pub"))
+
+    def get_pub_ssh_key(self):
+        with open(self.key_pub) as fn:
+            return fn.read().strip()
+
+    def get_ssh_cmd(self, targethostname, cmd, opts=None):
+        rip = self.config.get_worker_ip(targethostname)
+        if(rip is None):
+            return None
+        cmd = ["ssh", "-o", "UserKnownHostsFile=/dev/null", "-o",
+               "StrictHostKeyChecking=no", "-q", "-i", self.key_priv]
+        if(opts):
+            cmd.extend(opts)
+        cmd.extend([rip, cmd])
+        return cmd
+
+    def get_scp_put_cmd(self, targethostname, local, remote, opts=None):
+        rip = self.config.get_worker_ip(targethostname)
+        if(rip is None):
+            return None
+        cmd = ["scp", "-o", "UserKnownHostsFile=/dev/null", "-o",
+               "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
+        if(opts):
+            cmd.extend(opts)
+        cmd.extend([local, "%s:%s" % (rip, remote)])
+        return cmd
+
+    def get_scp_get_cmd(self, targethostname, remote, local opts=None):
+        rip = self.config.get_worker_ip(targethostname)
+        if(rip is None):
+            return None
+        cmd = ["scp", "-o", "UserKnownHostsFile=/dev/null", "-o",
+               "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
+        if(opts):
+            cmd.extend(opts)
+        cmd.extend(["%s:%s" % (rip, remote), local])
+        return cmd
+
+
 class Tools(object):
 
     @staticmethod
@@ -129,3 +185,7 @@ class Tools(object):
             return time.strftime("%Y-%m-%d_%H:%M:%S", t)
         else:
             return time.strftime("%Y-%m-%d_%H:%M:%S")
+
+    @staticmethod
+    def guess_ip():
+        return subprocess.check_output("ifconfig -a | awk '/(cast)/ { print $2 }' | cut -d':' -f2 | head -1", shell=True)

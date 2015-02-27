@@ -2,6 +2,7 @@ import atexit
 import logging
 import subprocess
 import sys
+import tempfile
 
 from mininet.link import TCLink, TCIntf
 from mininet.net import Mininet
@@ -10,6 +11,8 @@ import mininet.term
 import Pyro4
 
 from MaxiNet.tools import Tools
+from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
+
 
 class WorkerServer(object):
 
@@ -19,7 +22,10 @@ class WorkerServer(object):
         self.logger = logging.getLogger(__name__)
         self._manager = None
         self.mnManager = MininetManager()
+        self.sshManager = None
+        self.ssh_folder = tempfile.mkdtemp()
         logging.basicConfig(level=logging.DEBUG)
+        self.ip = None
         self._shutdown = False
         Pyro4.config.COMMTIMEOUT = 0.5
 
@@ -29,11 +35,24 @@ class WorkerServer(object):
         Pyro4.config.HMAC_KEY = password
         self._ns = Pyro4.locateNS(ip, port)
         self.config = Pyro4.Proxy(self._ns.lookup("config"))
-        self._pyrodaemon = Pyro4.Daemon(host=self.config.get_worker_ip(self.get_hostname()))
+        self.ip = self.config.get_worker_ip(self.get_hostname())
+        if(not self.ip):
+            self.ip = Tools.guess_ip()
+            if not self.config.has_section(self.get_hostname()):
+                self.config.add_section(self.get_hostname())
+            self.config.set(self.get_hostname(), "ip", self.ip)
+            self.logger.warn("""FrontendServer did not know IP of this host.
+                             Guessed: %s""" % self.ip)
+        self.logger.info("configuring and starting ssh daemon...")
+        self.sshManager = SSH_Manager(folder=self.ssh_folder, ip=ip, port=port)
+        self.sshManager.start_sshd()
+        self._pyrodaemon = Pyro4.Daemon(host=self.ip)
         uri = self._pyrodaemon.register(self)
         self._ns.register(self._get_pyroname(), uri)
         uri = self._pyrodaemon.register(self.mnManager)
         self._ns.register(self._get_pyroname()+".mnManager", uri)
+        uri = self._pyrodaemon.register(self.sshManager)
+        self._ns.register(self._get_pyroname()+".sshManager", uri)
         atexit.register(self._stop)
         self.logger.info("looking for manager application...")
         manager_uri = self._ns.lookup("MaxiNetManager")
