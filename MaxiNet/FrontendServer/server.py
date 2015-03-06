@@ -26,23 +26,13 @@ class NameServer(object):
         correctly and OS waits for timeout before freeing the port.
         """
         Pyro4.config.SERVERTYPE = "thread"
-        Pyro4.config.HMAC_KEY = self.config.get_nameserver_password()
-        self._inst = None
-        slept = 0
-        while(not self._inst):
-            try:
-                self._inst = Pyro4.naming.startNS(host=self.config.get_nameserver_ip(), port=self.config.get_nameserver_port())
-            except error as e:
-                if e.errno != 98:
-                    raise e
-                elif slept >= 30:
-                    raise Exception("Timed out waiting for Pyro nameserver")
-                else:
-                    self.logger.warning("waiting for nameserver port to " +
-                                        "become free...")
-                    time.sleep(2)
-                    slept += 2
-        self._ns_thread = threading.Thread(target=self._inst[1].requestLoop)
+
+        self._ns_thread = threading.Thread(target=Pyro4.naming.startNSloop,
+                                kwargs={
+                                    "host": self.config.get_nameserver_ip(),
+                                    "port": self.config.get_nameserver_port(),
+                                    "hmac": self.config.get_nameserver_password()
+                                })
         self._ns_thread.daemon = True
         self._ns_thread.start()
         atexit.register(self.stop)
@@ -51,13 +41,7 @@ class NameServer(object):
     def stop(self):
         """Shut down nameserver instance.
         """
-        if(self._ns_thread):
-            self._inst[1].shutdown()
-            self._inst[1].close()
-            self._ns_thread.join()
-            self._ns_thread = None
-            self._inst[2].close()
-            self._inst = None
+        self.config.unregister()
 
 
 class MaxiNetManager(object):
@@ -72,11 +56,14 @@ class MaxiNetManager(object):
     def start(self):
         self.logger.info("starting up and connecting to  %s:%d"
                          % (self.config.get_nameserver_ip(), self.config.get_nameserver_port()))
-        Pyro4.config.HMAC_KEY = self.config.get_nameserver_password()
-        self._ns = Pyro4.locateNS(self.config.get_nameserver_ip(), self.config.get_nameserver_port())
+        #Pyro4.config.HMAC_KEY = self.config.get_nameserver_password()
+        self._ns = Pyro4.locateNS(self.config.get_nameserver_ip(), self.config.get_nameserver_port(), hmac_key=self.config.get_nameserver_password())
         #  replace local config with the one from nameserver
+        pw = self.config.get_nameserver_password()
         self.config = Pyro4.Proxy(self._ns.lookup("config"))
+        self.config._pyroHmacKey=pw
         self._pyrodaemon = Pyro4.Daemon(host=self.config.get_nameserver_ip())
+        self._pyrodaemon._pyroHmacKey=self.config.get_nameserver_password()
         uri = self._pyrodaemon.register(self)
         self._ns.register("MaxiNetManager", uri)
         atexit.register(self._stop)
@@ -89,7 +76,9 @@ class MaxiNetManager(object):
         for worker in workers:
             pn = self._worker_dict[worker]["pyroname"]
             self._worker_dict_lock.release()
-            Pyro4.Proxy(self._ns.lookup(pn)).remoteShutdown()
+            p = Pyro4.Proxy(self._ns.lookup(pn))
+            p._pyroHmacKey=self.config.get_nameserver_password()
+            p.remoteShutdown()
             self._worker_dict_lock.acquire()
         self._worker_dict_lock.release()
         while(len(self.get_workers()) > 0):
@@ -98,7 +87,6 @@ class MaxiNetManager(object):
         self._ns.remove("MaxiNetManager")
         self._pyrodaemon.unregister(self)
         self._pyrodaemon.shutdown()
-        self._pyrodaemon.close()
 
     def stop(self):
         self._worker_dict_lock.acquire()

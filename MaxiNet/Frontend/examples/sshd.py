@@ -7,13 +7,12 @@
 #
 
 import subprocess
-import sys
 
 from mininet.node import OVSSwitch
 from mininet.topo import Topo
 
 from MaxiNet.Frontend import maxinet
-from MaxiNet.Frontend.tools import Tools
+from MaxiNet.tools import Tools
 
 topo = Topo()
 
@@ -26,7 +25,7 @@ topo.addLink("s1", "s2")
 topo.addLink("h2", "s2")
 
 cluster = maxinet.Cluster()
-cluster.start()
+cluster.add_workers()
 
 # we need to add the root node after the simulation has started as we do
 # not know which worker id the frontend machine will get. Therefore we
@@ -48,8 +47,8 @@ h2.cmd("/usr/sbin/sshd -o UseDNS=no -u0 -o \"Banner /tmp/%s.banner\"" %
 
 # Locate worker which runs on Frontend
 for w in cluster.workers():
-    if w.run_cmd("hostname") == subprocess.check_output(["hostname"]):
-        wid = w.wid
+    if w.run_cmd("hostname") == subprocess.check_output(["hostname"]).strip():
+        wid = exp.hostname_to_workerid[w.run_cmd("hostname")]
 # Add host and switch on Frontend worker.
 # Switch is needed as tunnels are only possible between switches
 exp.addHost("root", inNamespace=False, wid=wid)

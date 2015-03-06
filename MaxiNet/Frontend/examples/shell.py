@@ -7,15 +7,12 @@
 # topology.
 #
 
-import sys
-import time
-
 from MaxiNet.Frontend import maxinet
-from MaxiNet.Frontend.tools import FatTree
+from MaxiNet.tools import FatTree
 
 topo = FatTree(4, 10, 0.1)
 cluster = maxinet.Cluster()
-cluster.start()
+cluster.add_workers()
 
 exp = maxinet.Experiment(cluster, topo)
 exp.setup()

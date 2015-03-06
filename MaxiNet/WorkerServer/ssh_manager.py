@@ -18,7 +18,11 @@ class SSH_Manager(object):
             return True
         return False
 
-    def _write_sshd_config(self, ip, port, template="sshd_config.template"):
+    def _write_sshd_config(self, ip, port, template=None):
+        if template is None:
+            template = os.path.abspath(os.path.dirname(os.path.abspath(__file__))
+                                                       + os.sep
+                                                       + "sshd_config.template")
         with open(template, "r") as f_template:
             content = f_template.read()
         content = content.replace("<!IP!>", ip)
@@ -50,7 +54,7 @@ class SSH_Manager(object):
             fn.write("")
 
     def _generate_host_key(self):
-        subprocess.call(["ssh-keygen", "-q", "-N", "\"\"", "-t", "rsa", "-f",
+        subprocess.call(["ssh-keygen", "-q", "-N", "", "-t", "rsa", "-f",
                          os.path.join(self.folder, "ssh_host_rsa_key")])
 
     def get_host_key_fingerprint(self):
@@ -64,8 +68,6 @@ class SSH_Manager(object):
 
     def start_sshd(self):
         self.popen = subprocess.Popen(["/usr/sbin/sshd", "-D",
-                                       "-E",
-                                       os.path.join(self.folder, "sshd.log"),
                                        "-f",
                                        os.path.join(self.folder, "sshd_config")
                                        ],

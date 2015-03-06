@@ -1,4 +1,12 @@
-; place this at ~/.MaxiNet
+; place this at ~/.MaxiNet.cfg
+[all]
+password = HalloWelt
+controller = 192.168.123.1:6633
+logLevel = INFO ; Either CRITICAL, ERROR, WARNING, INFO  or DEBUG
+port_ns = 9090
+port_sshd = 5345
+runWith1500MTU = False
+
 [debian-vm1]
 ip = 192.168.123.1
 share = 1
@@ -10,12 +18,3 @@ share = 1
 [debian-vm3]
 ip = 192.168.123.1
 share = 1
-
-[MaxiNet]
-controller = 192.168.123.1:6633
-runWith1500MTU = False
-debugLevel = INFO ; Either CRITICAL, ERROR, WARNING, INFO  or DEBUG
-keepScreenOpenOnError = False
-# Start pryo on the worker with debug
-# To debug the Fronted pyro use PYRO_LOGFILE='{stderr}' PYRO_LOGLEVEL=DEBUG python ...
-debugPyroOnWorker = False

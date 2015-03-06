@@ -43,8 +43,8 @@ from mininet.link import TCIntf, Intf, Link, TCLink
 import Pyro4
 
 from MaxiNet.Frontend.cli import CLI
-from MaxiNet.Frontend.client import Frontend, log_and_reraise_remote_exception
-from MaxiNet.tools import Tools, MaxiNetConfig
+from MaxiNet.Frontend.client import log_and_reraise_remote_exception
+from MaxiNet.tools import Tools, MaxiNetConfig, SSH_Tool
 from MaxiNet.Frontend.partitioner import Partitioner
 
 
@@ -118,25 +118,29 @@ class Worker(object):
         wid: worker id.
     """
 
-    def __init__(self, nameserver, pyroname, sshtool, switch=UserSwitch):
+    def __init__(self, nameserver, pyroname, pyropw, sshtool, switch=UserSwitch):
         """Init Worker class."""
         self.server = Pyro4.Proxy(nameserver.lookup(pyroname))
+        self.server._pyroHmacKey=pyropw
         self.mininet = Pyro4.Proxy(nameserver.lookup(pyroname+".mnManager"))
+        self.mininet._pyroHmacKey=pyropw
         self.ssh = Pyro4.Proxy(nameserver.lookup(pyroname+".sshManager"))
+        self.ssh._pyroHmacKey=pyropw
         self.config = Pyro4.Proxy(nameserver.lookup("config"))
+        self.config._pyroHmacKey=pyropw
         if(not self.config.run_with_1500_mtu()):
             self._fix_mtus()
         self.switch = switch
         self.sshtool = sshtool
         self._x11tunnels = []
         self.run_script("load_tunneling.sh")
+        self._add_ssh_key()
 
     def _add_ssh_key(self):
         k = self.sshtool.get_pub_ssh_key()
         self.ssh.add_key(k)
 
 
-    @log_and_reraise_remote_exception
     def hn(self):
         """Get hostname of worker machine."""
         return self.server.get_hostname()
@@ -145,7 +149,7 @@ class Worker(object):
         """Set default switch class."""
         self.switch = switch
 
-    @log_and_reraise_remote_exception
+
     def configLinkStatus(self, src, dst, status):
         """Wrapper for configLinkStatus method on remote mininet.
 
@@ -159,12 +163,12 @@ class Worker(object):
         """
         self.mininet.configLinkStatus(src, dst, status)
 
-    @log_and_reraise_remote_exception
+
     def ip(self, classifier=None):
         """Get public ip adress of worker machine."""
         return self.config.get_worker_ip(self.hn(), classifier)
 
-    @log_and_reraise_remote_exception
+
     def start(self, topo, tunnels, controller=None):
         """Start mininet instance on worker machine.
 
@@ -187,13 +191,13 @@ class Worker(object):
             self.mininet.create_mininet(topo=topo, tunnels=tunnels,
                                         switch=self.switch)
 
-    @log_and_reraise_remote_exception
+
     def daemonize(self, cmd):
         """run command in background and terminate when MaxiNet is shut
         down."""
         self.server.daemonize(cmd)
 
-    @log_and_reraise_remote_exception
+
     def tunnelX11(self, node):
         """Create X11 tunnel from Frontend to node on worker to make
         x-forwarding work.
@@ -219,7 +223,7 @@ class Worker(object):
                 return False
         return True
 
-    @log_and_reraise_remote_exception
+
     def run_cmd_on_host(self, host, cmd):
         """Run cmd in context of host and return output.
 
@@ -232,7 +236,7 @@ class Worker(object):
         """
         return self.mininet.runCmdOnHost(host, cmd)
 
-    @log_and_reraise_remote_exception
+
     def run_cmd(self, cmd):
         """run cmd on worker machine and return output.
 
@@ -244,7 +248,7 @@ class Worker(object):
         """
         return self.server.check_output(cmd)
 
-    @log_and_reraise_remote_exception
+
     def run_script(self, cmd):
         """Run MaxiNet script on worker machine and return output.
 
@@ -256,7 +260,7 @@ class Worker(object):
         """
         return self.server.script_check_output(cmd)
 
-    @log_and_reraise_remote_exception
+
     def rpc(self, host, cmd, *params1, **params2):
         """Do rpc call to mininet node.
 
@@ -276,7 +280,7 @@ class Worker(object):
         """
         return self.mininet.rpc(host, cmd, *params1, **params2)
 
-    @log_and_reraise_remote_exception
+
     def rattr(self, host, name):
         """Get attributes of mininet node.
 
@@ -291,9 +295,9 @@ class Worker(object):
             WARNING: if the attribute is not serializable this might
                      crash.
         """
-        return self.miinet.attr(host, name)
+        return self.mininet.attr(host, name)
 
-    @log_and_reraise_remote_exception
+
     def _fix_mtus(self):
         """If mtu of Worker is lower than 1600 set it to 1600.
 
@@ -317,10 +321,10 @@ class Worker(object):
         if(mtu < 1600):
             self.run_cmd("ip li se dev " + intf + " mtu 1600")
 
-    @log_and_reraise_remote_exception
+
     def stop(self):
         """Stop mininet instance on this worker."""
-        return self.mininet.stop()
+        return self.mininet.destroy_mininet()
 
     def get_file(self, src, dst):
         """Transfer file specified by src on worker to dst on Frontend.
@@ -332,8 +336,8 @@ class Worker(object):
             src: string of path to file on Worker
             dst: string of path to file or folder on Frontend
         """
-        cmd_get = self.sshtool.get_scp_get_cmd(targethostname=self.hn()
-                                               remote=src
+        cmd_get = self.sshtool.get_scp_get_cmd(targethostname=self.hn(),
+                                               remote=src,
                                                local=dst)
         subprocess.call(cmd_get)
 
@@ -346,12 +350,12 @@ class Worker(object):
             src: string of path to file on Frontend
             dst: string of path to file or folder on Worker
         """
-        cmd_put = self.sshtool.get_scp_put_cmd(targethostname=self.hn()
-                                               local=src
+        cmd_put = self.sshtool.get_scp_put_cmd(targethostname=self.hn(),
+                                               local=src,
                                                remote=dst)
         subprocess.call(cmd_put)
 
-    @log_and_reraise_remote_exception
+
     def addHost(self, name, cls=None, **params):
         """Add host at runtime.
 
@@ -368,7 +372,7 @@ class Worker(object):
         """
         return self.mininet.addHost(name, cls, **params)
 
-    @log_and_reraise_remote_exception
+
     def addSwitch(self, name, cls=None, **params):
         """Add switch at runtime.
 
@@ -385,7 +389,7 @@ class Worker(object):
         """
         return self.mininet.addSwitch(name, cls, **params)
 
-    @log_and_reraise_remote_exception
+
     def addController(self, name="c0", controller=None, **params):
         """Add controller at runtime.
 
@@ -402,7 +406,7 @@ class Worker(object):
         """
         return self.mininet.addHost(name, controller, **params)
 
-    @log_and_reraise_remote_exception
+
     def addTunnel(self, name, switch, port, intf, **params):
         """Add tunnel at runtime.
 
@@ -417,7 +421,7 @@ class Worker(object):
         """
         self.mininet.addTunnel(name, switch, port, intf, **params)
 
-    @log_and_reraise_remote_exception
+
     def addLink(self, node1, node2, port1=None, port2=None,
                 cls=None, **params):
         """Add link at runtime.
@@ -529,7 +533,7 @@ class Cluster(object):
             sequence must be equal to worker id.
     """
 
-    def __init__(self, ip, port, password):
+    def __init__(self, ip=None, port=None, password=None):
         """Inits Cluster class.
 
         Args:
@@ -538,14 +542,19 @@ class Cluster(object):
         self.running = False
         self.logger = logging.getLogger(__name__)
         self.tunhelper = TunHelper()
-        Pyro4.config.HMAC_KEY = password
-        self.nameserver = Pyro4.locateNS(host=ip, port=port)
-        # we can't open our pyro server yet (we need the local ip first)
-        # but need to read the config file. Therefore we do not register
-        # the config instance and replace it later on.
+        self.config = MaxiNetConfig()
+        if(ip is None):
+            ip = self.config.get_nameserver_ip()
+        if(port is None):
+            port = self.config.get_nameserver_port()
+        if(password is None):
+            password = self.config.get_nameserver_password()
+        self.nameserver = Pyro4.locateNS(host=ip, port=port, hmac_key=password)
         self.config = Pyro4.Proxy(self.nameserver.lookup("config"))
+        self.config._pyroHmacKey=password
         self.manager = Pyro4.Proxy(self.nameserver.lookup("MaxiNetManager"))
-        self.sshtool = Tools.SSH_Tool(self.config)
+        self.manager._pyroHmacKey=password
+        self.sshtool = SSH_Tool(self.config)
         self.hostname_to_worker={}
         self.ident = random.randint(1, sys.maxint)
         logging.basicConfig(level=self.config.get_loglevel())
@@ -559,7 +568,7 @@ class Cluster(object):
     def add_worker_by_hostname(self, hostname):
         pyname = self.manager.reserve_worker(hostname, self.ident)
         if(pyname):
-            self.worker.append(Worker(self.nameserver, pyname, self.sshtool))
+            self.worker.append(Worker(self.nameserver, pyname, self.config.get_nameserver_password(), self.sshtool))
             self.hostname_to_worker[hostname] = self.worker[-1]
             self.logger.info("added worker %s" % hostname)
             return True
@@ -573,6 +582,12 @@ class Cluster(object):
             if(self.add_worker_by_hostname(hn)):
                 return True
         return False
+
+    def add_workers(self):
+        i = 0
+        while self.add_worker():
+            i = i + 1
+        return i
 
     def remove_worker(self, worker):
         if(not isinstance(worker, Worker)):
@@ -747,7 +762,7 @@ class Experiment(object):
         if controller:
             contr = controller
         else:
-            contr = self.config.getController()
+            contr = self.config.get_controller()
         if contr.find(":") >= 0:
             (host, port) = contr.split(":")
         else:
@@ -758,10 +773,14 @@ class Experiment(object):
 
     def _update_shares(self):
         if(self.shares is None):
-            self.shares = [1] * self.cluster.num_workers()
+            ts = [1] * self.cluster.num_workers()
             for i in range(0, self.cluster.num_workers()):
                 if(self._get_config_share(i)):
-                    self.shares[i] = self._get_config_share(i)
+                    ts[i] = self._get_config_share(i)
+            s = sum(ts)
+            self.shares = []
+            for i in range(0, self.cluster.num_workers()):
+                self.shares.append(float(ts[i])/float(s))
 
     def _get_config_share(self, wid):
         hn = self.workerid_to_hostname[wid]

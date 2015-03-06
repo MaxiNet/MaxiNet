@@ -5,18 +5,15 @@
 # Make sure your controller is able to handle OpenFlow 1.3.
 #
 
-import sys
-import time
-
 from mininet.node import OVSSwitch
 
 from MaxiNet.Frontend import maxinet
-from MaxiNet.Frontend.tools import FatTree
+from MaxiNet.tools import FatTree
 
 
 topo = FatTree(4, 10, 0.1)
 cluster = maxinet.Cluster()
-cluster.start()
+cluster.add_workers()
 
 exp = maxinet.Experiment(cluster, topo, switch=OVSSwitch)
 exp.setup()

@@ -9,15 +9,13 @@
 #
 
 
-import sys
 import time
 
 from mininet.topo import Topo
 from mininet.node import OVSSwitch
 
 from MaxiNet.Frontend import maxinet
-from MaxiNet.Frontend.tools import FatTree
-from MaxiNet.Frontend.tools import Tools
+from MaxiNet.tools import Tools
 
 
 # create topology
@@ -30,7 +28,7 @@ topo.addLink("h2", "s1")
 
 # start cluster
 cluster = maxinet.Cluster()
-cluster.start()
+cluster.add_workers()
 
 # start experiment with OVSSwitch on cluster
 exp = maxinet.Experiment(cluster, topo, switch=OVSSwitch)

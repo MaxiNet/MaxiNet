@@ -23,7 +23,7 @@ StrictModes no
 RSAAuthentication yes
 PubkeyAuthentication yes
 AuthorizedKeysFile	<!FOLDER!>/authorized_keys
-AuthenticationMethods "publickey"
+#AuthenticationMethods "publickey"
 IgnoreRhosts yes
 RhostsRSAAuthentication no
 HostbasedAuthentication no

@@ -45,15 +45,19 @@ class CLI(Cmd):
         "Print all workers; worker id in brackets"
         h = ""
         for worker in self.experiment.cluster.worker:
-            h = h + " " + worker.hn() + "[" + str(worker.wid) + "]"
+            wid = self.experiment.hostname_to_workerid[worker.hn()]
+            h = h + " " + worker.hn() + "[" + str(wid) + "]"
         print h
 
     def do_switches(self, s):
         "Print all switchnames; worker id in brackets"
         h = ""
         for switch in self.experiment.switches:
+            wid = self.experiment.hostname_to_workerid[
+                self.experiment.get_worker(switch).hn()
+            ]
             h = h + " " + switch.name +\
-                "[" + str(self.experiment.get_worker(switch).wid) + "]"
+                "[" + str(wid) + "]"
         print h
 
     def do_pingall(self, s):
@@ -165,4 +169,5 @@ class CLI(Cmd):
                 rcmd = sshtool.get_ssh_cmd(targethostname=hn,
                                            cmd="mnexec -a " + pid + " " + cmd,
                                            opts=["-t"])
+            print rcmd
             subprocess.call(rcmd)

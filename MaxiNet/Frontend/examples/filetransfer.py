@@ -10,18 +10,17 @@
 #
 
 import subprocess
-import sys
 import time
 
 from MaxiNet.Frontend import maxinet
-from MaxiNet.Frontend.tools import FatTree
+from MaxiNet.tools import FatTree
 
 
 topo = FatTree(4, 10, 0.1)
 
 # start maxinet cluster
 cluster = maxinet.Cluster()
-cluster.start()
+cluster.add_workers()
 
 # create experiment on cluster with FatTree topology
 exp = maxinet.Experiment(cluster, topo)

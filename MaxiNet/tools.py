@@ -1,5 +1,6 @@
 import atexit
 from ConfigParser import RawConfigParser
+from mininet.topo import Topo
 import logging
 import os
 import random
@@ -22,6 +23,7 @@ class MaxiNetConfig(RawConfigParser):
     def __init__(self, file=None, register=False, **args):
         RawConfigParser.__init__(self, **args)
         self.logger = logging.getLogger(__name__)
+        self.daemon = None
         if(file is None):
             self.read(["MaxiNet.cfg", os.path.expanduser("~/.MaxiNet.cfg"),
                        "/etc/MaxiNet.cfg"])
@@ -42,6 +44,9 @@ class MaxiNetConfig(RawConfigParser):
 
     def get_frontend_ip(self):
         return self.get("FrontendServer", "ip")
+
+    def get_controller(self):
+        return self.get("all", "controller")
 
     def get_worker_ip(self, hostname, classifier=None):
         if(not self.has_section(hostname)):
@@ -77,8 +82,9 @@ class MaxiNetConfig(RawConfigParser):
         return lvls[lvl]
 
     def register(self):
-        self.nameserver = Pyro4.locateNS(self.get_nameserver_ip(), self.get_nameserver_port())
+        self.nameserver = Pyro4.locateNS(self.get_nameserver_ip(), self.get_nameserver_port(), hmac_key=self.get_nameserver_password())
         self.daemon = Pyro4.Daemon(host=self.get_nameserver_ip())
+        self.daemon._pyroHmacKey = self.get_nameserver_password()
         uri = self.daemon.register(self)
         self.daemon_thread = threading.Thread(target=self.daemon.requestLoop)
         self.daemon_thread.daemon = True
@@ -90,7 +96,6 @@ class MaxiNetConfig(RawConfigParser):
         if(self.daemon):
             self.nameserver.remove("config")
             self.daemon.shutdown()
-            self.daemon.close()
             self.daemon = None
             self.daemon_thread.join()
             self.daemon_thread = None
@@ -104,7 +109,7 @@ class SSH_Tool(object):
 
     def _generate_ssh_key(self):
         folder = tempfile.mkdtemp()
-        subprocess.call(["ssh-keygen", "-t", "rsa", "-q", "-N", "\"\"",
+        subprocess.call(["ssh-keygen", "-t", "rsa", "-q", "-N", "", "-f",
                          os.path.join(folder, "sshkey")])
         return (os.path.join(folder, "sshkey"), os.path.join(folder, "sshkey.pub"))
 
@@ -116,18 +121,22 @@ class SSH_Tool(object):
         rip = self.config.get_worker_ip(targethostname)
         if(rip is None):
             return None
-        cmd = ["ssh", "-o", "UserKnownHostsFile=/dev/null", "-o",
+        cm = ["ssh", "-p", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
                "StrictHostKeyChecking=no", "-q", "-i", self.key_priv]
         if(opts):
-            cmd.extend(opts)
-        cmd.extend([rip, cmd])
-        return cmd
+            cm.extend(opts)
+        cm.append(rip)
+        if(type(cmd) == str):
+            cm.append(cmd)
+        else:
+            cm.extend(cmd)
+        return cm
 
     def get_scp_put_cmd(self, targethostname, local, remote, opts=None):
         rip = self.config.get_worker_ip(targethostname)
         if(rip is None):
             return None
-        cmd = ["scp", "-o", "UserKnownHostsFile=/dev/null", "-o",
+        cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
                "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
@@ -138,12 +147,61 @@ class SSH_Tool(object):
         rip = self.config.get_worker_ip(targethostname)
         if(rip is None):
             return None
-        cmd = ["scp", "-o", "UserKnownHostsFile=/dev/null", "-o",
+        cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
                "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
         cmd.extend(["%s:%s" % (rip, remote), local])
         return cmd
+
+
+#
+# Fat-tree topology implemention for mininet
+#
+class FatTree(Topo):
+    def randByte(self):
+        return hex(random.randint(0, 255))[2:]
+
+    def makeMAC(self, i):
+        return self.randByte() + ":" + self.randByte() + ":" + \
+               self.randByte() + ":00:00:" + hex(i)[2:]
+
+    def makeDPID(self, i):
+        a = self.makeMAC(i)
+        dp = "".join(re.findall(r'[a-f0-9]+', a))
+        return "0" * (12 - len(dp)) + dp
+
+    # args is a string defining the arguments of the topology!
+    # has be to format: "x,y,z" to have x hosts and a bw limit of y for
+    # those hosts each and a latency of z (in ms) per hop
+    def __init__(self, hosts=2, bwlimit=10, lat=0.1, **opts):
+        Topo.__init__(self, **opts)
+        tor = []
+        numLeafes = hosts
+        bw = bwlimit
+        s = 1
+        #bw = 10
+        for i in range(numLeafes):
+            h = self.addHost('h' + str(i + 1), mac=self.makeMAC(i),
+                            ip="10.0.0." + str(i + 1))
+            sw = self.addSwitch('s' + str(s), dpid=self.makeDPID(s),
+                                **dict(listenPort=(13000 + s - 1)))
+            s = s + 1
+            self.addLink(h, sw, bw=bw, delay=str(lat) + "ms")
+            tor.append(sw)
+        toDo = tor  # nodes that have to be integrated into the tree
+        while len(toDo) > 1:
+            newToDo = []
+            for i in range(0, len(toDo), 2):
+                sw = self.addSwitch('s' + str(s), dpid=self.makeDPID(s),
+                                    **dict(listenPort=(13000 + s - 1)))
+                s = s + 1
+                newToDo.append(sw)
+                self.addLink(toDo[i], sw, bw=bw, delay=str(lat) + "ms")
+                if len(toDo) > (i + 1):
+                    self.addLink(toDo[i + 1], sw, bw=bw, delay=str(lat) + "ms")
+            toDo = newToDo
+            bw = 2.0 * bw
 
 
 class Tools(object):

@@ -27,14 +27,15 @@ class WorkerServer(object):
         logging.basicConfig(level=logging.DEBUG)
         self.ip = None
         self._shutdown = False
-        Pyro4.config.COMMTIMEOUT = 0.5
+        #Pyro4.config.COMMTIMEOUT = 2
 
     def start(self, ip, port, password):
         self.logger.info("starting up and connecting to  %s:%d"
                          % (ip, port))
-        Pyro4.config.HMAC_KEY = password
-        self._ns = Pyro4.locateNS(ip, port)
+        #Pyro4.config.HMAC_KEY = password
+        self._ns = Pyro4.locateNS(ip, port, hmac_key=password)
         self.config = Pyro4.Proxy(self._ns.lookup("config"))
+        self.config._pyroHmacKey=password
         self.ip = self.config.get_worker_ip(self.get_hostname())
         if(not self.ip):
             self.ip = Tools.guess_ip()
@@ -44,9 +45,10 @@ class WorkerServer(object):
             self.logger.warn("""FrontendServer did not know IP of this host.
                              Guessed: %s""" % self.ip)
         self.logger.info("configuring and starting ssh daemon...")
-        self.sshManager = SSH_Manager(folder=self.ssh_folder, ip=ip, port=port)
+        self.sshManager = SSH_Manager(folder=self.ssh_folder, ip=self.ip, port=self.config.get_sshd_port())
         self.sshManager.start_sshd()
         self._pyrodaemon = Pyro4.Daemon(host=self.ip)
+        self._pyrodaemon._pyroHmacKey=password
         uri = self._pyrodaemon.register(self)
         self._ns.register(self._get_pyroname(), uri)
         uri = self._pyrodaemon.register(self.mnManager)
@@ -58,11 +60,12 @@ class WorkerServer(object):
         manager_uri = self._ns.lookup("MaxiNetManager")
         if(manager_uri):
             self._manager = Pyro4.Proxy(manager_uri)
+            self._manager._pyroHmacKey=password
             self.logger.info("signing in...")
             if(self._manager.worker_signin(self._get_pyroname(), self.get_hostname())):
                 self.logger.info("done. Entering requestloop.")
                 self._started = True
-                self._pyrodaemon.requestLoop(loopCondition=(lambda: not self._check_shutdown()))
+                self._pyrodaemon.requestLoop()
             else:
                 self.logger.error("signin failed.")
         else:
@@ -86,7 +89,7 @@ class WorkerServer(object):
         self._pyrodaemon.close()
 
     def remoteShutdown(self):
-        self._shutdown = True
+        self._pyrodaemon.shutdown()
 
     def _check_shutdown(self):
         return self._shutdown
@@ -103,7 +106,7 @@ class WorkerServer(object):
     def check_output(self, cmd):
         self.logger.debug("Executing %s" % cmd)
         return subprocess.check_output(cmd, shell=True,
-                                       stderr=subprocess.STDOUT)
+                                       stderr=subprocess.STDOUT).strip()
 
     def script_check_output(self, cmd):
         # Prefix command by our worker directory
@@ -154,9 +157,10 @@ class MininetManager(object):
             return False
 
     def destroy_mininet(self):
-        self.net.stop()
-        self.logger.info("mininet instance terminated")
-        self.net = None
+        if self.net:
+            self.net.stop()
+            self.logger.info("mininet instance terminated")
+            self.net = None
 
     def configLinkStatus(self, src, dst, status):
         self.net.configLinkStatus(src, dst, status)
