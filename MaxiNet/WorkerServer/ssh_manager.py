@@ -53,6 +53,10 @@ class SSH_Manager(object):
         subprocess.call(["ssh-keygen", "-q", "-N", "\"\"", "-t", "rsa", "-f",
                          os.path.join(self.folder, "ssh_host_rsa_key")])
 
+    def get_host_key_fingerprint(self):
+        return subprocess.check_output(["ssh-keygen", "-l", "-f",
+                                        os.path.join(self.folder, "ssh_host_rsa_key")]).strip()
+
     def initialize_ssh_folder(self, ip, port):
         self._write_sshd_config(ip, port)
         subprocess.call(["touch", os.path.join(self.folder, "authorized_keys")])

@@ -1,26 +1,26 @@
 TUTORIAL MaxiNet installation:
 
 Introduction:
-MaxiNet is is clustered version of mininet where multiple mininet instances 
-running on different physical machines (called workers) are linked and used 
-to run large scale experiments. Using the MaxiNet API, specification of 
+MaxiNet is is clustered version of mininet where multiple mininet instances
+running on different physical machines (called workers) are linked and used
+to run large scale experiments. Using the MaxiNet API, specification of
 experiments feels like setting up experiments in mininet because MaxiNet
-automatically maps the topology of the network to the workers and configures 
+automatically maps the topology of the network to the workers and configures
 them accordingly.
 In this tutorial we assume you are using Ubuntu as the operating system.
 
 1: Install mininet
-For each worker, follow the "Get started Guide" of mininet that can be found at 
-http://mininet.org/download/ and install mininet such that it can be invoked by 
-calling sudo mn at the terminal. You can also use the preconfigured mininet 
+For each worker, follow the "Get started Guide" of mininet that can be found at
+http://mininet.org/download/ and install mininet such that it can be invoked by
+calling sudo mn at the terminal. You can also use the preconfigured mininet
 virtual machines as workers.
 
 2. Install METIS
-One machine will be used as the coordinator of MaxiNet. We call 
+One machine will be used as the coordinator of MaxiNet. We call
 this machine the Frontend. It will need to have installed the same version of
 mininet as the workers, but can be a worker or a different machine.
 The Frontend requires the graph clustering library METIS.
-Download METIS from http://glaros.dtc.umn.edu/gkhome/metis/metis/download and 
+Download METIS from http://glaros.dtc.umn.edu/gkhome/metis/metis/download and
 install it on the Frontend:
 
 sudo
@@ -33,7 +33,7 @@ make
 sudo make install
 
 3. Install Pyro4, a python rpc libary, on all machines including the Frontend.
-sudo apt-get install pip
+sudo apt-get install python-gopip
 sudo pip install Pyro4
 
 4. Install screen
@@ -42,7 +42,7 @@ apt-get install screen
 
 5. Configure ssh access
 The Frontend starts mininet at the workers by using ssh. It is important that at
-all workers there is one user configured that is in the sudoers list with 
+all workers there is one user configured that is in the sudoers list with
 NO_PASSWORD option. For this tutorial we assume this user is called "mininet".
 
 mininet ALL= NOPASSWD:  ALL
@@ -51,10 +51,10 @@ as user mininet:
 ssh-keygen -t rsa
 ssh-copy-id -i ~/.ssh/id_rsa.pub mininet@remote-system
 
-where the last command has to be issued for each worker node. 
+where the last command has to be issued for each worker node.
 It is also important that the Frontend can access all workers via ssh and their
 respective hostname. For example the execution of "ssh host1" has to open an
-ssh session on the host with hostname "host1" without requiring a password. If 
+ssh session on the host with hostname "host1" without requiring a password. If
 this is not the case in your network, you can set aliases for these hosts in the
 ~/.ssh/config file as follows:
 

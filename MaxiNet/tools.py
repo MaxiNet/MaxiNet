@@ -134,7 +134,7 @@ class SSH_Tool(object):
         cmd.extend([local, "%s:%s" % (rip, remote)])
         return cmd
 
-    def get_scp_get_cmd(self, targethostname, remote, local opts=None):
+    def get_scp_get_cmd(self, targethostname, remote, local, opts=None):
         rip = self.config.get_worker_ip(targethostname)
         if(rip is None):
             return None

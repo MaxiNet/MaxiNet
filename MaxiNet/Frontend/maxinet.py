@@ -122,6 +122,7 @@ class Worker(object):
         """Init Worker class."""
         self.server = Pyro4.Proxy(nameserver.lookup(pyroname))
         self.mininet = Pyro4.Proxy(nameserver.lookup(pyroname+".mnManager"))
+        self.ssh = Pyro4.Proxy(nameserver.lookup(pyroname+".sshManager"))
         self.config = Pyro4.Proxy(nameserver.lookup("config"))
         if(not self.config.run_with_1500_mtu()):
             self._fix_mtus()
@@ -129,6 +130,11 @@ class Worker(object):
         self.sshtool = sshtool
         self._x11tunnels = []
         self.run_script("load_tunneling.sh")
+
+    def _add_ssh_key(self):
+        k = self.sshtool.get_pub_ssh_key()
+        self.ssh.add_key(k)
+
 
     @log_and_reraise_remote_exception
     def hn(self):
