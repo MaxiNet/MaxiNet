@@ -1179,8 +1179,10 @@ class Experiment(object):
         """
         w1 = self.get_worker(node1)
         w2 = self.get_worker(node2)
-        node1 = self.get(node1)
-        node2 = self.get(node2)
+        if(not isinstance(node1, NodeWrapper)):
+            node1 = self.get(node1)
+        if(not isinstance(node2, NodeWrapper)):
+            node2 = self.get(node2)
         if(w1 == w2):
             self.logger.debug("no tunneling needed")
             l = w1.addLink(self.name(node1), self.name(node2), port1, port2,
@@ -1338,9 +1340,11 @@ class Experiment(object):
         """Set MTUs of all Interfaces of mininet host.
 
         Args:
-            host: NodeWrapper instance.
+            host: NodeWrapper instance or nodename.
             mtu: MTU value.
         """
+        if(not isinstance(host, NodeWrapper)):
+            host = self.get(host)
         for intf in host.intfNames():
             host.cmd("ifconfig " + intf + " mtu " + str(mtu))
 
