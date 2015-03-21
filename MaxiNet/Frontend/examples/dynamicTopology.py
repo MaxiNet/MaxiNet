@@ -41,10 +41,10 @@ print "pinging h2 from h1 to check network connectivity..."
 print exp.get_node("h1").cmd("ping -c 5 10.0.0.2")  # show network connectivity
 
 raw_input("[Continue]")  # wait for user to acknowledge network connectivity
-print "adding switch on worker 2..."
+print "adding switch on second worker..."
 # Enforce placement of s2 on Worker 2. Otherwise random worker would be chosen
-exp.addSwitch("s2", dpid=Tools.makeDPID(2), wid=2)
-print "adding hosts h3 and h4 on worker 2..."
+exp.addSwitch("s2", dpid=Tools.makeDPID(2), wid=1)
+print "adding hosts h3 and h4 on second worker..."
 # Enforce placement of h3 on worker of s2.
 # Remember: we cannot have tunnels between hosts and switches
 exp.addHost("h3", ip=Tools.makeIP(3), max=Tools.makeMAC(3), pos="s2")
