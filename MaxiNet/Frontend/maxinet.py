@@ -870,7 +870,7 @@ class Experiment(object):
     def terminate_logging(self):
         """Stop logging."""
         for worker in self.cluster.workers():
-            worker.run_cmd("killall getRxTx.sh getMemoryUsage.sh")
+            worker.run_cmd("killall mpstat getRxTx.sh getMemoryUsage.sh")
         self.isMonitoring = False
 
     def log_cpu(self):
