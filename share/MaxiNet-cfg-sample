@@ -6,6 +6,11 @@ logLevel = INFO ; Either CRITICAL, ERROR, WARNING, INFO  or DEBUG
 port_ns = 9090
 port_sshd = 5345
 runWith1500MTU = False
+sshuser = root
+usesudo = True
+
+[FrontendServer]
+ip = 192.168.123.1
 
 [debian-vm1]
 ip = 192.168.123.1

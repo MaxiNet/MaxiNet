@@ -45,7 +45,7 @@ class WorkerServer(object):
             self.logger.warn("""FrontendServer did not know IP of this host.
                              Guessed: %s""" % self.ip)
         self.logger.info("configuring and starting ssh daemon...")
-        self.sshManager = SSH_Manager(folder=self.ssh_folder, ip=self.ip, port=self.config.get_sshd_port())
+        self.sshManager = SSH_Manager(folder=self.ssh_folder, ip=self.ip, port=self.config.get_sshd_port(), user=self.config.get("all", "sshuser"))
         self.sshManager.start_sshd()
         self._pyrodaemon = Pyro4.Daemon(host=self.ip)
         self._pyrodaemon._pyroHmacKey=password

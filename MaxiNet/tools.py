@@ -119,39 +119,46 @@ class SSH_Tool(object):
 
     def get_ssh_cmd(self, targethostname, cmd, opts=None):
         rip = self.config.get_worker_ip(targethostname)
+        user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
         cm = ["ssh", "-p", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
                "StrictHostKeyChecking=no", "-q", "-i", self.key_priv]
         if(opts):
             cm.extend(opts)
-        cm.append(rip)
+        cm.append("%s@%s" % (user, rip))
         if(type(cmd) == str):
+            if(self.config.getboolean("all", "usesudo")):
+                cmd = "sudo "+cmd
             cm.append(cmd)
         else:
+            if(self.config.getboolean("all", "usesudo")):
+                cmd = ["sudo"] + cmd
             cm.extend(cmd)
         return cm
 
     def get_scp_put_cmd(self, targethostname, local, remote, opts=None):
         rip = self.config.get_worker_ip(targethostname)
+        user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
         cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
                "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
-        cmd.extend([local, "%s:%s" % (rip, remote)])
+        cmd.extend([local, "%s@%s:%s" % (user, rip, remote)])
         return cmd
 
     def get_scp_get_cmd(self, targethostname, remote, local, opts=None):
         rip = self.config.get_worker_ip(targethostname)
+        user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
         cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
                "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
-        cmd.extend(["%s:%s" % (rip, remote), local])
+        cmd.extend(["%s@%s:%s" % (user, rip, remote), local])
         return cmd
 
 

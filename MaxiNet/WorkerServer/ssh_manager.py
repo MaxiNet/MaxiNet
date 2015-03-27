@@ -5,11 +5,11 @@ import subprocess
 
 class SSH_Manager(object):
 
-    def __init__(self, folder, ip, port):
+    def __init__(self, folder, ip, port, user):
         self.folder = folder
         self.popen = None
         if not self._folder_is_initialized():
-            self.initialize_ssh_folder(ip, port)
+            self.initialize_ssh_folder(ip, port, user)
 
     def _folder_is_initialized(self):
         if (os.path.exists(os.path.join(self.folder, "sshd_config")) and
@@ -18,7 +18,7 @@ class SSH_Manager(object):
             return True
         return False
 
-    def _write_sshd_config(self, ip, port, template=None):
+    def _write_sshd_config(self, ip, port, user, template=None):
         if template is None:
             template = os.path.abspath(os.path.dirname(os.path.abspath(__file__))
                                                        + os.sep
@@ -26,6 +26,7 @@ class SSH_Manager(object):
         with open(template, "r") as f_template:
             content = f_template.read()
         content = content.replace("<!IP!>", ip)
+        content = content.replace("<!USER!>", user)
         content = content.replace("<!PORT!>", str(port))
         content = content.replace("<!FOLDER!>", self.folder)
         with open(os.path.join(self.folder, "sshd_config"), "w") as fn:
@@ -61,8 +62,8 @@ class SSH_Manager(object):
         return subprocess.check_output(["ssh-keygen", "-l", "-f",
                                         os.path.join(self.folder, "ssh_host_rsa_key")]).strip()
 
-    def initialize_ssh_folder(self, ip, port):
-        self._write_sshd_config(ip, port)
+    def initialize_ssh_folder(self, ip, port, user):
+        self._write_sshd_config(ip, port, user)
         subprocess.call(["touch", os.path.join(self.folder, "authorized_keys")])
         self._generate_host_key()
 

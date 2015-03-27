@@ -7,7 +7,7 @@ Protocol 2
 HostKey <!FOLDER!>/ssh_host_rsa_key
 #HostKey /tmp/ssh/ssh_host_dsa_key
 UsePrivilegeSeparation no
-AllowUsers root
+AllowUsers <!USER!>
 KeyRegenerationInterval 3600
 ServerKeyBits 768
 
