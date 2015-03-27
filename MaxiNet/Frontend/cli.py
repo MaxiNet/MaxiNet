@@ -169,5 +169,4 @@ class CLI(Cmd):
                 rcmd = sshtool.get_ssh_cmd(targethostname=hn,
                                            cmd="mnexec -a " + pid + " " + cmd,
                                            opts=["-t"])
-            print rcmd
             subprocess.call(rcmd)
