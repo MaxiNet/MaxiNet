@@ -35,6 +35,7 @@ class NameServer(object):
                                 })
         self._ns_thread.daemon = True
         self._ns_thread.start()
+        time.sleep(1)
         atexit.register(self.stop)
         self.config.register()
 
@@ -191,6 +192,7 @@ class MaxiNetManager(object):
 
 def main():
     NameServer().start()
+    time.sleep(1)
     MaxiNetManager().start()
 
 if(__name__ == "__main__"):
