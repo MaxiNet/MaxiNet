@@ -24,6 +24,7 @@ class WorkerServer(object):
         self.mnManager = MininetManager()
         self.sshManager = None
         self.ssh_folder = tempfile.mkdtemp()
+        atexit.register(subprocess.call, ["rm", "-rf", self.ssh_folder])
         logging.basicConfig(level=logging.DEBUG)
         self.ip = None
         self._shutdown = False
