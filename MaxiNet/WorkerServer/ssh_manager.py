@@ -8,6 +8,8 @@ class SSH_Manager(object):
     def __init__(self, folder, ip, port, user):
         self.folder = folder
         self.popen = None
+        subprocess.call(["chown", ":%s" % user, folder])
+        subprocess.call(["chmod", "g+xr", folder])
         if not self._folder_is_initialized():
             self.initialize_ssh_folder(ip, port, user)
 
