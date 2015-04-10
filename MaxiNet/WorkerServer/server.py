@@ -1,5 +1,7 @@
+import argparse
 import atexit
 import logging
+import os
 import subprocess
 import sys
 import tempfile
@@ -10,7 +12,7 @@ from mininet.node import UserSwitch, OVSSwitch
 import mininet.term
 import Pyro4
 
-from MaxiNet.tools import Tools
+from MaxiNet.tools import Tools, MaxiNetConfig
 from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
 
 
@@ -217,7 +219,36 @@ class MininetManager(object):
 
 
 def main():
-    WorkerServer().start(ip=sys.argv[1], port=int(sys.argv[2]), password=sys.argv[3])
+    parser = argparse.ArgumentParser(description="MaxiNet Worker which hosts a mininet instance")
+    parser.add_argument("--ip", action="store", help="Frontend Server IP")
+    parser.add_argument("--port", action="store", help="Frontend Server Port", type=int)
+    parser.add_argument("--password", action="store", help="Frontend Server Password")
+    parser.add_argument("-c", "--config", metavar="FILE", action="store", help="Read configuration from FILE")
+    parsed = parser.parse_args()
+    print parsed
+    if (parsed.config or
+            os.path.isfile("MaxiNet.cfg") or
+            os.path.isfile(os.path.expanduser("~/.MaxiNet.cfg")) or
+            os.path.isfile("/etc/MaxiNet.cfg")):
+        if parsed.config:
+            config = MaxiNetConfig(file=parsed.config,register=False)
+        else:
+            config = MaxiNetConfig(register=False)
+        ip = config.get_nameserver_ip()
+        port = config.get_nameserver_port()
+        pw = config.get_nameserver_password()
+    if parsed.ip:
+        ip = parsed.ip
+    if parsed.port:
+        port = parsed.port
+    if parsed.password:
+        pw = parsed.password
+
+    if not (ip and port and pw):
+        print "Please provide MaxiNet.cfg or specify ip, port and password of \
+               the Frontend Server."
+    else:
+        WorkerServer().start(ip=ip, port=port, password=pw)
 
 
 if(__name__ == "__main__"):
