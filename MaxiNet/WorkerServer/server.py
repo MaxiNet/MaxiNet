@@ -132,32 +132,33 @@ class MininetManager(object):
 
     def create_mininet(self, topo, tunnels=[],  switch=UserSwitch,
                        controller=None):
-        if(self.net is None):
-            self.logger.info("Creating mininet instance")
-            if controller:
-                self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
-                                   switch=switch, controller=controller)
-            else:
-                self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
-                                   switch=switch)
-            self.logger.info("Adding tunnels to mininet instance")
-            for tunnel in tunnels:
-                port = None
-                cls = None
-                if "port" in tunnel[2].keys():
-                    port = tunnel[2]["port"]
-                    del tunnel[2]["port"]
-                if "cls" in tunnel[2].keys():
-                    cls = tunnel[2]["cls"]
-                    del tunnel[2]["cls"]
-                self.addTunnel(tunnel[0], tunnel[1], port, cls, **tunnel[2])
-            self.logger.info("Starting Mininet...")
-            self.net.start()
-            self.logger.info("Startup complete.")
-            return True
+        if(not self.net is None):
+            self.logger.warn("running mininet instance detected!\
+                              Shutting it down...")
+            self.destroy_mininet()
+
+        self.logger.info("Creating mininet instance")
+        if controller:
+            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
+                               switch=switch, controller=controller)
         else:
-            self.logger.warn("mininet is already running. can't create new instance.")
-            return False
+            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
+                               switch=switch)
+        self.logger.info("Adding tunnels to mininet instance")
+        for tunnel in tunnels:
+            port = None
+            cls = None
+            if "port" in tunnel[2].keys():
+                port = tunnel[2]["port"]
+                del tunnel[2]["port"]
+            if "cls" in tunnel[2].keys():
+                cls = tunnel[2]["cls"]
+                del tunnel[2]["cls"]
+            self.addTunnel(tunnel[0], tunnel[1], port, cls, **tunnel[2])
+        self.logger.info("Starting Mininet...")
+        self.net.start()
+        self.logger.info("Startup complete.")
+        return True
 
     def destroy_mininet(self):
         if self.net:
