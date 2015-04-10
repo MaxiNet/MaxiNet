@@ -106,6 +106,7 @@ class SSH_Tool(object):
     def __init__(self, config):
         self.config = config
         (self.key_priv, self.key_pub) = self._generate_ssh_key()
+        self.known_hosts = tempfile.mkstemp()[1]
 
     def _generate_ssh_key(self):
         folder = tempfile.mkdtemp()
@@ -122,8 +123,9 @@ class SSH_Tool(object):
         user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
-        cm = ["ssh", "-p", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
-               "StrictHostKeyChecking=no", "-q", "-i", self.key_priv]
+        cm = ["ssh", "-p", str(self.config.get_sshd_port()), "-o",
+              "UserKnownHostsFile=%s" % self.known_hosts,
+              "-q", "-i", self.key_priv]
         if(opts):
             cm.extend(opts)
         cm.append("%s@%s" % (user, rip))
@@ -142,8 +144,9 @@ class SSH_Tool(object):
         user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
-        cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
-               "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
+        cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o",
+               "UserKnownHostsFile=%s" % self.known_hosts,
+               "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
         cmd.extend([local, "%s@%s:%s" % (user, rip, remote)])
@@ -154,13 +157,19 @@ class SSH_Tool(object):
         user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
-        cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o", "UserKnownHostsFile=/dev/null", "-o",
-               "StrictHostKeyChecking=no", "-r", "-i", self.key_priv]
+        cmd = ["scp", "-P", str(self.config.get_sshd_port()), "-o",
+               "UserKnownHostsFile=%s" % self.known_hosts,
+               "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
         cmd.extend(["%s@%s:%s" % (user, rip, remote), local])
         return cmd
 
+    def add_known_host(self, ip):
+        with open(self.known_hosts, "a") as kh:
+            fp = subprocess.check_output(["ssh-keyscan", "-p",
+                                          str(self.config.get_sshd_port()), ip])
+            kh.write(fp)
 
 #
 # Fat-tree topology implemention for mininet

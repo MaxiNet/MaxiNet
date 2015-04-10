@@ -132,6 +132,7 @@ class Worker(object):
             self._fix_mtus()
         self.switch = switch
         self.sshtool = sshtool
+        self.sshtool.add_known_host(self.ip())
         self._x11tunnels = []
         self.run_script("load_tunneling.sh")
         self._add_ssh_key()
@@ -1116,7 +1117,7 @@ class Experiment(object):
             cls: Optional class to use on Link creation. Be aware that
                 only mininet.link.Link and mininet.link.TCLink are
                 supported for tunnels.
-            autoconf: mininet requires some calls to make newly added
+            autoconf: mininet requires some calls to makIe newly added
                 tunnels work. If autoconf is set to True MaxiNet will
                 issue these calls automatically.
 

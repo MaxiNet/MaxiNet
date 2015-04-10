@@ -55,7 +55,7 @@ class MaxiNetManager(object):
         self.logger = logging.getLogger(__name__)
 
     def start(self):
-        self.logger.info("starting up and connecting to  %s:%d"
+        self.logger.debug("starting up and connecting to  %s:%d"
                          % (self.config.get_nameserver_ip(), self.config.get_nameserver_port()))
         #Pyro4.config.HMAC_KEY = self.config.get_nameserver_password()
         self._ns = Pyro4.locateNS(self.config.get_nameserver_ip(), self.config.get_nameserver_port(), hmac_key=self.config.get_nameserver_password())
@@ -68,6 +68,7 @@ class MaxiNetManager(object):
         uri = self._pyrodaemon.register(self)
         self._ns.register("MaxiNetManager", uri)
         atexit.register(self._stop)
+        self.logger.info("startup successful. Waiting for workers to register...")
         self._pyrodaemon.requestLoop()
 
     def _stop(self):
@@ -192,7 +193,6 @@ class MaxiNetManager(object):
 
 def main():
     NameServer().start()
-    time.sleep(1)
     MaxiNetManager().start()
 
 if(__name__ == "__main__"):
