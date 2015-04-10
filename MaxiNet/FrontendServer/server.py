@@ -1,8 +1,7 @@
+#!/usr/bin/python2
+
 import atexit
-from ConfigParser import RawConfigParser
 import logging
-import os
-from socket import error
 import threading
 import time
 
@@ -13,17 +12,14 @@ from MaxiNet.tools import MaxiNetConfig
 
 Pyro4.config.SOCK_REUSE = True
 
+
 class NameServer(object):
     def __init__(self, config=MaxiNetConfig()):
         self.config = config
         self.logger = logging.getLogger(__name__)
 
     def start(self):
-        """Start namserver instance.
-
-        Will wait for up to 30 seconds if nameserver port is blocked by other
-        process. This sometimes happens when nameserver was not shut down
-        correctly and OS waits for timeout before freeing the port.
+        """Start namserver instance
         """
         Pyro4.config.SERVERTYPE = "thread"
 
@@ -46,6 +42,22 @@ class NameServer(object):
 
 
 class MaxiNetManager(object):
+
+    """Manager class which manages distribution of workers to clusters.
+
+    The MaxiNetManager class manages the distribution of workers to clusters
+    After connecting to the nameserver every Worker registers itself with the
+    MaxiNetManager instance. Workers can than be reserved by Clusters to
+    to run Experiments on them. The Cluster has to free the Worker if it doesn't
+    use it anymore. Note that MaxiNet does not implement any "security" features,
+    meaning that there is no mechanism in place to prevent a malicious cluster
+    from messing with Workers that are not reserved for it.
+
+    Attributes:
+        config: instance of class MaxiNetConfig which is registerd on the
+            nameserver and accessible by clusters, experiments and workers.
+        logger: logging instance
+    """
     def __init__(self, config=MaxiNetConfig()):
         self.config = config
         self._worker_dict = {}

@@ -1,5 +1,15 @@
 MaxiNet
 
+MaxiNet 0.5:
+ * change: Reworked MaxiNet startup architecture.
+           To start MaxiNet cluster call MaxiNetFrontendServer command
+           on the frontend and MaxiNetWorker on worker machines.
+ * change: Config options changes. See share/MaxiNet-cfg-sample
+ * change: moved MaxiNet/Frontend/tools.py to to MaxiNet/tools.py
+ * bugfix: cpu logging did not terminate correctly
+ * feature: Pyro 4.30 compatibility
+ * feature: mininet 2.2.0 compatibility
+
 MaxiNet 0.4:
  * cleanup: MaxiNet is now installed as a python module. Use "from MaxiNet.Frontend import maxinet" instead of old
             "import maxinet"
@@ -47,7 +57,7 @@ MaxiNet 0.2:
  * feature: added install script for debian wheezy and ubuntu 12.04.3 Server
  * feature: added ability to add nodes on-the-fly
  * cleanup: some api changes
-   * configuration is now done in config.py only. 
+   * configuration is now done in config.py only.
      Parameters of Cluster / Experiment classes override config
    * Experiment.run_cmd_on_host is deprecated now. Use Experiment.get(host).cmd
      instead

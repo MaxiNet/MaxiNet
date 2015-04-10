@@ -43,7 +43,6 @@ from mininet.link import TCIntf, Intf, Link, TCLink
 import Pyro4
 
 from MaxiNet.Frontend.cli import CLI
-from MaxiNet.Frontend.client import log_and_reraise_remote_exception
 from MaxiNet.tools import Tools, MaxiNetConfig, SSH_Tool
 from MaxiNet.Frontend.partitioner import Partitioner
 
@@ -93,7 +92,7 @@ def run_cmd_shell(cmd):
 
     Args:
         cmd: Either a string of program name and arguments or sequence
-            of program arguments.
+            of program name and arguments.
 
     Returns:
         Stdout of cmd call as string.
@@ -106,7 +105,8 @@ class Worker(object):
     """Worker class used to manage an individual Worker host.
 
     A Worker is part of a Cluster and runs a part of the emulated
-    network.
+    network. A Worker is identified by its hostname.
+    The Worker class is instanciated when a Worker is added to a Cluster.
 
     Attributes:
         config: instance of class MaxiNetConfig
@@ -115,7 +115,10 @@ class Worker(object):
         server: remote instance of class WorkerServer which is used to run
             commands on the Worker machine.
         switch: default mininet switch class to use in mininet instances.
-        wid: worker id.
+        ssh: instance of class SSH_Manager used to configure the ssh daemon
+            on the worker.
+        sshtool: instance of class SSH_Tool used to manage the ssh client on
+            the frontend machine.
     """
 
     def __init__(self, nameserver, pyroname, pyropw, sshtool, switch=UserSwitch):
@@ -138,6 +141,7 @@ class Worker(object):
         self._add_ssh_key()
 
     def _add_ssh_key(self):
+        """add ssh key of frontend machine to worker ssh daemon"""
         k = self.sshtool.get_pub_ssh_key()
         self.ssh.add_key(k)
 
@@ -166,7 +170,12 @@ class Worker(object):
 
 
     def ip(self, classifier=None):
-        """Get public ip adress of worker machine."""
+        """Get public ip adress of worker machine.
+
+        Args:
+            classifier: if multiple ip addresses are configured for a worker
+                a classifier can be used to hint which ip address should be used.
+        """
         return self.config.get_worker_ip(self.hn(), classifier)
 
 
@@ -200,7 +209,12 @@ class Worker(object):
 
     def daemonize_script(self, script, args):
         """run script from script folder in background and terminate when MaxiNet is shut
-        down."""
+        down.
+
+        Args:
+            script: Script name to call
+            args: string of args which will be appended to script name call
+        """
         self.server.daemonize_script(script, args)
 
 
@@ -312,7 +326,7 @@ class Worker(object):
         set to 1600.
         This method tries to determine the correct network interface and
         sets its MTU. This method is not needed if MaxiNet is configured
-        to use MTUs lower than 1451 in the MaxiNet configuration file.
+        to use MTUs lower than 1451 on the mininet nodes.
         """
         if self.ip(classifier="backend") is None:
             logger.warn("no ip configured - can not fix MTU ")
@@ -326,7 +340,6 @@ class Worker(object):
                                " | head -n1 | cut -d ' ' -f5"))
         if(mtu < 1600):
             self.run_cmd("ip li se dev " + intf + " mtu 1600")
-
 
     def stop(self):
         """Stop mininet instance on this worker."""
@@ -527,13 +540,19 @@ class Cluster(object):
         config: Instance of Tools.Config to query MaxiNet configuration.
         frontend: Instance of MaxiNet.Frontend.client.Frontend which
             is used to manage the pyro Server.
+        hostname_to_worker: dictionary which translates hostnames into Worker
+            instances
         hosts: List of worker hostnames.
+        ident: random integer which identifies this cluster instance on the
+            FrontendServer.
         localIP: IPv4 address of the Frontend.
         logger: Logging instance.
+        nameserver: pyro nameserver
         nsport: Nameserver port number.
-        running: Cluster is initialized and ready to run an experiment.
-            Can be queryd by Cluster.is_running() and gets set by
-            successfully calling Cluster.start().
+        manager: MaxiNetManager instance hosted by FrontendServer which manages
+            Workers.
+        sshtool: SSH_Tool instance which is used to manage ssh client on frontend
+            machine.
         tunhelper: Instance of TunHelper to enumerate tunnel instances.
         worker: List of worker instances. Index of worker instance in
             sequence must be equal to worker id.
@@ -543,9 +562,10 @@ class Cluster(object):
         """Inits Cluster class.
 
         Args:
-
+            ip: IP address of FrontendServer nameserver.
+            port: port of FrontendServer nameserver.
+            password: password of FrontendServer nameserver.
         """
-        self.running = False
         self.logger = logging.getLogger(__name__)
         self.tunhelper = TunHelper()
         self.config = MaxiNetConfig()
@@ -569,9 +589,26 @@ class Cluster(object):
         atexit.register(self._stop)
 
     def get_available_workers(self):
+        """Get list of worker hostnames which are not reserved.
+
+        Returns:
+            list of hostnames of workers which are registered on the FrontendServer
+            but not reserved by this or another Cluster instance.
+        """
         return self.manager.get_free_workers()
 
     def add_worker_by_hostname(self, hostname):
+        """Add worker by hostname
+
+        Reserves a Worker for this Cluster on the FrontendServer and adds it to
+        the Cluster instance. Fails if Worker is reserved by other Cluster or
+        no worker with that hostname exists.
+
+        Args:
+            hostname: hostname of Worker
+        Returns:
+            True if worker was successfully added, False if not.
+        """
         pyname = self.manager.reserve_worker(hostname, self.ident)
         if(pyname):
             self.worker.append(Worker(self.nameserver, pyname, self.config.get_nameserver_password(), self.sshtool))
@@ -583,6 +620,15 @@ class Cluster(object):
             return False
 
     def add_worker(self):
+        """Add worker
+
+        Reserves a Worker for this Cluster on the FrontendServer and adds it to
+        the Cluster instance. Fails if no unreserved Worker is available on the
+        FrontendServer.
+
+        Returns:
+            True if worker was successfully added, False if not.
+        """
         hns = self.get_available_workers().keys()
         for hn in hns:
             if(self.add_worker_by_hostname(hn)):
@@ -590,12 +636,28 @@ class Cluster(object):
         return False
 
     def add_workers(self):
+        """Add all available workers
+
+        Reserves all unreserved Workers for this Cluster on the FrontendServer
+        and adds them to the Cluster instance.
+
+        Returns:
+            Number of workers added.
+        """
         i = 0
         while self.add_worker():
             i = i + 1
         return i
 
     def remove_worker(self, worker):
+        """Remove worker from Cluster
+
+        Removes a Worker from the Cluster and makes it available for other
+        Cluster instances on the FrontendServer.
+
+        Args:
+            worker: hostname or Worker instance of Worker to remove.
+        """
         if(not isinstance(worker, Worker)):
             worker = self.hostname_to_worker[worker]
         del self.hostname_to_worker[worker.hn()]
@@ -606,15 +668,19 @@ class Cluster(object):
         self.logger.info("removed worker %s" % hn)
 
     def remove_workers(self):
+        """Remove all workers from this cluster
+
+        Removes all Workers from the Cluster and makes them available for other
+        Cluster instances on the FrontendServer.
+        """
         while(len(self.worker) > 0):
             self.remove_worker(self.worker[0])
 
     def _stop(self):
         """Stop Cluster and shut it down.
 
-        Shuts down cluster and removes pyro nameserver entries but
-        DOES NOT shut down workers. Call this after shutting down
-        workers via worker_manager.py script.
+        Removes all Workers from the Cluster and makes them available for other
+        Cluster instances on the FrontendServer.
         """
         self.remove_workers()
 
@@ -631,13 +697,13 @@ class Cluster(object):
         return self.worker
 
     def get_worker(self, hostname):
-        """Return worker with id wid.
+        """Return worker instance of worker with hostname hostname.
 
         Args:
-            wid: worker id
+            hostname: worker hostname
 
         Returns:
-            Worker with id wid.
+            Worker instance
         """
         return self.hostname_to_worker[hostname]
 
@@ -688,16 +754,19 @@ class Experiment(object):
         cluster: Cluster instance which will be used by this Experiment.
         config: Config instance to queury config file.
         controller: Controller class to use in Experiment.
+        hostname_to_workerid: Dict to map hostnames of workers to workerids
         hosts: List of host NodeWrapper instances.
         isMonitoring: True if monitoring is in use.
         logger: Logging instance.
         nodemapping: optional dict to map nodes to specific workers ids.
         nodes: List of NodeWrapper instances.
-        node_to_workerid: Dict to map node name (string) to worker id.
+        node_to_worker: Dict to map node name (string) to worker instance.
         node_to_wrapper: Dict to map node name (string) to NodeWrapper
             instance.
         origtopology: Unpartitioned topology if topology was partitioned
             by MaxiNet.
+        shares: list to map worker ids to workload shares. shares[x] is used to
+            obtain the share of worker id x.
         starttime: Time at which Experiment was instanciated. Used for
             logfile creation.
         switch: Default mininet switch class to use.
@@ -706,6 +775,8 @@ class Experiment(object):
         tunnellookup: Dict to map tunnel tuples (switchname1,switchname2)
             to tunnel names. Order of switchnames can be ignored as both
             directions are covered.
+        workerid_to_hostname: dict to map workerids to hostnames of workers to
+            worker ids.
     """
     def __init__(self, cluster, topology, controller=None,
                  is_partitioned=False, switch=UserSwitch,
@@ -733,7 +804,8 @@ class Experiment(object):
                 are 0 to N-1.
             sharemapping: Optional list to map worker ids to workload shares.
                 sharemapping[x] is used to obtain the share of worker id x. Takes
-                precedence over shares configured in config file.
+                precedence over shares configured in config file. If given needs
+                to hold share for every worker.
         """
         self.cluster = cluster
         self.logger = logging.getLogger(__name__)
@@ -778,6 +850,8 @@ class Experiment(object):
                                             port=int(port))
 
     def _update_shares(self):
+        """helper function which reads workload shares per worker from
+        config file. Has no effect if shares are already configured"""
         if(self.shares is None):
             ts = [1] * self.cluster.num_workers()
             for i in range(0, self.cluster.num_workers()):
@@ -789,12 +863,14 @@ class Experiment(object):
                 self.shares.append(float(ts[i])/float(s))
 
     def _get_config_share(self, wid):
+        """get workload share of worker with worker id wid"""
         hn = self.workerid_to_hostname[wid]
         if(self.config.has_section(hn) and self.config.has_option(hn, "share")):
             return self.config.getint(hn, "share")
         return None
 
     def generate_hostname_mapping(self):
+        """generates a hostname-> workerid mapping dictionary"""
         i = 0
         d = {}
         for w in self.cluster.workers():
@@ -803,6 +879,9 @@ class Experiment(object):
         return d
 
     def is_valid_hostname_mapping(self, d):
+        """checks whether hostname -> workerid mappign is valid
+        (every worker has exactly one workerid, workerids are contiguos from 0
+        upwards)"""
         if(d is None):
             return False
         if(len(d) != len(self.cluster.workers())):
@@ -821,8 +900,8 @@ class Experiment(object):
         Change status (up/down) of link between two nodes.
 
         Args:
-           src: Node name.
-           dst: Node name.
+           src: Node name or NodeWrapper instance.
+           dst: Node name or NodeWrapper instance.
            status: String {up, down}.
        """
         ws = self.get_worker(src)
@@ -844,7 +923,7 @@ class Experiment(object):
         Replaced by get_worker.
 
         Args:
-            node: nodename.
+            node: nodename or NodeWrapper instance.
 
         Returns:
             Worker instance
@@ -1170,43 +1249,43 @@ class Experiment(object):
             self.setMTU(node1, 1450)
             self.setMTU(node2, 1450)
 
-    def get_node(self, nodename):
+    def get_node(self, node):
         """Return NodeWrapper instance that is specified by nodename.
 
         Args:
-            nodename: Nodename.
+            node: Nodename or nodewrapper instance.
 
         Returns:
             NodeWrapper instance with name nodename or None if none is
             found.
         """
-        if(nodename in self.node_to_wrapper):
-            return self.node_to_wrapper[nodename]
+        if(node in self.node_to_wrapper):
+            return self.node_to_wrapper[node]
         else:
             return None
 
-    def get(self, nodename):
+    def get(self, node):
         """Return NodeWrapper instance that is specified by nodename.
 
         Alias for get_node.
 
         Args:
-            nodename: Nodename.
+            node: Nodename or nodewrapper instance.
 
         Returns:
             NodeWrapper instance with name nodename or None if none is
             found.
         """
-        return self.get_node(nodename)
+        return self.get_node(node)
 
     def setup(self):
         """Start experiment.
 
-        Start cluster if not yet started, partition topology (if needed)
-        and assign topology parts to workers and start workers.
+        Partition topology (if needed), assign topology parts to workers and
+        start mininet instances on workers.
 
         Raises:
-            RuntimeError: If Cluster is too small or won't start.
+            RuntimeError: If Cluster is too small.
         """
         self.logger.info("Clustering topology...")
         # partition topology (if needed)
@@ -1266,9 +1345,9 @@ class Experiment(object):
             except Pyro4.errors.ConnectionClosedError:
                 self.logger.error("Remote " + thn + " exited abnormally. " +
                                   "This is probably due to mininet not" +
-                                  " starting up. Have a look at " +
-                                  "https://github.com/MaxiNet/MaxiNet/wiki/Debugging-MaxiNet#retrieving-worker-output" +
-                                  " to debug this.")
+                                  " starting up. You might want to have a look"+
+                                  " at the output of the MaxiNetWorker calls on"+
+                                  " the Worker machines.")
                 raise
         # configure network if needed
         if (self.config.run_with_1500_mtu()):

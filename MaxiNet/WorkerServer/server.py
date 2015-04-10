@@ -1,9 +1,10 @@
+#!/usr/bin/python2
+
 import argparse
 import atexit
 import logging
 import os
 import subprocess
-import sys
 import tempfile
 
 from mininet.link import TCLink, TCIntf
@@ -17,7 +18,21 @@ from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
 
 
 class WorkerServer(object):
+    """Manages the Worker
 
+    The WorkerServer class connects to the nameserver and registers
+    itself with the MaxiNetManager instance. It is used by the Cluster instances
+    to start mininet instances, manage the ssh daemon and run commands etc.
+
+    Attributes:
+        logger: logging instance
+        mnManager: instance of class MininetManager which is used to create mininet
+            instances
+        sshManager: instance of class SSH_Manager which is used to manage the ssh
+            daemon.
+        ssh_folder: folder which holds configuration files for the ssh daemon.
+        ip: ip address of Worker
+    """
     def __init__(self):
         self._ns = None
         self._pyrodaemon = None
@@ -33,6 +48,7 @@ class WorkerServer(object):
         #Pyro4.config.COMMTIMEOUT = 2
 
     def start(self, ip, port, password):
+        """Start WorkerServer and ssh daemon and connect to nameserver."""
         self.logger.info("starting up and connecting to  %s:%d"
                          % (ip, port))
         #Pyro4.config.HMAC_KEY = password

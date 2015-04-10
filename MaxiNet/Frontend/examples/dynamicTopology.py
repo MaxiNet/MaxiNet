@@ -7,6 +7,8 @@
 # between a switch and a host if these are emulated at DIFFERENT workers
 # This limitation does (of course) NOT hold for links between switches.
 #
+# Dynamic adding and removing of nodes also does not work when using the
+# UserSwitch.
 
 
 import time

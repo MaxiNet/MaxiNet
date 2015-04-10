@@ -2,12 +2,12 @@
 [all]
 password = HalloWelt
 controller = 192.168.123.1:6633
-logLevel = INFO ; Either CRITICAL, ERROR, WARNING, INFO  or DEBUG
-port_ns = 9090
+logLevel = INFO        ; Either CRITICAL, ERROR, WARNING, INFO  or DEBUG
+port_ns = 9090         ; Nameserver port
 port_sshd = 5345
-runWith1500MTU = False
-sshuser = root
-usesudo = True
+runWith1500MTU = False ; Set this to True if your physical network can not handle MTUs >1500.
+sshuser = root         ; On Debian set this to root. On ubuntu set this to user which can do passwordless sudo
+usesudo = False        ; If sshuser is set to something different than root set this to True.
 
 [FrontendServer]
 ip = 192.168.123.1
