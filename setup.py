@@ -19,6 +19,12 @@ setup(name='MaxiNet',
       package_data={
         "MaxiNet":["Scripts/*"],
       },
+      entry_points={
+        'console_scripts': [
+            'MaxiNetWorker = MaxiNet.WorkerServer.server:main',
+            'MaxiNetFrontendServer = MaxiNet.FrontendServer.server:main',
+        ]
+      },
       zip_safe=False)
 
 if((__name__=="__main__") and (sys.argv[1] == "install")):
