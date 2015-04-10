@@ -112,6 +112,7 @@ class SSH_Tool(object):
         folder = tempfile.mkdtemp()
         subprocess.call(["ssh-keygen", "-t", "rsa", "-q", "-N", "", "-f",
                          os.path.join(folder, "sshkey")])
+        atexit.register(self._cleanup)
         return (os.path.join(folder, "sshkey"), os.path.join(folder, "sshkey.pub"))
 
     def get_pub_ssh_key(self):
@@ -170,6 +171,11 @@ class SSH_Tool(object):
             fp = subprocess.check_output(["ssh-keyscan", "-p",
                                           str(self.config.get_sshd_port()), ip])
             kh.write(fp)
+
+    def _cleanup(self):
+        subprocess.call(["rm", self.key_priv])
+        subprocess.call(["rm", self.key_pub])
+        subprocess.call(["rmdir", os.path.dirname(self.key_priv)])
 
 #
 # Fat-tree topology implemention for mininet
