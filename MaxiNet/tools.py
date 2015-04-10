@@ -25,8 +25,8 @@ class MaxiNetConfig(RawConfigParser):
         self.logger = logging.getLogger(__name__)
         self.daemon = None
         if(file is None):
-            self.read(["MaxiNet.cfg", os.path.expanduser("~/.MaxiNet.cfg"),
-                       "/etc/MaxiNet.cfg"])
+            self.read(["/etc/MaxiNet.cfg", os.path.expanduser("~/.MaxiNet.cfg"),
+                       "MaxiNet.cfg"])
         self.set_loglevel()
         if(register):
             self.register()
@@ -150,7 +150,7 @@ class SSH_Tool(object):
                "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
-        cmd.extend(["\"%s\"" % local, "%s@%s:\"%s\"" % (user, rip, remote)])
+        cmd.extend([local, "%s@%s:\"%s\"" % (user, rip, remote)])
         return cmd
 
     def get_scp_get_cmd(self, targethostname, remote, local, opts=None):
@@ -163,7 +163,7 @@ class SSH_Tool(object):
                "-r", "-i", self.key_priv]
         if(opts):
             cmd.extend(opts)
-        cmd.extend(["%s@%s:\"%s\"" % (user, rip, remote), "\"%s\"" % local])
+        cmd.extend(["%s@%s:\"%s\"" % (user, rip, remote), local])
         return cmd
 
     def add_known_host(self, ip):
