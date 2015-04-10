@@ -198,6 +198,11 @@ class Worker(object):
         down."""
         self.server.daemonize(cmd)
 
+    def daemonize_script(self, script, args):
+        """run script from script folder in background and terminate when MaxiNet is shut
+        down."""
+        self.server.daemonize_script(script, args)
+
 
     def tunnelX11(self, node):
         """Create X11 tunnel from Frontend to node on worker to make
@@ -913,8 +918,7 @@ class Experiment(object):
                             str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
                             "/tmp/maxinet_logs/" +
                             Tools.time_to_string(self.starttime) + "/")
-            memmon = worker.config.getWorkerScript("getMemoryUsage.sh")
-            worker.daemonize(memmon + " > \"/tmp/maxinet_mem_" +
+            worker.daemonize_script("getMemoryUsage.sh", " > \"/tmp/maxinet_mem_" +
                              str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log\"")
             atexit.register(self._print_log_info)
 
@@ -943,8 +947,7 @@ class Experiment(object):
                         str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
                         "/tmp/maxinet_logs/" +
                         Tools.time_to_string(self.starttime) + "/")
-        ethmon = worker.config.getWorkerScript("getRxTx.sh")
-        worker.daemonize(ethmon + " " + intf + " > \"/tmp/maxinet_intf_" +
+        worker.daemonize_script("getRxTx.sh", " " + intf + " > \"/tmp/maxinet_intf_" +
                          intf + "_" + str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() +
                          ").log\"")
         atexit.register(self._print_log_info)

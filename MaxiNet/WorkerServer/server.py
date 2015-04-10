@@ -123,6 +123,11 @@ class WorkerServer(object):
         p = subprocess.Popen(cmd, shell=True)
         atexit.register(p.terminate)
 
+    def daemonize_script(self, script, args):
+        cmd = Tools.get_script_dir()+script+" "+args
+        p = subprocess.Popen(cmd, shell=True)
+        atexit.register(p.terminate)
+
 
 class MininetManager(object):
 
