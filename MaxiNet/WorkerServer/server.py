@@ -179,10 +179,15 @@ class MininetManager(object):
         self.logger.info("Starting Mininet...")
         self.net.start()
         self.logger.info("Startup complete.")
+        self.x11popens = []
         return True
 
     def destroy_mininet(self):
         if self.net:
+            for popen in self.x11popens:
+                popen.terminate()
+                popen.communicate()
+                popen.wait()
             self.net.stop()
             self.logger.info("mininet instance terminated")
             self.net = None
@@ -220,7 +225,8 @@ class MininetManager(object):
 
     def tunnelX11(self, node, display):
         node = self.net.get(node)
-        mininet.term.tunnelX11(node, display)
+        (tunnel, popen) = mininet.term.tunnelX11(node, display)
+        self.x11popens.append(popen)
 
     def addLink(self, node1, node2, port1=None, port2=None, cls=None,
                 **params):
