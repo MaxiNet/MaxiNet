@@ -1,6 +1,6 @@
 MaxiNet
 
-MaxiNet 0.5:
+MaxiNet 1.0:
  * change: Reworked MaxiNet startup architecture.
            To start MaxiNet cluster call MaxiNetFrontendServer command
            on the frontend and MaxiNetWorker on worker machines.

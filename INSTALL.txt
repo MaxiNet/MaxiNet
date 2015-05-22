@@ -15,15 +15,15 @@ Ubuntu 12.04
 
 
 
-1: Install dependencies
+1: Install dependencies & download MaxiNet
 > sudo apt-get install git autoconf screen cmake build-essential sysstat python-matplotlib uuid-runtime python-pip
+> cd ~ && git clone git://github.com/MaxiNet/MaxiNet.git
 
 2: Patch mininet installer to install OpenvSwitch 2.3 and install mininet 2.2.0
-> wget <URL to patch>
 > git clone git://github.com/mininet/mininet
 > cd mininet
 > git checkout -b 2.2.0 2.2.0
-> patch util/install.sh ~/install.sh.patch
+> patch util/install.sh ~/MaxiNet/install.sh.patch
 > cd .. & sudo mininet/util/install.sh -a -V 2.3.0
 
 3: Install metis
@@ -40,8 +40,7 @@ Ubuntu 12.04
 > sudo pip install Pyro4
 
 5: Install MaxiNet
-> git clone git://github.com/MaxiNet/MaxiNet.git
-> cd MaxiNet
+> cd ~/MaxiNet
 > sudo make install
 
 6: Set up cluster and configure MaxiNet
