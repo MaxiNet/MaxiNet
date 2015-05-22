@@ -247,7 +247,9 @@ def main():
     parser.add_argument("--password", action="store", help="Frontend Server Password")
     parser.add_argument("-c", "--config", metavar="FILE", action="store", help="Read configuration from FILE")
     parsed = parser.parse_args()
-    print parsed
+    ip = False
+    port = False
+    pw = False
     if (parsed.config or
             os.path.isfile("MaxiNet.cfg") or
             os.path.isfile(os.path.expanduser("~/.MaxiNet.cfg")) or
