@@ -148,6 +148,10 @@ class CLI(Cmd):
         if(self.experiment.get(node) is None):
             print "Error: Node " + s + " does not exist"
         else:
+            blocking = True
+            if cmd[-1] == "&":
+                cmd = cmd[:-1]
+                blocking = False
             pid = self.experiment.get_worker(self.experiment.get(node))\
                     .run_cmd("ps ax | grep \"bash.*mininet:" + node +
                              "$\" | grep -v grep | awk '{print $1}'").strip()
@@ -169,4 +173,7 @@ class CLI(Cmd):
                 rcmd = sshtool.get_ssh_cmd(targethostname=hn,
                                            cmd="mnexec -a " + pid + " " + cmd,
                                            opts=["-t"])
-            subprocess.call(rcmd)
+            if blocking:
+                subprocess.call(rcmd)
+            else:
+                subprocess.Popen(rcmd)
