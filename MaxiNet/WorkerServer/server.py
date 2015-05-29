@@ -9,9 +9,9 @@ import subprocess
 import sys
 import tempfile
 
+from mininet.node import UserSwitch, OVSSwitch
 from mininet.link import TCLink, TCIntf
 from mininet.net import Mininet
-from mininet.node import UserSwitch, OVSSwitch
 import mininet.term
 import Pyro4
 
