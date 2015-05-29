@@ -24,7 +24,7 @@ Ubuntu 12.04
 1: Install dependencies & download MaxiNet
 > sudo apt-get install git autoconf screen cmake build-essential sysstat python-matplotlib uuid-runtime python-pip
 > cd ~ && git clone git://github.com/MaxiNet/MaxiNet.git
-> cd MaxiNet && git checkout v1.0
+> cd MaxiNet && git checkout v1.0 && cd ..
 
 2: Patch mininet installer to install OpenvSwitch 2.3 and install mininet 2.2.0
 > git clone git://github.com/mininet/mininet
