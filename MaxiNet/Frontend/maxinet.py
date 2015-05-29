@@ -35,7 +35,6 @@ import random
 import re
 import subprocess
 import sys
-import threading
 import time
 import warnings
 
@@ -554,9 +553,6 @@ class Cluster(object):
             Workers.
         sshtool: SSH_Tool instance which is used to manage ssh client on frontend
             machine.
-        ssh_daemon: Pyro daemon to export SSH_Tool instance to local processes.
-            Needed to implement MaxiNetExec
-        ssh_daemon_thread: Thread to run ssh_daemon requestloop
         tunhelper: Instance of TunHelper to enumerate tunnel instances.
         worker: List of worker instances. Index of worker instance in
             sequence must be equal to worker id.
@@ -591,31 +587,6 @@ class Cluster(object):
         self.hosts = []
         self.worker = []
         atexit.register(self._stop)
-        self._export_ssh_tool()
-
-    def _export_ssh_tool(self):
-        """Export SSH_Tool instance via Pyro to local processes.
-
-        Allows other processes to connect via Pyro and obtain ssh commands to
-        run commands on nodes.
-        """
-        self.ssh_daemon = Pyro4.Daemon(host="127.0.0.1")
-        self.ssh_daemon._pyroHmacKey = self.config.get_nameserver_password()
-        uri = self.ssh_daemon.register(self.sshtool)
-        self.ssh_daemon_thread = threading.Thread(target=self.ssh_daemon.requestLoop)
-        self.ssh_daemon_thread.daemon = True
-        self.ssh_daemon_thread.start()
-        self.nameserver.register("%s:ssh" % self.ident, uri)
-        atexit.register(self._ssh_tool_unregister)
-
-    def _ssh_tool_unregister(self):
-        """Unregister local SSH_Tool from Pyro server."""
-        if(self.ssh_daemon):
-            self.nameserver.remove("%s:ssh" % self.ident)
-            self.ssh_daemon.shutdown()
-            self.ssh_daemon = None
-            self.ssh_daemon_thread.join()
-            self.ssh_daemon_thread = None
 
     def _create_ident(self):
         """Create and register identifier to use when communicating with the
