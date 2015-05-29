@@ -16,22 +16,19 @@ to run MaxiNet on an untrusted or publicly accessible network.
 
 
 Supported Operating Systems:
-Debian Wheezy
-Ubuntu 12.04
+Debian 8
+Ubuntu 14.04
 
 
 
-1: Install dependencies & download MaxiNet
+1: Install dependencies
 > sudo apt-get install git autoconf screen cmake build-essential sysstat python-matplotlib uuid-runtime python-pip
-> cd ~ && git clone git://github.com/MaxiNet/MaxiNet.git
-> cd MaxiNet && git checkout v1.0 && cd ..
 
-2: Patch mininet installer to install OpenvSwitch 2.3 and install mininet 2.2.0
+2: Install mininet 2.2.1rc1 and OpenVSwitch
 > git clone git://github.com/mininet/mininet
 > cd mininet
-> git checkout -b 2.2.0 2.2.0
-> patch util/install.sh ~/MaxiNet/install.sh.patch
-> cd .. && sudo mininet/util/install.sh -a -V 2.3.0
+> git checkout -b 2.2.1rc1 2.2.1rc1
+> cd .. && sudo mininet/util/install.sh -a
 
 3: Install metis
 > wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-5.1.0.tar.gz
@@ -46,8 +43,10 @@ Ubuntu 12.04
 4: Install Pyro4
 > sudo pip install Pyro4
 
-5: Install MaxiNet
-> cd ~/MaxiNet
+5: Download and install MaxiNet
+> cd ~ && git clone git://github.com/MaxiNet/MaxiNet.git
+> cd MaxiNet
+> git checkout v1.0
 > sudo make install
 
 6: Set up cluster and configure MaxiNet

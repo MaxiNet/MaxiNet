@@ -8,7 +8,9 @@ MaxiNet 1.0:
  * change: moved MaxiNet/Frontend/tools.py to to MaxiNet/tools.py
  * bugfix: cpu logging did not terminate correctly
  * feature: Pyro 4.30 compatibility
- * feature: mininet 2.2.0 compatibility
+ * feature: mininet 2.2.1rc1 compatibility
+ * feature: Debian 8 compatibility
+ * feature: Ubuntu 14.04 compatibility
 
 MaxiNet 0.4:
  * cleanup: MaxiNet is now installed as a python module. Use "from MaxiNet.Frontend import maxinet" instead of old
