@@ -20,6 +20,9 @@ from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
 
 
 def exit_handler(signal, frame):
+    # I have absolutely no clue why but without this print atexit sometimes
+    # doesn't seem to wait for called functions to finish...
+    print "exiting..."
     sys.exit()
 
 
