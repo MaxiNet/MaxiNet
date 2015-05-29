@@ -4,7 +4,9 @@ import argparse
 import atexit
 import logging
 import os
+import signal
 import subprocess
+import sys
 import tempfile
 
 from mininet.link import TCLink, TCIntf
@@ -15,6 +17,10 @@ import Pyro4
 
 from MaxiNet.tools import Tools, MaxiNetConfig
 from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
+
+
+def exit_handler(signal, frame):
+    sys.exit()
 
 
 class WorkerServer(object):
@@ -253,6 +259,7 @@ def main():
     parser.add_argument("--password", action="store", help="Frontend Server Password")
     parser.add_argument("-c", "--config", metavar="FILE", action="store", help="Read configuration from FILE")
     parsed = parser.parse_args()
+    signal.signal(signal.SIGINT, exit_handler)
     ip = False
     port = False
     pw = False
