@@ -582,11 +582,26 @@ class Cluster(object):
         self.manager._pyroHmacKey=password
         self.sshtool = SSH_Tool(self.config)
         self.hostname_to_worker={}
-        self.ident = random.randint(1, sys.maxint)
+        self._create_ident()
         logging.basicConfig(level=self.config.get_loglevel())
         self.hosts = []
         self.worker = []
         atexit.register(self._stop)
+
+    def _create_ident(self):
+        """Create and register identifier to use when communicating with the
+        FrontendServer"""
+        self.ident = None
+        hn = run_cmd("hostname").strip()
+        ident = "%s:%s" % (hn, sys.argv[0])
+        if not self.manager.register_ident(ident):
+            for i in range(2, 10000):
+                ident = "%s:%s-%d" % (hn, sys.argv[0], i)
+                if self.manager.register_ident(ident):
+                    self.ident = ident
+                    break
+        else:
+            self.ident = ident
 
     def get_available_workers(self):
         """Get list of worker hostnames which are not reserved.
@@ -683,6 +698,7 @@ class Cluster(object):
         Cluster instances on the FrontendServer.
         """
         self.remove_workers()
+        self.manager.unregister_ident(self.ident)
 
     def num_workers(self):
         """Return number of worker nodes in this Cluster."""

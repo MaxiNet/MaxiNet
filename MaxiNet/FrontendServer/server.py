@@ -65,6 +65,59 @@ class MaxiNetManager(object):
         self._ns = None
         self._pyrodaemon = None
         self.logger = logging.getLogger(__name__)
+        self.idents = []
+
+    def register_ident(self, ident):
+        """Register identifier on manager.
+
+        To identify a cluster instance when communicating with the MaxiNetManager
+        an identifier string is used. The Cluster instance needs to generate
+        this string and register it with the Manager.
+
+        Args:
+            ident: Identifier string the Cluster instance wants to register
+
+        Returns:
+            True if successful, False if identifier is already registered.
+        """
+        # maybe we should use a lock here
+        if not ident in self.idents:
+            self.idents.append(ident)
+            return True
+        else:
+            return False
+
+    def unregister_ident(self, ident):
+        """Unregister identifier.
+
+        Frees up the identifier string of a cluster instance to use by other
+        instances. The unregistering instance must not use this string anymore
+        when communicating with the Manager if it did not reregister it
+        beforehand.
+
+        Args:
+            ident: Identifier string to unregister
+
+        Returns:
+            True
+        """
+        if ident in self.idents:
+            self.idents.remove(ident)
+        return True
+
+    def valid_ident(self, ident):
+        """Check if identifier is registerd with manager instance.
+
+        Args:
+            ident: Identifier to check
+
+        Returns:
+            True if identifier is registered, False if not.
+        """
+        if ident in self.idents:
+            return True
+        else:
+            return False
 
     def start(self):
         self.logger.debug("starting up and connecting to  %s:%d"
@@ -165,12 +218,17 @@ class MaxiNetManager(object):
             self._worker_dict_lock.release()
             return None
         else:
-            self._worker_dict[worker_hostname]["assigned"] = id
-            pyname = self._worker_dict[worker_hostname]["pyroname"]
-            self._worker_dict_lock.release()
-            self.logger.info("reserved worker %s for id %s"
-                             % (worker_hostname, id))
-            return pyname
+            if self.valid_ident(id):
+                self._worker_dict[worker_hostname]["assigned"] = id
+                pyname = self._worker_dict[worker_hostname]["pyroname"]
+                self._worker_dict_lock.release()
+                self.logger.info("reserved worker %s for id %s"
+                                 % (worker_hostname, id))
+                return pyname
+            else:
+                self.logger.warn("unknown identfier %s encounterd. Something is \
+                                  not right here.")
+                return None
 
     def free_worker(self, worker_hostname, id, force=False):
         self._worker_dict_lock.acquire()
