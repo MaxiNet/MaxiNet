@@ -6,6 +6,7 @@ logLevel = INFO        ; Either CRITICAL, ERROR, WARNING, INFO  or DEBUG
 port_ns = 9090         ; Nameserver port
 port_sshd = 5345       ; Port where MaxiNet will start an ssh server on each worker
 runWith1500MTU = False ; Set this to True if your physical network can not handle MTUs >1500.
+useMultipleIPs = 0     ; for RSS load balancing. Set to n > 0 to use multiple IP addresses per worker. More information on this feature can be found at MaxiNets github Wiki.
 sshuser = root         ; On Debian set this to root. On ubuntu set this to user which can do passwordless sudo
 usesudo = False        ; If sshuser is set to something different than root set this to True.
 
@@ -17,9 +18,9 @@ ip = 192.168.123.1
 share = 1
 
 [debian-vm2]
-ip = 192.168.123.1
+ip = 192.168.123.2
 share = 1
 
 [debian-vm3]
-ip = 192.168.123.1
+ip = 192.168.123.3
 share = 1

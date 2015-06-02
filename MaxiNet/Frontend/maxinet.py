@@ -742,6 +742,22 @@ class Cluster(object):
         intf = "mn_tun" + str(tid)
         ip1 = w1.ip(classifier="backend")
         ip2 = w2.ip(classifier="backend")
+
+
+        #use multiple IP addresses for the workers:
+        #modern NICs have multiple queues with own IRQs. This is called RSS. The queue a packet is enqueued in is determined by a hashing algorithm using the IP headers.
+        #unfortunatelly, most RSS implementations ignore the GRE headers.
+        #on GRE, most RSS hashing algorithms only use src-dest IP addresses to assign packets to queues which makes is necessary to provide multiple IP combinations per worker pair
+        #otherwise, all packets between a pair of workers would be assigned to the same queue.
+        if self.config.useMultipleIPs > 1:
+            ip1_int = [int(a) for a in ip1.split(".")]
+            ip2_int = [int(a) for a in ip2.split(".")]
+            ip1_int[3] += random.randint(0, self.config.useMultipleIPs-1)
+            ip2_int[3] += random.randint(0, self.config.useMultipleIPs-1)
+            ip1 = "%d.%d.%d.%d" % tuple(ip1_int)
+            ip2 = "%d.%d.%d.%d" % tuple(ip2_int)
+
+
         self.logger.debug("invoking tunnel create commands on " + ip1 +
                           " and " + ip2)
         w1.run_script("create_tunnel.sh " + ip1 + " " + ip2 + " " + intf +
