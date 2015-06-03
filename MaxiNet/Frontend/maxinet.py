@@ -749,11 +749,11 @@ class Cluster(object):
         #unfortunatelly, most RSS implementations ignore the GRE headers.
         #on GRE, most RSS hashing algorithms only use src-dest IP addresses to assign packets to queues which makes is necessary to provide multiple IP combinations per worker pair
         #otherwise, all packets between a pair of workers would be assigned to the same queue.
-        if self.config.useMultipleIPs > 1:
+        if self.config.getint("all", "useMultipleIPs") > 1:
             ip1_int = [int(a) for a in ip1.split(".")]
             ip2_int = [int(a) for a in ip2.split(".")]
-            ip1_int[3] += random.randint(0, self.config.useMultipleIPs-1)
-            ip2_int[3] += random.randint(0, self.config.useMultipleIPs-1)
+            ip1_int[3] += random.randint(0, self.config.getint("all", "useMultipleIPs")-1)
+            ip2_int[3] += random.randint(0, self.config.getint("all", "useMultipleIPs")-1)
             ip1 = "%d.%d.%d.%d" % tuple(ip1_int)
             ip2 = "%d.%d.%d.%d" % tuple(ip2_int)
 

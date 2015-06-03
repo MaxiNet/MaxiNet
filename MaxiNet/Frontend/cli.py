@@ -146,7 +146,16 @@ class CLI(Cmd):
         node = s[:s.find(" ")]
         cmd = s[s.find(" ") + 1:]
         if(self.experiment.get(node) is None):
-            print "Error: Node " + s + " does not exist"
+            # check if node is the name of a worker. if so, execute command on that worker
+            if(node in self.experiment.hostname_to_workerid):
+                worker = self.experiment.cluster.get_worker(node)
+                # execute command on worker
+                rcmd = worker.sshtool.get_ssh_cmd(targethostname=node,
+                                           cmd=cmd,
+                                           opts=["-t"])
+                subprocess.call(rcmd)
+            else:
+                print "Error: Node " + node + " does not exist"
         else:
             blocking = True
             if cmd[-1] == "&":
