@@ -1,17 +1,17 @@
 MaxiNet installation
 
 Introduction:
-MaxiNet is a clustered version of mininet where multiple mininet instances
-running on different physical machines (called workers) are linked and used
+MaxiNet is a distributed version of mininet where multiple mininet instances
+running on different physical machines (called workers) are interconnected and used
 to run large scale experiments. Using the MaxiNet API, specification of
-experiments feels like setting up experiments in mininet because MaxiNet
+experiments feels like setting up experiments in Mininet because MaxiNet
 automatically maps the topology of the network to the workers and configures
 them accordingly.
 
 Warning:
-MaxiNet allows to issue command line commands with root permissions over a
+MaxiNet allows to run command line commands with root permissions over a
 network rpc connection as well as a seperate ssh server. Although authentication
-measures are in place to prevent unauthorized access it is strongly disadvised
+measures are in place to prevent unauthorized access, it is strongly disadvised
 to run MaxiNet on an untrusted or publicly accessible network.
 
 
@@ -19,7 +19,19 @@ Supported Operating Systems:
 Debian 8
 Ubuntu 14.04
 
+There are two different ways to install MaxiNet 1.0: 
+ - automated installation using the installer.sh script
+ - manual installation using the instructions below.
 
+
+#### automated installation ####
+
+In case you want to use the automated installer, just issue the following command:
+
+./installer.sh
+
+
+#### manual installation ####
 
 1: Install dependencies
 > sudo apt-get install git autoconf screen cmake build-essential sysstat python-matplotlib uuid-runtime python-pip
