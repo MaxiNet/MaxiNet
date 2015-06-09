@@ -4,53 +4,69 @@ echo "MaxiNet 1.0 installer"
 echo ""
 echo "This program installs MaxiNet 1.0 and all requirements to the home directory of your user"
 
-
-read -n1 -r -p "Do you want to install Mininet 2.2.1rc1? ([y]/n)" mininet
-
-if [ "$mininet" == "" ] || [ "$mininet" == "y" ] || [ "$mininet" == "Y" ]
+if [ "$1" == "--help" ] || [ "$1" == "-h" ]
 then
-	mininet="y"
-	echo ""
-	echo "You choose to install Mininet. Warning: This will automatically remove existing directories ~/mininet, ~/loxigen, and ~/openflow"
-else
-	mininet="n"
+    echo ""
+    echo "Invoke without any parameter to interactively install MaxiNet and its dependencies."
+    echo "Use the -a parameter for complete and unguided installation."
+    exit 0
 fi
-echo ""
 
-read -n1 -r -p "Do you want to install Metis 5.1? ([y]/n)" metis
 
-if [ "$metis" == "" ] || [ "$metis" == "y" ] || [ "$metis" == "Y" ]
+if [ "$1" == "-a" ]
 then
-	metis="y"
+    mininet="y"
+    metis="y"
+    pyro="y"
 else
-	metis="n"
+
+    read -n1 -r -p "Do you want to install Mininet 2.2.1rc1? ([y]/n)" mininet
+
+    if [ "$mininet" == "" ] || [ "$mininet" == "y" ] || [ "$mininet" == "Y" ]
+    then
+        mininet="y"
+        echo ""
+        echo "You choose to install Mininet. Warning: This will automatically remove existing directories ~/mininet, ~/loxigen, and ~/openflow"
+    else
+        mininet="n"
+    fi
+    echo ""
+
+    read -n1 -r -p "Do you want to install Metis 5.1? ([y]/n)" metis
+
+    if [ "$metis" == "" ] || [ "$metis" == "y" ] || [ "$metis" == "Y" ]
+    then
+        metis="y"
+    else
+        metis="n"
+    fi
+    echo ""
+
+    read -n1 -r -p "Do you want to install Pyro 4? ([y]/n)" pyro
+
+    if [ "$pyro" == "" ] || [ "$pyro" == "y" ] || [ "$pyro" == "Y" ]
+    then
+        pyro="y"
+    else
+        pyro="n"
+    fi
+    echo ""
+
+
+    echo "----------------"
+    echo ""
+    echo "MaxiNet installer will now install: "
+    if [ "$mininet" == "y" ]; then echo " -Mininet 2.2.1rc1"; fi
+    if [ "$metis" == "y" ]; then echo " -Metis 5.1"; fi
+    if [ "$pyro" == "y" ]; then echo " -Pyro 4"; fi
+    echo " -MaxiNet 1.0"
+    echo ""
+
+    read -n1 -r -p "Is this OK? Press ANY key to continue or CTRL+C to abort." abort
+
 fi
-echo ""
 
-read -n1 -r -p "Do you want to install Pyro 4? ([y]/n)" pyro
-
-if [ "$pyro" == "" ] || [ "$pyro" == "y" ] || [ "$pyro" == "Y" ]
-then
-	pyro="y"
-else
-	pyro="n"
-fi
-echo ""
-
-
-echo "----------------"
-echo ""
-echo "MaxiNet installer will now install: "
-if [ "$mininet" == "y" ]; then echo " -Mininet 2.2.1rc1"; fi
-if [ "$metis" == "y" ]; then echo " -Metis 5.1"; fi
-if [ "$pyro" == "y" ]; then echo " -Pyro 4"; fi
-echo " -MaxiNet 1.0"
-echo ""
-
-read -n1 -r -p "Is this OK? Press ANY key to continue or CTRL+C to abort." abort
-
-
-echo "installing required dependancies."
+echo "installing required dependencies."
 
 sudo apt-get install git autoconf screen cmake build-essential sysstat python-matplotlib uuid-runtime
 
