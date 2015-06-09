@@ -107,6 +107,7 @@ class SSH_Tool(object):
         self.config = config
         (self.key_priv, self.key_pub) = self._generate_ssh_key()
         self.known_hosts = tempfile.mkstemp()[1]
+        self.add_known_host("localhost")
 
     def _generate_ssh_key(self):
         folder = tempfile.mkdtemp()
@@ -121,6 +122,13 @@ class SSH_Tool(object):
 
     def get_ssh_cmd(self, targethostname, cmd, opts=None):
         rip = self.config.get_worker_ip(targethostname)
+
+        #workaround: for some reason ssh-ing into localhost using localhosts external IP does not work.
+        #hence, we replace the external ip with localhost if necessary.
+        local = subprocess.check_output("ip route get %s" % rip, shell=True)
+        if (local[0:5] == "local"):
+            rip = "localhost"
+
         user = self.config.get("all", "sshuser")
         if(rip is None):
             return None

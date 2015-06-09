@@ -153,6 +153,7 @@ class CLI(Cmd):
                 rcmd = worker.sshtool.get_ssh_cmd(targethostname=node,
                                            cmd=cmd,
                                            opts=["-t"])
+                
                 subprocess.call(rcmd)
             else:
                 print "Error: Node " + node + " does not exist"

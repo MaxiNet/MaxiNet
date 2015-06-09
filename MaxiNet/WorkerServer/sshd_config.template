@@ -2,6 +2,7 @@ Port <!PORT!>
 AddressFamily inet
 #ListenAddress ::
 ListenAddress <!IP!>
+ListenAddress localhost
 Protocol 2
 # HostKeys for protocol version 2
 HostKey <!FOLDER!>/ssh_host_rsa_key

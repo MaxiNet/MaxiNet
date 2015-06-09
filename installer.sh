@@ -57,9 +57,10 @@ sudo apt-get install git autoconf screen cmake build-essential sysstat python-ma
 if [ "$mininet" == "y" ]
 then
 	cd ~
-	rm -rf openflow &> /dev/null
-	rm -rf loxigen &> /dev/null
-	rm -rf mininet &> /dev/null
+	sudo rm -rf openflow &> /dev/null
+	sudo rm -rf loxigen &> /dev/null
+	sudo rm -rf mininet &> /dev/null
+
 	git clone git://github.com/mininet/mininet
 	cd mininet
 	git checkout -b 2.2.1rc1 2.2.1rc1
