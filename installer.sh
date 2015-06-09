@@ -75,6 +75,9 @@ then
 	cd ~
 	sudo rm -rf openflow &> /dev/null
 	sudo rm -rf loxigen &> /dev/null
+	sudo rm -rf pox &> /dev/null
+	sudo rm -rf oftest &> /dev/null
+	sudo rm -rf oflops &> /dev/null
 	sudo rm -rf mininet &> /dev/null
 
 	git clone git://github.com/mininet/mininet

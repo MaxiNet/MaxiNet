@@ -150,6 +150,11 @@ class SSH_Tool(object):
 
     def get_scp_put_cmd(self, targethostname, local, remote, opts=None):
         rip = self.config.get_worker_ip(targethostname)
+
+        loc = subprocess.check_output("ip route get %s" % rip, shell=True)
+        if (loc[0:5] == "local"):
+            rip = "localhost"
+
         user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
@@ -163,6 +168,11 @@ class SSH_Tool(object):
 
     def get_scp_get_cmd(self, targethostname, remote, local, opts=None):
         rip = self.config.get_worker_ip(targethostname)
+
+        loc = subprocess.check_output("ip route get %s" % rip, shell=True)
+        if (loc[0:5] == "local"):
+            rip = "localhost"
+
         user = self.config.get("all", "sshuser")
         if(rip is None):
             return None
