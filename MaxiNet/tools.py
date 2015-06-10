@@ -66,6 +66,11 @@ class MaxiNetConfig(RawConfigParser):
             return self.getboolean("all","runWith1500MTU")
         return False
 
+    def deactivateTSO(self):
+        if(self.has_option("all","deactivateTSO")):
+            return self.getboolean("all","deactivateTSO")
+        return False
+
     def get_nameserver_ip(self):
         return self.get_frontend_ip()
 

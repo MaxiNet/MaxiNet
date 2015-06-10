@@ -1138,6 +1138,7 @@ class Experiment(object):
         if (self.config.run_with_1500_mtu()):
             self.setMTU(self.get_node(name), 1450)
 
+
     def addHost(self, name, cls=None, wid=None, pos=None, **params):
         """Add host at runtime.
 
@@ -1156,6 +1157,12 @@ class Experiment(object):
         self.addNode(name, wid=wid, pos=pos)
         self.get_worker(name).addHost(name, cls=cls, **params)
         self.hosts.append(self.get(name))
+
+        #deactivate TSO
+        if (self.config.deactivateTSO()):
+            for intf in self.get_node(name).intfNames():
+                self.get_node(name).cmd("sudo ethtool -K %s tso off" % intf)
+
         return self.get(name)
 
     def addSwitch(self, name, cls=None, wid=None, pos=None, **params):
@@ -1386,6 +1393,13 @@ class Experiment(object):
             for topo in subtopos:
                 for host in topo.nodes():
                     self.setMTU(self.get(host), 1450)
+
+        #deactivate TSO if needed
+        if (self.config.deactivateTSO()):
+            for topo in subtopos:
+                for host in topo.nodes():
+                    for intf in self.get(host).intfNames():
+                        self.get(host).cmd("sudo ethtool -K %s tso off" % intf)
 
     def setMTU(self, host, mtu):
         """Set MTUs of all Interfaces of mininet host.

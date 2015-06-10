@@ -78,12 +78,23 @@ then
 	sudo rm -rf pox &> /dev/null
 	sudo rm -rf oftest &> /dev/null
 	sudo rm -rf oflops &> /dev/null
+	sudo rm -rf ryu &> /dev/null
 	sudo rm -rf mininet &> /dev/null
 
 	git clone git://github.com/mininet/mininet
 	cd mininet
 	git checkout -b 2.2.1rc1 2.2.1rc1
-	cd .. && sudo mininet/util/install.sh -a
+	cd util/
+	./install.sh
+
+	# the mininet installer sometimes crashes with a zipimport.ZipImportError.
+	# In that case, we retry installation.
+	if [ "$?" != "0" ]
+	then
+	    ./install.sh
+	fi
+
+
 fi
 
 if [ "$metis" == "y" ]
