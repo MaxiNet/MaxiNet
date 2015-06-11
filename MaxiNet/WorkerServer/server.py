@@ -8,6 +8,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 from mininet.node import UserSwitch, OVSSwitch
 from mininet.link import TCLink, TCIntf
@@ -56,12 +57,24 @@ class WorkerServer(object):
         self._shutdown = False
         #Pyro4.config.COMMTIMEOUT = 2
 
-    def start(self, ip, port, password):
+    def start(self, ip, port, password, retry=float("inf")):
         """Start WorkerServer and ssh daemon and connect to nameserver."""
         self.logger.info("starting up and connecting to  %s:%d"
                          % (ip, port))
         #Pyro4.config.HMAC_KEY = password
-        self._ns = Pyro4.locateNS(ip, port, hmac_key=password)
+        tries=1
+        self._ns = None
+        while not self._ns:
+            try:
+                self._ns = Pyro4.locateNS(ip, port, hmac_key=password)
+            except Pyro4.errors.NamingError:
+                if tries < retry:
+                    self.logger.warn("Unable to locate Nameserver. Trying again in %s seconds..." % tries)
+                    time.sleep(tries)
+                    tries += 1
+                else:
+                    self.logger.error("Unable to locate Nameserver.")
+                    sys.exit()
         self.config = Pyro4.Proxy(self._ns.lookup("config"))
         self.config._pyroHmacKey=password
         self.ip = self.config.get_worker_ip(self.get_hostname())
