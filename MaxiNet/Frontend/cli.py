@@ -153,7 +153,7 @@ class CLI(Cmd):
                 rcmd = worker.sshtool.get_ssh_cmd(targethostname=node,
                                            cmd=cmd,
                                            opts=["-t"])
-                
+
                 subprocess.call(rcmd)
             else:
                 print "Error: Node " + node + " does not exist"
@@ -173,11 +173,14 @@ class CLI(Cmd):
                         sshtool.get_ssh_cmd(targethostname=hn,
                                             cmd="echo $USER", opts=["-t"])
                        ).strip()
+                opts=["-t","-X"]
+                if not blocking:
+                    opts.append("-n")
                 rcmd = sshtool.get_ssh_cmd(
                         targethostname=hn,
                         cmd="XAUTHORITY=/home/" + user + "/.Xauthority mnexec -a "
                             + pid + " " + cmd,
-                        opts=["-t", "-X"]
+                        opts=opts
                        )
             else:
                 rcmd = sshtool.get_ssh_cmd(targethostname=hn,
