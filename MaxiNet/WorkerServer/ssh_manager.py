@@ -7,6 +7,7 @@ class SSH_Manager(object):
 
     def __init__(self, folder, ip, port, user):
         self.folder = folder
+        self.port = port
         self.popen = None
         subprocess.call(["chown", ":%s" % user, folder])
         subprocess.call(["chmod", "g+xr", folder])
@@ -70,6 +71,10 @@ class SSH_Manager(object):
         self._generate_host_key()
 
     def start_sshd(self):
+        #kill the process that might listen on MaxiNets sshd port:
+        r = subprocess.call(["sudo", "fuser", "-k", "-n", "tcp", "%s" % self.port])
+        if(r == 0):
+            print "Killed a process that listened on port %s in order to start MaxiNets sshd." % self.port
         self.popen = subprocess.Popen(["/usr/sbin/sshd", "-D",
                                        "-f",
                                        os.path.join(self.folder, "sshd_config")
