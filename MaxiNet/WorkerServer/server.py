@@ -268,6 +268,21 @@ class MininetManager(object):
             return h1.cmd(command)
 
 
+def getFrontendStatus():
+    config = MaxiNetConfig(register=False)
+    ip = config.get_nameserver_ip()
+    port = config.get_nameserver_port()
+    pw = config.get_nameserver_password()
+    ns = Pyro4.locateNS(ip, port, hmac_key=pw)
+    manager_uri = ns.lookup("MaxiNetManager")
+    if(manager_uri):
+        manager = Pyro4.Proxy(manager_uri)
+        manager._pyroHmacKey=pw
+        print manager.print_worker_status()
+    else:
+        print "Could not contact Frontend Server"
+
+
 def main():
     parser = argparse.ArgumentParser(description="MaxiNet Worker which hosts a mininet instance")
     parser.add_argument("--ip", action="store", help="Frontend Server IP")

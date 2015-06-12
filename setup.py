@@ -23,6 +23,7 @@ setup(name='MaxiNet',
         'console_scripts': [
             'MaxiNetWorker = MaxiNet.WorkerServer.server:main',
             'MaxiNetFrontendServer = MaxiNet.FrontendServer.server:main',
+            'MaxiNetStatus = MaxiNet.WorkerServer.server:getFrontendStatus',
         ]
       },
       zip_safe=False)

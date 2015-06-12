@@ -186,6 +186,20 @@ class MaxiNetManager(object):
     def _is_assigned(self, worker_hostname):
         return not (self._worker_dict[worker_hostname]["assigned"] is None)
 
+    def print_worker_status(self):
+        numWorkers = len(self._worker_dict)
+        out = ""
+        out += "MaxiNet Frontend server running at %s\n" % self.config.get_nameserver_ip()
+        out += "Number of connected workers: %d\n" % numWorkers
+        if numWorkers > 0:
+            out += "--------------------------------\n"
+        for worker_name in self._worker_dict.keys():
+            status = "free"
+            if (self._worker_dict[worker_name]["assigned"]):
+                status = "assigned"
+            out += "%s\t\t%s\n" % (worker_name, status)
+        return out
+
     def get_worker_status(self, worker_hostname):
         signed_in = False
         assigned = None
