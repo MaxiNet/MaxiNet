@@ -312,6 +312,10 @@ def main():
     if parsed.password:
         pw = parsed.password
 
+    if os.getuid() != 0:
+        print "MaxiNetWorker must run with root privileges!"
+        sys.exit(1)
+
     if not (ip and port and pw):
         print "Please provide MaxiNet.cfg or specify ip, port and password of \
                the Frontend Server."
