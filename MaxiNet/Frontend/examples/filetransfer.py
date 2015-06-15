@@ -20,7 +20,6 @@ topo = FatTree(4, 10, 0.1)
 
 # start maxinet cluster
 cluster = maxinet.Cluster()
-cluster.add_workers()
 
 # create experiment on cluster with FatTree topology
 exp = maxinet.Experiment(cluster, topo)

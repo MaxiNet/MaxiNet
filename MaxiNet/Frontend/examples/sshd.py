@@ -25,7 +25,6 @@ topo.addLink("s1", "s2")
 topo.addLink("h2", "s2")
 
 cluster = maxinet.Cluster()
-cluster.add_workers()
 
 # we need to add the root node after the simulation has started as we do
 # not know which worker id the frontend machine will get. Therefore we

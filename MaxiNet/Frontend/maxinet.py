@@ -559,13 +559,15 @@ class Cluster(object):
             sequence must be equal to worker id.
     """
 
-    def __init__(self, ip=None, port=None, password=None):
+    def __init__(self, ip=None, port=None, password=None, minWorkers=None, maxWorkers=None):
         """Inits Cluster class.
 
         Args:
             ip: IP address of FrontendServer nameserver.
             port: port of FrontendServer nameserver.
             password: password of FrontendServer nameserver.
+            maxWorkers: number of workers to allocate to this cluster; None for "all you can get".
+            minWorkers: minimum number of workers to allocate to this cluster; None for "at least 1"
         """
         self.logger = logging.getLogger(__name__)
         self.tunhelper = TunHelper()
@@ -603,6 +605,15 @@ class Cluster(object):
         self._pyro_daemon_thread = threading.Thread(target=self._pyrodaemon.requestLoop)
         self._pyro_daemon_thread.daemon = True
         self._pyro_daemon_thread.start()
+
+        if(maxWorkers == None):
+            self.add_workers()
+        else:
+            for i in range(0,maxWorkers):
+                self.add_worker()
+
+        if ((minWorkers != None) and (self.num_workers() < minWorkers)):
+            raise Exception("Not enough free workers to run this experiment (got %s, required %s). " % (self.num_workers(), minWorkers))
 
 
     def _create_ident(self):

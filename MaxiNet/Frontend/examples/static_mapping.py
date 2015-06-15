@@ -25,7 +25,6 @@ mapping = {"h1": 0,
           }
 
 cluster = maxinet.Cluster()
-cluster.add_workers()
 
 exp = maxinet.Experiment(cluster, topo, nodemapping=mapping)
 exp.setup()

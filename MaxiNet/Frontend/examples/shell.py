@@ -12,7 +12,6 @@ from MaxiNet.tools import FatTree
 
 topo = FatTree(4, 10, 0.1)
 cluster = maxinet.Cluster()
-cluster.add_workers()
 
 exp = maxinet.Experiment(cluster, topo)
 exp.setup()
