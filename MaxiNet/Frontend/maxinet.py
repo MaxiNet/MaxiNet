@@ -37,6 +37,7 @@ import subprocess
 import sys
 import time
 import warnings
+import threading
 
 from mininet.node import RemoteController, UserSwitch
 from mininet.link import TCIntf, Intf, Link, TCLink
@@ -588,6 +589,18 @@ class Cluster(object):
         self.worker = []
         atexit.register(self._stop)
 
+        #register this Cluster to the nameserver as key self.ident:
+        myIP = subprocess.check_output("ip route get %s | cut -d' ' -f6" % ip, shell=True)
+        myIP = myIP.strip()
+        self._pyrodaemon = Pyro4.Daemon(host=myIP)
+        self._pyrodaemon._pyroHmacKey=password
+        uri = self._pyrodaemon.register(self)
+        self.nameserver.register(self.ident, uri)
+        self._pyro_daemon_thread = threading.Thread(target=self._pyrodaemon.requestLoop)
+        self._pyro_daemon_thread.daemon = True
+        self._pyro_daemon_thread.start()
+
+
     def _create_ident(self):
         """Create and register identifier to use when communicating with the
         FrontendServer"""
@@ -602,6 +615,14 @@ class Cluster(object):
                     break
         else:
             self.ident = ident
+
+    def get_status_is_alive(self):
+        """Get the status of this Cluster object.
+            returns true if the object is still alive.
+            this function is periodically called from the FrontendServer to check if the cluster still exists
+            otherwise its allocated resources (workers) are freed for future use by other clusters
+        """
+        return True
 
     def get_available_workers(self):
         """Get list of worker hostnames which are not reserved.
@@ -699,6 +720,13 @@ class Cluster(object):
         """
         self.remove_workers()
         self.manager.unregister_ident(self.ident)
+
+        self.nameserver.unregister(self.ident)
+        self._pyro_daemon_thread.stop()
+        self._pyrodaemon.unregister(self)
+        self._pyrodaemon.shutdown()
+
+
 
     def num_workers(self):
         """Return number of worker nodes in this Cluster."""
@@ -1077,7 +1105,7 @@ class Experiment(object):
                                   "| head -n1 | cut -d' ' -f2 | tr -d :")\
                                   .strip()
             if(intf == ""):
-                self.logger.warn("could not find main interface for " +
+                self.logger.warn("could not find main eth interface for " +
                                  worker.hn() + ". no logging possible.")
             else:
                 self.log_interface(worker, intf)

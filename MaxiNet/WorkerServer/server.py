@@ -280,7 +280,7 @@ def getFrontendStatus():
         manager._pyroHmacKey=pw
         print manager.print_worker_status()
     else:
-        print "Could not contact Frontend Server"
+        print "Could not contact Frontend server at %s:%s" % (ip, port)
 
 
 def main():

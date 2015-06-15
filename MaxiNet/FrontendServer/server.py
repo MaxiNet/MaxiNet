@@ -4,6 +4,7 @@ import atexit
 import logging
 import threading
 import time
+import traceback
 
 import Pyro4
 
@@ -67,6 +68,10 @@ class MaxiNetManager(object):
         self.logger = logging.getLogger(__name__)
         self.idents = []
 
+        self._monitor_thread = threading.Thread(target=self.monitor_clusters)
+        self._monitor_thread.daemon = True
+        self._monitor_thread.start()
+
     def register_ident(self, ident):
         """Register identifier on manager.
 
@@ -118,6 +123,48 @@ class MaxiNetManager(object):
             return True
         else:
             return False
+
+    def monitor_clusters(self):
+        """check if the clusters (which allocated workers) are alive
+        otherwise, deallocate the workers from the cluster
+        """
+
+        print "Monitoring clusters..."
+
+        while(True):
+            time.sleep(5)   #we check all 5 seconds.
+            clusters = list()
+            for worker in self._worker_dict.keys():
+                if (self._worker_dict[worker]["assigned"] != None):
+                    if (not (self._worker_dict[worker]["assigned"] in clusters)):
+                        clusters.append(self._worker_dict[worker]["assigned"])
+
+            #iterate over clusters and check if still alive:
+            for cluster in clusters:
+                try:
+                    uri = self._ns.lookup(cluster)
+                    cluster_instance = Pyro4.Proxy(uri)
+                    alive = False
+                    if(cluster_instance):
+                        cluster_instance._pyroHmacKey=self.config.get_nameserver_password()
+                        if(cluster_instance.get_status_is_alive()):
+                            alive = True
+                except Exception as e:
+                    pass
+
+                if(not alive):
+                    #we just detected that this cluster is no more alive!
+                    print "Detected a hung cluster. Freeing workers."
+                    for worker in self._worker_dict.keys():
+                        if(self._worker_dict[worker]["assigned"] == cluster):
+                            pn = self._worker_dict[worker]["pyroname"]+".mnManager"
+                            p = Pyro4.Proxy(self._ns.lookup(pn))
+                            p._pyroHmacKey=self.config.get_nameserver_password()
+                            p.destroy_mininet()
+                            self.free_worker(worker, cluster, True)
+
+
+
 
     def start(self):
         self.logger.debug("starting up and connecting to  %s:%d"
