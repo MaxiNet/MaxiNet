@@ -162,6 +162,7 @@ class MaxiNetManager(object):
                             p._pyroHmacKey=self.config.get_nameserver_password()
                             p.destroy_mininet()
                             self.free_worker(worker, cluster, True)
+                    self.unregister_ident(cluster)
 
 
 
@@ -243,7 +244,7 @@ class MaxiNetManager(object):
         for worker_name in self._worker_dict.keys():
             status = "free"
             if (self._worker_dict[worker_name]["assigned"]):
-                status = "assigned"
+                status = "assigned to %s" % self._worker_dict[worker_name]["assigned"]
             out += "%s\t\t%s\n" % (worker_name, status)
         return out
 

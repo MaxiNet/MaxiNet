@@ -721,8 +721,7 @@ class Cluster(object):
         self.remove_workers()
         self.manager.unregister_ident(self.ident)
 
-        self.nameserver.unregister(self.ident)
-        self._pyro_daemon_thread.stop()
+        self.nameserver.remove(self.ident)
         self._pyrodaemon.unregister(self)
         self._pyrodaemon.shutdown()
 
