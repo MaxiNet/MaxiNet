@@ -590,8 +590,12 @@ class Cluster(object):
         atexit.register(self._stop)
 
         #register this Cluster to the nameserver as key self.ident:
-        myIP = subprocess.check_output("ip route get %s | cut -d' ' -f6" % ip, shell=True)
-        myIP = myIP.strip()
+        myIP = subprocess.check_output("ip route get %s | cut -d' ' -f1" % ip, shell=True)
+        if (myIP.strip() == "local"):
+            myIP = "127.0.0.1"
+        else:
+            myIP = subprocess.check_output("ip route get %s | cut -d' ' -f6" % ip, shell=True)
+            myIP = myIP.strip()
         self._pyrodaemon = Pyro4.Daemon(host=myIP)
         self._pyrodaemon._pyroHmacKey=password
         uri = self._pyrodaemon.register(self)
