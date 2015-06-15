@@ -1,14 +1,15 @@
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html><head><title>Python: module MaxiNet.Frontend.maxinet</title>
+<html><head><title>Python: module maxinet</title>
+<meta charset="utf-8">
 </head><body bgcolor="#f0f0f8">
 
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><font color="#ffffff">MaxiNet</font>.<font color="#ffffff">Frontend</font>.maxinet</strong></big></big></font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>maxinet</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><br>maxinet.py</font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/wette/MaxiNet/MaxiNet/Frontend/maxinet.py">/home/wette/MaxiNet/MaxiNet/Frontend/maxinet.py</a></font></td></tr></table>
     <p><tt>MaxiNet&nbsp;main&nbsp;file<br>
 &nbsp;<br>
 This&nbsp;file&nbsp;holds&nbsp;the&nbsp;main&nbsp;components&nbsp;of&nbsp;MaxiNet&nbsp;and&nbsp;is&nbsp;intended&nbsp;to&nbsp;be&nbsp;the<br>
@@ -41,7 +42,7 @@ Classes&nbsp;in&nbsp;this&nbsp;file:<br>
 <tr bgcolor="#aa55cc">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
-
+    
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="Pyro4.html">Pyro4</a><br>
 <a href="atexit.html">atexit</a><br>
@@ -59,26 +60,26 @@ Classes&nbsp;in&nbsp;this&nbsp;file:<br>
 <tr bgcolor="#ee77aa">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
-
+    
 <tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><dl>
-<dt><font face="helvetica, arial"><a href="MaxiNet.Frontend.maxinet.html#TunHelper">TunHelper</a>
-</font></dt><dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
 </font></dt><dd>
 <dl>
-<dt><font face="helvetica, arial"><a href="MaxiNet.Frontend.maxinet.html#Cluster">Cluster</a>
-</font></dt><dt><font face="helvetica, arial"><a href="MaxiNet.Frontend.maxinet.html#Experiment">Experiment</a>
-</font></dt><dt><font face="helvetica, arial"><a href="MaxiNet.Frontend.maxinet.html#NodeWrapper">NodeWrapper</a>
-</font></dt><dt><font face="helvetica, arial"><a href="MaxiNet.Frontend.maxinet.html#Worker">Worker</a>
+<dt><font face="helvetica, arial"><a href="maxinet.html#Cluster">Cluster</a>
+</font></dt><dt><font face="helvetica, arial"><a href="maxinet.html#Experiment">Experiment</a>
+</font></dt><dt><font face="helvetica, arial"><a href="maxinet.html#NodeWrapper">NodeWrapper</a>
+</font></dt><dt><font face="helvetica, arial"><a href="maxinet.html#Worker">Worker</a>
 </font></dt></dl>
 </dd>
-</dl>
+<dt><font face="helvetica, arial"><a href="maxinet.html#TunHelper">TunHelper</a>
+</font></dt></dl>
  <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ffc8d8">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#000000" face="helvetica, arial"><a name="Cluster">class <strong>Cluster</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
-
+    
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
 <td colspan=2><tt>Class&nbsp;used&nbsp;to&nbsp;manage&nbsp;a&nbsp;cluster&nbsp;of&nbsp;Workers.<br>
 &nbsp;<br>
@@ -104,20 +105,19 @@ Attributes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Workers.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;sshtool:&nbsp;SSH_Tool&nbsp;instance&nbsp;which&nbsp;is&nbsp;used&nbsp;to&nbsp;manage&nbsp;ssh&nbsp;client&nbsp;on&nbsp;frontend<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;machine.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ssh_daemon:&nbsp;Pyro&nbsp;daemon&nbsp;to&nbsp;export&nbsp;SSH_Tool&nbsp;instance&nbsp;to&nbsp;local&nbsp;processes.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Needed&nbsp;to&nbsp;implement&nbsp;MaxiNetExec<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ssh_daemon_thread:&nbsp;Thread&nbsp;to&nbsp;run&nbsp;ssh_daemon&nbsp;requestloop<br>
 &nbsp;&nbsp;&nbsp;&nbsp;tunhelper:&nbsp;Instance&nbsp;of&nbsp;<a href="#TunHelper">TunHelper</a>&nbsp;to&nbsp;enumerate&nbsp;tunnel&nbsp;instances.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;worker:&nbsp;List&nbsp;of&nbsp;worker&nbsp;instances.&nbsp;Index&nbsp;of&nbsp;worker&nbsp;instance&nbsp;in<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sequence&nbsp;must&nbsp;be&nbsp;equal&nbsp;to&nbsp;worker&nbsp;id.<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="Cluster-__init__"><strong>__init__</strong></a>(self, ip<font color="#909090">=None</font>, port<font color="#909090">=None</font>, password<font color="#909090">=None</font>)</dt><dd><tt>Inits&nbsp;<a href="#Cluster">Cluster</a>&nbsp;class.<br>
+<dl><dt><a name="Cluster-__init__"><strong>__init__</strong></a>(self, ip<font color="#909090">=None</font>, port<font color="#909090">=None</font>, password<font color="#909090">=None</font>, minWorkers<font color="#909090">=None</font>, maxWorkers<font color="#909090">=None</font>)</dt><dd><tt>Inits&nbsp;<a href="#Cluster">Cluster</a>&nbsp;class.<br>
 &nbsp;<br>
 Args:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;ip:&nbsp;IP&nbsp;address&nbsp;of&nbsp;FrontendServer&nbsp;nameserver.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;port:&nbsp;port&nbsp;of&nbsp;FrontendServer&nbsp;nameserver.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;password:&nbsp;password&nbsp;of&nbsp;FrontendServer&nbsp;nameserver.</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;password:&nbsp;password&nbsp;of&nbsp;FrontendServer&nbsp;nameserver.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;maxWorkers:&nbsp;number&nbsp;of&nbsp;workers&nbsp;to&nbsp;allocate&nbsp;to&nbsp;this&nbsp;cluster;&nbsp;None&nbsp;for&nbsp;"all&nbsp;you&nbsp;can&nbsp;get".<br>
+&nbsp;&nbsp;&nbsp;&nbsp;minWorkers:&nbsp;minimum&nbsp;number&nbsp;of&nbsp;workers&nbsp;to&nbsp;allocate&nbsp;to&nbsp;this&nbsp;cluster;&nbsp;None&nbsp;for&nbsp;"at&nbsp;least&nbsp;1"</tt></dd></dl>
 
 <dl><dt><a name="Cluster-add_worker"><strong>add_worker</strong></a>(self)</dt><dd><tt>Add&nbsp;worker<br>
 &nbsp;<br>
@@ -166,6 +166,11 @@ Returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;list&nbsp;of&nbsp;hostnames&nbsp;of&nbsp;workers&nbsp;which&nbsp;are&nbsp;registered&nbsp;on&nbsp;the&nbsp;FrontendServer<br>
 &nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;not&nbsp;reserved&nbsp;by&nbsp;this&nbsp;or&nbsp;another&nbsp;<a href="#Cluster">Cluster</a>&nbsp;instance.</tt></dd></dl>
 
+<dl><dt><a name="Cluster-get_status_is_alive"><strong>get_status_is_alive</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;status&nbsp;of&nbsp;this&nbsp;<a href="#Cluster">Cluster</a>&nbsp;<a href="__builtin__.html#object">object</a>.<br>
+returns&nbsp;true&nbsp;if&nbsp;the&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;is&nbsp;still&nbsp;alive.<br>
+this&nbsp;function&nbsp;is&nbsp;periodically&nbsp;called&nbsp;from&nbsp;the&nbsp;FrontendServer&nbsp;to&nbsp;check&nbsp;if&nbsp;the&nbsp;cluster&nbsp;still&nbsp;exists<br>
+otherwise&nbsp;its&nbsp;allocated&nbsp;resources&nbsp;(workers)&nbsp;are&nbsp;freed&nbsp;for&nbsp;future&nbsp;use&nbsp;by&nbsp;other&nbsp;clusters</tt></dd></dl>
+
 <dl><dt><a name="Cluster-get_worker"><strong>get_worker</strong></a>(self, hostname)</dt><dd><tt>Return&nbsp;worker&nbsp;instance&nbsp;of&nbsp;worker&nbsp;with&nbsp;hostname&nbsp;hostname.<br>
 &nbsp;<br>
 Args:<br>
@@ -209,7 +214,7 @@ Data descriptors defined here:<br>
 <tr bgcolor="#ffc8d8">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#000000" face="helvetica, arial"><a name="Experiment">class <strong>Experiment</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
-
+    
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
 <td colspan=2><tt>Class&nbsp;to&nbsp;manage&nbsp;MaxiNet&nbsp;<a href="#Experiment">Experiment</a>.<br>
 &nbsp;<br>
@@ -500,7 +505,7 @@ Data descriptors defined here:<br>
 <tr bgcolor="#ffc8d8">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#000000" face="helvetica, arial"><a name="NodeWrapper">class <strong>NodeWrapper</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
-
+    
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
 <td colspan=2><tt>Wrapper&nbsp;that&nbsp;allows&nbsp;most&nbsp;commands&nbsp;that&nbsp;can&nbsp;be&nbsp;used&nbsp;in&nbsp;mininet&nbsp;to&nbsp;be<br>
 used&nbsp;in&nbsp;MaxiNet&nbsp;as&nbsp;well.<br>
@@ -557,7 +562,7 @@ Data descriptors defined here:<br>
 <tr bgcolor="#ffc8d8">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#000000" face="helvetica, arial"><a name="TunHelper">class <strong>TunHelper</strong></a></font></td></tr>
-
+    
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
 <td colspan=2><tt>Class&nbsp;to&nbsp;manage&nbsp;tunnel&nbsp;interface&nbsp;names.<br>
 &nbsp;<br>
@@ -609,7 +614,7 @@ Returns:<br>
 <tr bgcolor="#ffc8d8">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#000000" face="helvetica, arial"><a name="Worker">class <strong>Worker</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
-
+    
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
 <td colspan=2><tt><a href="#Worker">Worker</a>&nbsp;class&nbsp;used&nbsp;to&nbsp;manage&nbsp;an&nbsp;individual&nbsp;<a href="#Worker">Worker</a>&nbsp;host.<br>
 &nbsp;<br>
@@ -839,7 +844,7 @@ Data descriptors defined here:<br>
 <tr bgcolor="#eeaa77">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
-
+    
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><dl><dt><a name="-deprecated"><strong>deprecated</strong></a>(func)</dt><dd><tt>This&nbsp;is&nbsp;a&nbsp;decorator&nbsp;which&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;mark&nbsp;functions<br>
 as&nbsp;deprecated.&nbsp;It&nbsp;will&nbsp;result&nbsp;in&nbsp;a&nbsp;warning&nbsp;being&nbsp;emitted<br>
@@ -869,7 +874,7 @@ Returns:<br>
 <tr bgcolor="#55aa55">
 <td colspan=3 valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
-
+    
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><strong>logger</strong> = &lt;logging.Logger object&gt;</td></tr></table>
 </body></html>
