@@ -118,7 +118,9 @@ then
 fi
 
 
-cd ~ && git clone git://github.com/MaxiNet/MaxiNet.git
+cd ~
+rm -rf MaxiNet
+git clone git://github.com/MaxiNet/MaxiNet.git
 cd MaxiNet
 git checkout v1.0
 sudo make install
