@@ -176,9 +176,12 @@ class CLI(Cmd):
                 opts=["-t","-X"]
                 if not blocking:
                     opts.append("-n")
+                xauthprefix = "/home/"
+                if user == "root":
+                    xauthprefix = "/"
                 rcmd = sshtool.get_ssh_cmd(
                         targethostname=hn,
-                        cmd="XAUTHORITY=/home/" + user + "/.Xauthority mnexec -a "
+                        cmd="XAUTHORITY=" + xauthprefix + user + "/.Xauthority mnexec -a "
                             + pid + " " + cmd,
                         opts=opts
                        )
