@@ -22,11 +22,6 @@ from MaxiNet.tools import Tools, MaxiNetConfig
 from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
 
 
-def exit_handler(signal, frame):
-    # I have absolutely no clue why but without this print atexit sometimes
-    # doesn't seem to wait for called functions to finish...
-    print "exiting..."
-    sys.exit()
 
 
 class WorkerServer(object):
@@ -67,13 +62,19 @@ class WorkerServer(object):
         self._looping_thread = None
 
 
+    def exit_handler(self, signal, frame):
+        # I have absolutely no clue why but without this print atexit sometimes
+        # doesn't seem to wait for called functions to finish...
+        print "exiting..."
+        self._shutdown = True
+        sys.exit()
+
     def monitorFrontend(self):
         """ function to monitor if the frontend is still alive.
             if not, try to reconnect.
         """
-        while(True):
+        while(not self._shutdown):
             try:
-                time.sleep(5)
                 self._manager.getStatus()
             except:
                 if self._ip != None:
@@ -105,6 +106,7 @@ class WorkerServer(object):
                         traceback.print_exc(e)
                         pass
                 pass
+            time.sleep(5)
 
     def start(self, ip, port, password, retry=float("inf")):
         """Start WorkerServer and ssh daemon and connect to nameserver."""
@@ -191,8 +193,6 @@ class WorkerServer(object):
     def remoteShutdown(self):
         self._pyrodaemon.shutdown()
 
-    def _check_shutdown(self):
-        return self._shutdown
 
     def stop(self):
         (signedin, assigned) = self._manager.get_worker_status(self.get_hostname())
@@ -349,7 +349,7 @@ def main():
     parser.add_argument("--password", action="store", help="Frontend Server Password")
     parser.add_argument("-c", "--config", metavar="FILE", action="store", help="Read configuration from FILE")
     parsed = parser.parse_args()
-    signal.signal(signal.SIGINT, exit_handler)
+
     ip = False
     port = False
     pw = False
@@ -380,6 +380,9 @@ def main():
                the Frontend Server."
     else:
         workerserver = WorkerServer()
+
+        signal.signal(signal.SIGINT, workerserver.exit_handler)
+
         workerserver.start(ip=ip, port=port, password=pw)
         workerserver.monitorFrontend()
 
