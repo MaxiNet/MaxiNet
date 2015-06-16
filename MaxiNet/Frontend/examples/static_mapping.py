@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 
 #
-# Minimal example showing how to use MaxiNet with static mapping
+# Minimal example showing how to use MaxiNet with static mapping of nodes to workers
 #
 
 import time
@@ -24,7 +24,7 @@ mapping = {"h1": 0,
            "s7": 1
           }
 
-cluster = maxinet.Cluster()
+cluster = maxinet.Cluster(minWorkers=2,maxWorkers=2)
 
 exp = maxinet.Experiment(cluster, topo, nodemapping=mapping)
 exp.setup()
