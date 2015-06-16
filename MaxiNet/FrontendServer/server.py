@@ -164,7 +164,10 @@ class MaxiNetManager(object):
                             self.free_worker(worker, cluster, True)
                     self.unregister_ident(cluster)
 
-
+    def getStatus(self):
+        """ used to check if the frontend server is still alive.
+        """
+        return True
 
 
     def start(self):
@@ -186,19 +189,23 @@ class MaxiNetManager(object):
 
     def _stop(self):
         self.logger.info("shutting down...")
-        self._worker_dict_lock.acquire()
-        workers = self._worker_dict.keys()
-        for worker in workers:
-            pn = self._worker_dict[worker]["pyroname"]
-            self._worker_dict_lock.release()
-            p = Pyro4.Proxy(self._ns.lookup(pn))
-            p._pyroHmacKey=self.config.get_nameserver_password()
-            p.remoteShutdown()
-            self._worker_dict_lock.acquire()
-        self._worker_dict_lock.release()
-        while(len(self.get_workers()) > 0):
-            self.logger.debug("waiting for workers to unregister...")
-            time.sleep(0.5)
+
+        #
+        # comment back in if the workerservers should shutdown once the frontend is terminated.
+        #
+        #self._worker_dict_lock.acquire()
+        #workers = self._worker_dict.keys()
+        #for worker in workers:
+        #    pn = self._worker_dict[worker]["pyroname"]
+        #    self._worker_dict_lock.release()
+        #    p = Pyro4.Proxy(self._ns.lookup(pn))
+        #    p._pyroHmacKey=self.config.get_nameserver_password()
+        #    p.remoteShutdown()
+        #    self._worker_dict_lock.acquire()
+        #self._worker_dict_lock.release()
+        #while(len(self.get_workers()) > 0):
+        #    self.logger.debug("waiting for workers to unregister...")
+        #    time.sleep(0.5)
         self._ns.remove("MaxiNetManager")
         self._pyrodaemon.unregister(self)
         self._pyrodaemon.shutdown()

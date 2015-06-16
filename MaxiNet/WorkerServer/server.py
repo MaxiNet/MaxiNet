@@ -15,6 +15,8 @@ from mininet.link import TCLink, TCIntf
 from mininet.net import Mininet
 import mininet.term
 import Pyro4
+import threading
+import traceback
 
 from MaxiNet.tools import Tools, MaxiNetConfig
 from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
@@ -57,10 +59,63 @@ class WorkerServer(object):
         self._shutdown = False
         #Pyro4.config.COMMTIMEOUT = 2
 
+        #for frontend
+        self._ip = None
+        self._port = None
+        self._password = None
+
+        self._looping_thread = None
+
+
+    def monitorFrontend(self):
+        """ function to monitor if the frontend is still alive.
+            if not, try to reconnect.
+        """
+        while(True):
+            try:
+                time.sleep(5)
+                self._manager.getStatus()
+            except:
+                if self._ip != None:
+                    #self.ip as an indicator that this worker was connected to the frontend once.
+                    print "Trying to reconnect to FrontendServer..."
+                    try:
+                        try:
+                            self._pyrodaemon.unregister(self)
+                        except:
+                            pass
+                        try:
+                            self._pyrodaemon.unregister(self.mnManager)
+                        except:
+                            pass
+                        try:
+                            self._pyrodaemon.unregister(self.sshManager)
+                        except:
+                            pass
+                        try:
+                            self._pyrodaemon.shutdown()
+                        except:
+                            pass
+                        try:
+                            self._pyrodaemon.close()
+                        except:
+                            pass
+                        self.start(self._ip, self._port, self._password)
+                    except Exception as e:
+                        traceback.print_exc(e)
+                        pass
+                pass
+
     def start(self, ip, port, password, retry=float("inf")):
         """Start WorkerServer and ssh daemon and connect to nameserver."""
         self.logger.info("starting up and connecting to  %s:%d"
                          % (ip, port))
+
+        #store for reconnection attempts
+        self._ip = ip
+        self._port = port
+        self._password = password
+
         #Pyro4.config.HMAC_KEY = password
         tries=1
         self._ns = None
@@ -69,8 +124,8 @@ class WorkerServer(object):
                 self._ns = Pyro4.locateNS(ip, port, hmac_key=password)
             except Pyro4.errors.NamingError:
                 if tries < retry:
-                    self.logger.warn("Unable to locate Nameserver. Trying again in %s seconds..." % tries)
-                    time.sleep(tries)
+                    self.logger.warn("Unable to locate Nameserver. Trying again in 5 seconds...")
+                    time.sleep(5)
                     tries += 1
                 else:
                     self.logger.error("Unable to locate Nameserver.")
@@ -101,12 +156,14 @@ class WorkerServer(object):
         manager_uri = self._ns.lookup("MaxiNetManager")
         if(manager_uri):
             self._manager = Pyro4.Proxy(manager_uri)
-            self._manager._pyroHmacKey=password
+            self._manager._pyroHmacKey=self._password
             self.logger.info("signing in...")
             if(self._manager.worker_signin(self._get_pyroname(), self.get_hostname())):
                 self.logger.info("done. Entering requestloop.")
                 self._started = True
-                self._pyrodaemon.requestLoop()
+                self._looping_thread = threading.Thread(target=self._pyrodaemon.requestLoop)
+                self._looping_thread.daemon = True
+                self._looping_thread.start()
             else:
                 self.logger.error("signin failed.")
         else:
@@ -126,6 +183,8 @@ class WorkerServer(object):
         self._ns.remove(self._get_pyroname())
         self._ns.remove(self._get_pyroname()+".mnManager")
         self._pyrodaemon.unregister(self)
+        self._pyrodaemon.unregister(self.mnManager)
+        self._pyrodaemon.unregister(self.sshManager)
         self._pyrodaemon.shutdown()
         self._pyrodaemon.close()
 
@@ -320,7 +379,10 @@ def main():
         print "Please provide MaxiNet.cfg or specify ip, port and password of \
                the Frontend Server."
     else:
-        WorkerServer().start(ip=ip, port=port, password=pw)
+        workerserver = WorkerServer()
+        workerserver.start(ip=ip, port=port, password=pw)
+        workerserver.monitorFrontend()
+
 
 
 if(__name__ == "__main__"):
