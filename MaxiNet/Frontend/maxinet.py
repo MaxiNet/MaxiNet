@@ -1177,8 +1177,6 @@ class Experiment(object):
         self.node_to_worker[name] = self.cluster.get_worker(self.workerid_to_hostname[wid])
         self.node_to_wrapper[name] = NodeWrapper(name, self.get_worker(name))
         self.nodes.append(self.node_to_wrapper[name])
-        if (self.config.run_with_1500_mtu()):
-            self.setMTU(self.get_node(name), 1450)
 
 
     def addHost(self, name, cls=None, wid=None, pos=None, **params):
@@ -1205,6 +1203,10 @@ class Experiment(object):
             for intf in self.get_node(name).intfNames():
                 self.get_node(name).cmd("sudo ethtool -K %s tso off" % intf)
 
+        #set MTU if necessary
+        if (self.config.run_with_1500_mtu()):
+            self.setMTU(self.get_node(name), 1450)
+
         return self.get(name)
 
     def addSwitch(self, name, cls=None, wid=None, pos=None, **params):
@@ -1225,6 +1227,11 @@ class Experiment(object):
         self.addNode(name, wid=wid, pos=pos)
         self.get_worker(name).addSwitch(name, cls, **params)
         self.switches.append(self.get(name))
+
+        #set MTU if necessary
+        if (self.config.run_with_1500_mtu()):
+            self.setMTU(self.get_node(name), 1450)
+
         return self.get(name)
 
     def addController(self, name="c0", controller=None, wid=None, pos=None,
