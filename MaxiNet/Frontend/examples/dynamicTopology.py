@@ -29,7 +29,7 @@ topo.addLink("h1", "s1")
 topo.addLink("h2", "s1")
 
 # start cluster
-cluster = maxinet.Cluster()
+cluster = maxinet.Cluster(minWorkers=2, maxWorkers=2)
 
 # start experiment with OVSSwitch on cluster
 exp = maxinet.Experiment(cluster, topo, switch=OVSSwitch)
