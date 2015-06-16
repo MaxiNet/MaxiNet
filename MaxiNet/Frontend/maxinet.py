@@ -1315,7 +1315,7 @@ class Experiment(object):
                 self.logger.error("Only Link or TCLink instances are " +
                                   "supported by MaxiNet")
                 raise RuntimeError("Only Link or TCLink instances are " +
-                                   "supported by MaxiNe")
+                                   "supported by MaxiNet")
             intfn = self.cluster.create_tunnel(w1, w2)
             if((cls is None) or isinstance(cls, TCLink)):
                 intf = TCIntf
