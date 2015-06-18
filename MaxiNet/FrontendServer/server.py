@@ -228,7 +228,7 @@ class MaxiNetManager(object):
         if(worker_hostname in self._worker_dict):
             self._worker_dict_lock.release()
             self.logger.warn("failed to register worker %s (pyro: %s) as it is\
-                              aready registered."
+                              already registered."
                              % (worker_hostname, worker_pyroname))
             return False
         self._worker_dict[worker_hostname] = {"assigned": None,
