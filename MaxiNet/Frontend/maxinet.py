@@ -1030,6 +1030,29 @@ class Experiment(object):
         """Stop logging."""
         for worker in self.cluster.workers():
             worker.run_cmd("killall mpstat getRxTx.sh getMemoryUsage.sh")
+
+            #get CPU logs
+            worker.get_file("/tmp/maxinet_cpu_" +
+                        str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
+                        "/tmp/maxinet_logs/" +
+                        Tools.time_to_string(self.starttime) + "/")
+            #get memory logs
+            worker.get_file("/tmp/maxinet_mem_" +
+                            str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
+                            "/tmp/maxinet_logs/" +
+                            Tools.time_to_string(self.starttime) + "/")
+
+            #get interface logs
+            intf = worker.run_cmd("ip addr show to " + worker.ip(classifier="backend") + "/24 " +
+                                  "| head -n1 | cut -d' ' -f2 | tr -d :")\
+                                  .strip()
+            worker.get_file("/tmp/maxinet_intf_" + intf + "_" +
+                        str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
+                        "/tmp/maxinet_logs/" +
+                        Tools.time_to_string(self.starttime) + "/")
+
+        self._print_log_info()
+        self._print_monitor_info()
         self.isMonitoring = False
 
     def log_cpu(self):
@@ -1047,15 +1070,10 @@ class Experiment(object):
         """
         subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
                          Tools.time_to_string(self.starttime) + "/"])
-        atexit.register(worker.get_file, "/tmp/maxinet_cpu_" +
-                        str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
-                        "/tmp/maxinet_logs/" +
-                        Tools.time_to_string(self.starttime) + "/")
         worker.daemonize("LANG=en_EN.UTF-8 mpstat 1 | while read l; " +
                          "do echo -n \"`date +%s`    \" ; echo \"$l \" ;" +
                          " done > \"/tmp/maxinet_cpu_" + str(self.hostname_to_workerid[worker.hn()]) +
                          "_(" + worker.hn() + ").log\"")
-        atexit.register(self._print_log_info)
 
     def log_free_memory(self):
         """Log memory usage of workers.
@@ -1067,13 +1085,8 @@ class Experiment(object):
         subprocess.call(["mkdir", "-p", "/tmp/maxinet_logs/" +
                          Tools.time_to_string(self.starttime) + "/"])
         for worker in self.cluster.workers():
-            atexit.register(worker.get_file, "/tmp/maxinet_mem_" +
-                            str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
-                            "/tmp/maxinet_logs/" +
-                            Tools.time_to_string(self.starttime) + "/")
             worker.daemonize_script("getMemoryUsage.sh", " > \"/tmp/maxinet_mem_" +
                              str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log\"")
-            atexit.register(self._print_log_info)
 
     def log_interfaces_of_node(self, node):
         """Log statistics of interfaces of node.
@@ -1096,14 +1109,9 @@ class Experiment(object):
         Format is:
         timestamp,received bytes,sent bytes,received packets,sent packets
         """
-        atexit.register(worker.get_file, "/tmp/maxinet_intf_" + intf + "_" +
-                        str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() + ").log",
-                        "/tmp/maxinet_logs/" +
-                        Tools.time_to_string(self.starttime) + "/")
         worker.daemonize_script("getRxTx.sh", " " + intf + " > \"/tmp/maxinet_intf_" +
                          intf + "_" + str(self.hostname_to_workerid[worker.hn()]) + "_(" + worker.hn() +
                          ").log\"")
-        atexit.register(self._print_log_info)
 
     def monitor(self):
         """Log statistics of worker interfaces and memory usage.
@@ -1111,7 +1119,6 @@ class Experiment(object):
         Places log files in /tmp/maxinet_logs.
         """
         self.isMonitoring = True
-        atexit.register(self._print_monitor_info)
         self.log_free_memory()
         self.log_cpu()
         for worker in self.cluster.workers():
