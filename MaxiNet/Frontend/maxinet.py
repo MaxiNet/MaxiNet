@@ -1465,8 +1465,9 @@ class Experiment(object):
                     for intf in self.get(host).intfNames():
                         self.get(host).cmd("sudo ethtool -K %s tso off" % intf)
         for (w1, w2, ip1, ip2, tid, tkey, intf) in stt_tunnels:
-            w1.run_cmd("ovs-vsctl -- set interface %s type=stt options:remote_ip=%s,key=%i" % (intf, ip2, tkey))
-            w2.run_cmd("ovs-vsctl -- set interface %s type=stt options:remote_ip=%s,key=%i" % (intf, ip1, tkey))
+            print "ovs-vsctl -- set interface %s type=stt options:remote_ip=%s,key=%i" % (intf, ip2, tkey)
+            w1.run_cmd("ovs-vsctl -- set interface %s type=stt options=\"remote_ip=%s,local_ip=%s,key=%i\"" % (intf, ip2, ip1, tkey))
+            w2.run_cmd("ovs-vsctl -- set interface %s type=stt options=\"remote_ip=%s,local_ip=%s,key=%i\"" % (intf, ip1, ip2, tkey))
         # start mininet instances
 
     def setMTU(self, host, mtu):
