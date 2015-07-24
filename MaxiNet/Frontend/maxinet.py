@@ -765,6 +765,36 @@ class Cluster(object):
         """
         return self.hostname_to_worker[hostname]
 
+    def get_tunnel_metadata(self, w1, w2):
+        """Get metadata needed for tunnel creation
+
+        Args:
+            w1: Worker instance
+            w2: Worker instance
+
+        Returns:
+            Tuple of (ip1,ip2,tunnel id, tunnel key, tunnel interface name). Except
+            for ips all values are unique to that instance.
+        """
+        tid = self.tunhelper.get_tun_nr()
+        tkey = self.tunhelper.get_key_nr()
+        intf = "mn_tun" + str(tid)
+        ip1 = w1.ip(classifier="backend")
+        ip2 = w2.ip(classifier="backend")
+        #use multiple IP addresses for the workers:
+        #modern NICs have multiple queues with own IRQs. This is called RSS. The queue a packet is enqueued in is determined by a hashing algorithm using the IP headers.
+        #unfortunatelly, most RSS implementations ignore the GRE headers.
+        #on GRE, most RSS hashing algorithms only use src-dest IP addresses to assign packets to queues which makes is necessary to provide multiple IP combinations per worker pair
+        #otherwise, all packets between a pair of workers would be assigned to the same queue.
+        if self.config.getint("all", "useMultipleIPs") > 1:
+            ip1_int = [int(a) for a in ip1.split(".")]
+            ip2_int = [int(a) for a in ip2.split(".")]
+            ip1_int[3] += random.randint(0, self.config.getint("all", "useMultipleIPs")-1)
+            ip2_int[3] += random.randint(0, self.config.getint("all", "useMultipleIPs")-1)
+            ip1 = "%d.%d.%d.%d" % tuple(ip1_int)
+            ip2 = "%d.%d.%d.%d" % tuple(ip2_int)
+        return (ip1, ip2, tid, tkey, intf)
+
     def create_tunnel(self, w1, w2):
         """Create GRE tunnel between workers.
 
@@ -779,27 +809,7 @@ class Cluster(object):
         Returns:
             Network interface name of created tunnel.
         """
-        tid = self.tunhelper.get_tun_nr()
-        tkey = self.tunhelper.get_key_nr()
-        intf = "mn_tun" + str(tid)
-        ip1 = w1.ip(classifier="backend")
-        ip2 = w2.ip(classifier="backend")
-
-
-        #use multiple IP addresses for the workers:
-        #modern NICs have multiple queues with own IRQs. This is called RSS. The queue a packet is enqueued in is determined by a hashing algorithm using the IP headers.
-        #unfortunatelly, most RSS implementations ignore the GRE headers.
-        #on GRE, most RSS hashing algorithms only use src-dest IP addresses to assign packets to queues which makes is necessary to provide multiple IP combinations per worker pair
-        #otherwise, all packets between a pair of workers would be assigned to the same queue.
-        if self.config.getint("all", "useMultipleIPs") > 1:
-            ip1_int = [int(a) for a in ip1.split(".")]
-            ip2_int = [int(a) for a in ip2.split(".")]
-            ip1_int[3] += random.randint(0, self.config.getint("all", "useMultipleIPs")-1)
-            ip2_int[3] += random.randint(0, self.config.getint("all", "useMultipleIPs")-1)
-            ip1 = "%d.%d.%d.%d" % tuple(ip1_int)
-            ip2 = "%d.%d.%d.%d" % tuple(ip2_int)
-
-
+        ip1, ip2, tid, tkey, intf = self.get_tunnel_metadata(w1, w2)
         self.logger.debug("invoking tunnel create commands on " + ip1 +
                           " and " + ip2)
         w1.run_script("create_tunnel.sh " + ip1 + " " + ip2 + " " + intf +
@@ -1402,10 +1412,15 @@ class Experiment(object):
                     self.switches.append(self.nodes[-1])
         # create tunnels
         tunnels = [[] for x in range(len(subtopos))]
+        stt_tunnels = []
         for tunnel in self.topology.getTunnels():
             w1 = self.get_worker(tunnel[0])
             w2 = self.get_worker(tunnel[1])
-            intf = self.cluster.create_tunnel(w1, w2)
+            if not self.config.use_stt_tunneling():
+                intf = self.cluster.create_tunnel(w1, w2)
+            else:
+                ip1, ip2, tid, tkey, intf = self.cluster.get_tunnel_metadata(w1, w2)
+                stt_tunnels.append((w1, w2, ip1, ip2, tid, tkey, intf))
             self.tunnellookup[(tunnel[0], tunnel[1])] = intf
             self.tunnellookup[(tunnel[1], tunnel[0])] = intf
             for i in range(0, 2):
@@ -1449,6 +1464,10 @@ class Experiment(object):
                 for host in topo.nodes():
                     for intf in self.get(host).intfNames():
                         self.get(host).cmd("sudo ethtool -K %s tso off" % intf)
+        for (w1, w2, ip1, ip2, tid, tkey, intf) in stt_tunnels:
+            w1.run_cmd("ovs-vsctl -- set interface %s type=stt options:remote_ip=%s,key=%i" % (intf, ip2, tkey))
+            w2.run_cmd("ovs-vsctl -- set interface %s type=stt options:remote_ip=%s,key=%i" % (intf, ip1, tkey))
+        # start mininet instances
 
     def setMTU(self, host, mtu):
         """Set MTUs of all Interfaces of mininet host.
