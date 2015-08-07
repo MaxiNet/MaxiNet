@@ -233,7 +233,7 @@ class MininetManager(object):
         self.net = None
 
     def create_mininet(self, topo, tunnels=[],  switch=UserSwitch,
-                       controller=None):
+                       controller=None, STT=False):
         if(not self.net is None):
             self.logger.warn("running mininet instance detected!\
                               Shutting it down...")
@@ -246,6 +246,9 @@ class MininetManager(object):
         else:
             self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
                                switch=switch)
+        if STT:
+            self.logger.info("Starting Mininet...")
+            self.net.start()
         self.logger.info("Adding tunnels to mininet instance")
         for tunnel in tunnels:
             port = None
@@ -256,9 +259,10 @@ class MininetManager(object):
             if "cls" in tunnel[2].keys():
                 cls = tunnel[2]["cls"]
                 del tunnel[2]["cls"]
-            self.addTunnel(tunnel[0], tunnel[1], port, cls, **tunnel[2])
-        self.logger.info("Starting Mininet...")
-        self.net.start()
+            self.addTunnel(tunnel[0], tunnel[1], port, cls, STT=STT, **tunnel[2])
+        if not STT:
+            self.logger.info("Starting Mininet...")
+            self.net.start()
         self.logger.info("Startup complete.")
         self.x11popens = []
         return True
@@ -298,11 +302,14 @@ class MininetManager(object):
         self.net.addController(name, controller, **params)
         return name
 
-    def addTunnel(self, name, switch, port, intf, **params):
-        switch = self.net.get(switch)
+    def addTunnel(self, name, switch, port, intf, STT=False, **params):
+        switch_i = self.net.get(switch)
         if not intf:
             intf = TCIntf
-        intf(name, node=switch, port=port, link=None, **params)
+        if STT:
+            subprocess.check_output(["ovs-vsctl","add-port", switch, name])
+        else:
+            intf(name, node=switch_i, port=port, link=None, **params)
 
     def tunnelX11(self, node, display):
         node = self.net.get(node)

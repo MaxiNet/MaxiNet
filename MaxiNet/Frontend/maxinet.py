@@ -194,13 +194,14 @@ class Worker(object):
             controller: optional mininet controller class to use in this
                     network.
         """
+        STT = self.config.use_stt_tunneling()
         if controller:
             self.mininet.create_mininet(topo=topo, tunnels=tunnels,
                                         controller=controller,
-                                        switch=self.switch)
+                                        switch=self.switch, STT=STT)
         else:
             self.mininet.create_mininet(topo=topo, tunnels=tunnels,
-                                        switch=self.switch)
+                                        switch=self.switch, STT=STT)
 
 
     def daemonize(self, cmd):
@@ -1465,7 +1466,6 @@ class Experiment(object):
                     for intf in self.get(host).intfNames():
                         self.get(host).cmd("sudo ethtool -K %s tso off" % intf)
         for (w1, w2, ip1, ip2, tid, tkey, intf) in stt_tunnels:
-            print "ovs-vsctl -- set interface %s type=stt options:remote_ip=%s,key=%i" % (intf, ip2, tkey)
             w1.run_cmd("ovs-vsctl -- set interface %s type=stt options=\"remote_ip=%s,local_ip=%s,key=%i\"" % (intf, ip2, ip1, tkey))
             w2.run_cmd("ovs-vsctl -- set interface %s type=stt options=\"remote_ip=%s,local_ip=%s,key=%i\"" % (intf, ip1, ip2, tkey))
         # start mininet instances
