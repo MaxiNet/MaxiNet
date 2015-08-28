@@ -1,32 +1,30 @@
 #!/usr/bin/python2
 
 #
-# Minimal example showing how to use MaxiNet with static mapping
+# Minimal example showing how to use MaxiNet with static mapping of nodes to workers
 #
 
-import sys
 import time
 
 from MaxiNet.Frontend import maxinet
-from MaxiNet.Frontend.tools import FatTree
+from MaxiNet.tools import FatTree
 
 topo = FatTree(4, 10, 0.1)
 
-mapping = {"h1": 1,
-           "h2": 1,
-           "h3": 2,
-           "h4": 2,
-           "s1": 1,
-           "s2": 1,
-           "s3": 2,
-           "s4": 2,
-           "s5": 1,
-           "s6": 2,
-           "s7": 2
+mapping = {"h1": 0,
+           "h2": 0,
+           "h3": 1,
+           "h4": 1,
+           "s1": 0,
+           "s2": 0,
+           "s3": 1,
+           "s4": 1,
+           "s5": 0,
+           "s6": 1,
+           "s7": 1
           }
 
-cluster = maxinet.Cluster()
-cluster.start()
+cluster = maxinet.Cluster(minWorkers=2,maxWorkers=2)
 
 exp = maxinet.Experiment(cluster, topo, nodemapping=mapping)
 exp.setup()

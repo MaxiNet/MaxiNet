@@ -10,18 +10,16 @@
 #
 
 import subprocess
-import sys
 import time
 
 from MaxiNet.Frontend import maxinet
-from MaxiNet.Frontend.tools import FatTree
+from MaxiNet.tools import FatTree
 
 
 topo = FatTree(4, 10, 0.1)
 
 # start maxinet cluster
 cluster = maxinet.Cluster()
-cluster.start()
 
 # create experiment on cluster with FatTree topology
 exp = maxinet.Experiment(cluster, topo)
@@ -29,7 +27,7 @@ exp.setup()
 time.sleep(2)
 
 h3 = exp.get_node("h3")  # get node object "h3"
-w3 = exp.find_worker("h3")  # get worker-machine running node "h3"
+w3 = exp.get_worker("h3")  # get worker-machine running node "h3"
 # create file on worker machine
 w3.run_cmd("dd if=/dev/urandom of=/tmp/testfile1 bs=1024 count=1024")
 # get_file transfers a file from the file system of a worker to the file

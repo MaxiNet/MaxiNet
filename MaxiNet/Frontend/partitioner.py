@@ -161,7 +161,7 @@ class Partitioner(object):
         for node in topo.nodes():
             r.addNode(node, **topo.nodeInfo(node))
         for edge in topo.links():
-            r.addLink(edge[0], edge[1], **topo.linkInfo(edge[0], edge[1]))
+            r.addLink(**topo.linkInfo(edge[0], edge[1]))
         return r
 
     def partition(self, n, shares=None):
@@ -199,15 +199,15 @@ class Partitioner(object):
         """
         self.tunnels = []
         self.partitions = []
-        for i in range(0, max(mapping.values())):
+        for i in range(0, max(mapping.values()) + 1):
             self.partitions.append(Topo())
         print mapping
         switch_to_part = {}
         for switch in self.switches:
             if(not switch in mapping):
                 raise RuntimeError("no mapping for " + switch + " found")
-            switch_to_part[switch] = mapping[switch] - 1
-            self.partitions[mapping[switch] - 1].addNode(switch,
+            switch_to_part[switch] = mapping[switch]
+            self.partitions[mapping[switch]].addNode(switch,
                     **self.topo.nodeInfo(switch))
         self._add_links(switch_to_part)
         return Clustering(self.partitions, self.tunnels)
@@ -238,26 +238,36 @@ class Partitioner(object):
         f.close()
         self._add_links(switch_to_part)
 
+    def _remove_nodeinfo(self, d):
+        dr = d.copy()
+        if("node1" in dr):
+            del dr["node1"]
+        if("node2" in dr):
+            del dr["node2"]
+        return dr
+
     def _add_links(self, switch_to_part):
         for node in self.topo.nodes():
             if not self.topo.isSwitch(node):
                 for edge in self.topo.links():
                     if(edge[0] == node):
+                        info = self._remove_nodeinfo(self.topo.linkInfo(node, edge[1]))
                         self.partitions[switch_to_part[edge[1]]].addNode(node,
                                                    **self.topo.nodeInfo(node))
                         self.partitions[switch_to_part[edge[1]]].addLink(node,
-                                edge[1], **self.topo.linkInfo(node, edge[1]))
+                                edge[1], **info)
                     if(edge[1] == node):
+                        info = self._remove_nodeinfo(self.topo.linkInfo(edge[0], node))
                         self.partitions[switch_to_part[edge[0]]].addNode(node,
                                                    **self.topo.nodeInfo(node))
                         self.partitions[switch_to_part[edge[0]]]\
-                                .addLink(edge[0], node,
-                                         **self.topo.linkInfo(edge[0], node))
+                                .addLink(edge[0], node, **info)
         for edge in self.topo.links():
             if (self.topo.isSwitch(edge[0]) and self.topo.isSwitch(edge[1])):
+                info = self._remove_nodeinfo(self.topo.linkInfo(edge[0], edge[1]))
                 if(switch_to_part[edge[0]] == switch_to_part[edge[1]]):
                     self.partitions[switch_to_part[edge[0]]].addLink(edge[0],
-                               edge[1], **self.topo.linkInfo(edge[0], edge[1]))
+                               edge[1], **info)
                 else:
                     self.tunnels.append([edge[0], edge[1],
                                         self.topo.linkInfo(edge[0], edge[1])])

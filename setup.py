@@ -2,14 +2,13 @@ import sys, os, subprocess,distutils
 from setuptools import setup, find_packages
 
 setup(name='MaxiNet',
-      version='0.3.1',
+      version='1.0',
       description='Distributed Software Defined Network Emulation',
       long_description="MaxiNet extends the famous Mininet emulation environment to span the emulation across several physical machines. This allows to emulate very large SDN networks.",
       classifiers=[
         'Programming Language :: Python :: 2.7',
       ],
       keywords='mininet MaxiNet SDN Network OpenFlow openvswitch',
-      entry_points = { 'console_scripts': ['MaxiNetServer=MaxiNet.Worker.server:main'],},
       url='https://www.cs.uni-paderborn.de/?id=maxinet',
       author_email='maxinet@lists.upb.de',
       packages=find_packages(),
@@ -18,7 +17,14 @@ setup(name='MaxiNet',
       ],
       include_package_data=True,
       package_data={
-        "MaxiNet.Worker":["bin/*"],
+        "MaxiNet":["Scripts/*"],
+      },
+      entry_points={
+        'console_scripts': [
+            'MaxiNetWorker = MaxiNet.WorkerServer.server:main',
+            'MaxiNetFrontendServer = MaxiNet.FrontendServer.server:main',
+            'MaxiNetStatus = MaxiNet.WorkerServer.server:getFrontendStatus',
+        ]
       },
       zip_safe=False)
 
@@ -30,9 +36,8 @@ if((__name__=="__main__") and (sys.argv[1] == "install")):
     f.write("""
 import os,subprocess
 print "Setting executable bits..."
-from MaxiNet.Frontend.tools import Config
-c = Config(register = False)
-d = c.getWorkerDir()+os.sep+"bin"+os.sep
+from MaxiNet.tools import Tools
+d = Tools.get_script_dir()
 for f in filter(lambda x: x[-3:]==".sh",os.listdir(d)):
     print f
     subprocess.call(["sudo","chmod","a+x",d+f])

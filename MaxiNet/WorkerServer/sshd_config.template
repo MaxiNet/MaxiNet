@@ -1,0 +1,45 @@
+Port <!PORT!>
+AddressFamily inet
+#ListenAddress ::
+ListenAddress <!IP!>
+ListenAddress localhost
+Protocol 2
+# HostKeys for protocol version 2
+HostKey <!FOLDER!>/ssh_host_rsa_key
+#HostKey /tmp/ssh/ssh_host_dsa_key
+UsePrivilegeSeparation no
+AllowUsers <!USER!>
+KeyRegenerationInterval 3600
+ServerKeyBits 768
+
+# Logging
+SyslogFacility AUTH
+LogLevel DEBUG
+
+# Authentication:
+LoginGraceTime 120
+PermitRootLogin yes
+StrictModes no
+
+RSAAuthentication yes
+PubkeyAuthentication yes
+AuthorizedKeysFile	<!FOLDER!>/authorized_keys
+#AuthenticationMethods "publickey"
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+HostbasedAuthentication no
+#IgnoreUserKnownHosts yes
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+PasswordAuthentication no
+GSSAPIAuthentication no
+GSSAPICleanupCredentials yes
+GSSAPIKeyExchange no
+X11Forwarding yes
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog no
+TCPKeepAlive yes
+#UseLogin no
+AcceptEnv LANG LC_*
+UsePAM no

@@ -45,15 +45,19 @@ class CLI(Cmd):
         "Print all workers; worker id in brackets"
         h = ""
         for worker in self.experiment.cluster.worker:
-            h = h + " " + worker.hn() + "[" + str(worker.wid) + "]"
+            wid = self.experiment.hostname_to_workerid[worker.hn()]
+            h = h + " " + worker.hn() + "[" + str(wid) + "]"
         print h
 
     def do_switches(self, s):
         "Print all switchnames; worker id in brackets"
         h = ""
         for switch in self.experiment.switches:
+            wid = self.experiment.hostname_to_workerid[
+                self.experiment.get_worker(switch).hn()
+            ]
             h = h + " " + switch.name +\
-                "[" + str(self.experiment.get_worker(switch).wid) + "]"
+                "[" + str(wid) + "]"
         print h
 
     def do_pingall(self, s):
@@ -142,22 +146,50 @@ class CLI(Cmd):
         node = s[:s.find(" ")]
         cmd = s[s.find(" ") + 1:]
         if(self.experiment.get(node) is None):
-            print "Error: Node " + s + " does not exist"
+            # check if node is the name of a worker. if so, execute command on that worker
+            if(node in self.experiment.hostname_to_workerid):
+                worker = self.experiment.cluster.get_worker(node)
+                # execute command on worker
+                rcmd = worker.sshtool.get_ssh_cmd(targethostname=node,
+                                           cmd=cmd,
+                                           opts=["-t"])
+
+                subprocess.call(rcmd)
+            else:
+                print "Error: Node " + node + " does not exist"
         else:
+            blocking = True
+            if cmd[-1] == "&":
+                cmd = cmd[:-1]
+                blocking = False
             pid = self.experiment.get_worker(self.experiment.get(node))\
                     .run_cmd("ps ax | grep \"bash.*mininet:" + node +
                              "$\" | grep -v grep | awk '{print $1}'").strip()
+            sshtool = self.experiment.get_worker(self.experiment.get(node)).sshtool
+            hn = self.experiment.get_worker(self.experiment.get(node)).hn()
             if self.experiment.get_worker(self.experiment.get(node))\
                     .tunnelX11(node):
-                user = subprocess.check_output("ssh -q -t " +
-                        self.experiment.get_worker(self.experiment.get(node))
-                        .hn() + " echo $USER", shell=True).strip()
-                rcmd = "ssh -q -X -t " +\
-                       self.experiment.get_worker(self.experiment.get(node))\
-                       .hn() + " sudo  XAUTHORITY=/home/" + user +\
-                       "/.Xauthority mnexec -a " + pid + " " + cmd
+                user = subprocess.check_output(
+                        sshtool.get_ssh_cmd(targethostname=hn,
+                                            cmd="echo $USER", opts=["-t"])
+                       ).strip()
+                opts=["-t","-X"]
+                if not blocking:
+                    opts.append("-n")
+                xauthprefix = "/home/"
+                if user == "root":
+                    xauthprefix = "/"
+                rcmd = sshtool.get_ssh_cmd(
+                        targethostname=hn,
+                        cmd="XAUTHORITY=" + xauthprefix + user + "/.Xauthority mnexec -a "
+                            + pid + " " + cmd,
+                        opts=opts
+                       )
             else:
-                rcmd = "ssh -q -t " +\
-                       self.experiment.get_worker(self.experiment.get(node))\
-                       .hn() + " sudo mnexec -a " + pid + " " + cmd
-            subprocess.call(rcmd, shell=True)
+                rcmd = sshtool.get_ssh_cmd(targethostname=hn,
+                                           cmd="mnexec -a " + pid + " " + cmd,
+                                           opts=["-t"])
+            if blocking:
+                subprocess.call(rcmd)
+            else:
+                subprocess.Popen(rcmd)

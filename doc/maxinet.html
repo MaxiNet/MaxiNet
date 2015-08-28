@@ -1,0 +1,880 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module maxinet</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>maxinet</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/wette/MaxiNet/MaxiNet/Frontend/maxinet.py">/home/wette/MaxiNet/MaxiNet/Frontend/maxinet.py</a></font></td></tr></table>
+    <p><tt>MaxiNet&nbsp;main&nbsp;file<br>
+&nbsp;<br>
+This&nbsp;file&nbsp;holds&nbsp;the&nbsp;main&nbsp;components&nbsp;of&nbsp;MaxiNet&nbsp;and&nbsp;is&nbsp;intended&nbsp;to&nbsp;be&nbsp;the<br>
+only&nbsp;part&nbsp;of&nbsp;MaxiNet&nbsp;which&nbsp;needs&nbsp;to&nbsp;be&nbsp;used&nbsp;by&nbsp;the&nbsp;user&nbsp;or&nbsp;third-party<br>
+applications.<br>
+&nbsp;<br>
+Classes&nbsp;in&nbsp;this&nbsp;file:<br>
+&nbsp;<br>
+<a href="#Experiment">Experiment</a>:&nbsp;Use&nbsp;this&nbsp;class&nbsp;to&nbsp;specify&nbsp;an&nbsp;experiment.&nbsp;Experiments&nbsp;are<br>
+&nbsp;&nbsp;&nbsp;&nbsp;created&nbsp;for&nbsp;one-time-usage&nbsp;and&nbsp;have&nbsp;to&nbsp;be&nbsp;stopped&nbsp;in&nbsp;the&nbsp;end.&nbsp;One<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cluster&nbsp;instance&nbsp;can&nbsp;run&nbsp;several&nbsp;experiments&nbsp;in&nbsp;sequence.<br>
+&nbsp;<br>
+<a href="#Cluster">Cluster</a>:&nbsp;Manage&nbsp;a&nbsp;set&nbsp;of&nbsp;Workers&nbsp;via&nbsp;this&nbsp;class.&nbsp;A&nbsp;cluster&nbsp;can&nbsp;run&nbsp;one<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Experiment">Experiment</a>&nbsp;at&nbsp;a&nbsp;time.&nbsp;If&nbsp;you've&nbsp;got&nbsp;several&nbsp;Experiments&nbsp;to&nbsp;run&nbsp;do<br>
+&nbsp;&nbsp;&nbsp;&nbsp;not&nbsp;destroy/recreate&nbsp;this&nbsp;class&nbsp;but&nbsp;define&nbsp;several&nbsp;<a href="#Experiment">Experiment</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;instances&nbsp;and&nbsp;run&nbsp;them&nbsp;sequentially.<br>
+&nbsp;<br>
+<a href="#NodeWrapper">NodeWrapper</a>:&nbsp;Wrapper&nbsp;that&nbsp;allows&nbsp;most&nbsp;commands&nbsp;that&nbsp;can&nbsp;be&nbsp;used&nbsp;in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mininet&nbsp;to&nbsp;be&nbsp;used&nbsp;in&nbsp;MaxiNet&nbsp;as&nbsp;well.&nbsp;Whenever&nbsp;you&nbsp;call&nbsp;for&nbsp;example<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&gt;&nbsp;exp.get("h1")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;you'll&nbsp;get&nbsp;an&nbsp;instance&nbsp;of&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;which&nbsp;will&nbsp;forward&nbsp;calls&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;respective&nbsp;mininet&nbsp;node.<br>
+&nbsp;<br>
+<a href="#TunHelper">TunHelper</a>:&nbsp;Helper&nbsp;class&nbsp;to&nbsp;manage&nbsp;tunnel&nbsp;interface&nbsp;names.<br>
+&nbsp;<br>
+<a href="#Worker">Worker</a>:&nbsp;A&nbsp;<a href="#Worker">Worker</a>&nbsp;is&nbsp;part&nbsp;of&nbsp;a&nbsp;<a href="#Cluster">Cluster</a>&nbsp;and&nbsp;runs&nbsp;a&nbsp;part&nbsp;of&nbsp;the&nbsp;emulated<br>
+&nbsp;&nbsp;&nbsp;&nbsp;network.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="Pyro4.html">Pyro4</a><br>
+<a href="atexit.html">atexit</a><br>
+<a href="functools.html">functools</a><br>
+</td><td width="25%" valign=top><a href="logging.html">logging</a><br>
+<a href="random.html">random</a><br>
+<a href="re.html">re</a><br>
+</td><td width="25%" valign=top><a href="subprocess.html">subprocess</a><br>
+<a href="sys.html">sys</a><br>
+<a href="threading.html">threading</a><br>
+</td><td width="25%" valign=top><a href="time.html">time</a><br>
+<a href="warnings.html">warnings</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="maxinet.html#Cluster">Cluster</a>
+</font></dt><dt><font face="helvetica, arial"><a href="maxinet.html#Experiment">Experiment</a>
+</font></dt><dt><font face="helvetica, arial"><a href="maxinet.html#NodeWrapper">NodeWrapper</a>
+</font></dt><dt><font face="helvetica, arial"><a href="maxinet.html#Worker">Worker</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="maxinet.html#TunHelper">TunHelper</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Cluster">class <strong>Cluster</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;used&nbsp;to&nbsp;manage&nbsp;a&nbsp;cluster&nbsp;of&nbsp;Workers.<br>
+&nbsp;<br>
+Manage&nbsp;a&nbsp;set&nbsp;of&nbsp;Workers&nbsp;via&nbsp;this&nbsp;class.&nbsp;A&nbsp;cluster&nbsp;can&nbsp;run&nbsp;one<br>
+<a href="#Experiment">Experiment</a>&nbsp;at&nbsp;a&nbsp;time.&nbsp;If&nbsp;you've&nbsp;got&nbsp;several&nbsp;Experiments&nbsp;to&nbsp;run&nbsp;do<br>
+not&nbsp;destroy/recreate&nbsp;this&nbsp;class&nbsp;but&nbsp;define&nbsp;several&nbsp;<a href="#Experiment">Experiment</a><br>
+instances&nbsp;and&nbsp;run&nbsp;them&nbsp;sequentially.<br>
+&nbsp;<br>
+Attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;config:&nbsp;Instance&nbsp;of&nbsp;Tools.Config&nbsp;to&nbsp;query&nbsp;MaxiNet&nbsp;configuration.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;frontend:&nbsp;Instance&nbsp;of&nbsp;MaxiNet.Frontend.client.Frontend&nbsp;which<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;used&nbsp;to&nbsp;manage&nbsp;the&nbsp;pyro&nbsp;Server.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;hostname_to_worker:&nbsp;dictionary&nbsp;which&nbsp;translates&nbsp;hostnames&nbsp;into&nbsp;<a href="#Worker">Worker</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instances<br>
+&nbsp;&nbsp;&nbsp;&nbsp;hosts:&nbsp;List&nbsp;of&nbsp;worker&nbsp;hostnames.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ident:&nbsp;random&nbsp;integer&nbsp;which&nbsp;identifies&nbsp;this&nbsp;cluster&nbsp;instance&nbsp;on&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FrontendServer.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;localIP:&nbsp;IPv4&nbsp;address&nbsp;of&nbsp;the&nbsp;Frontend.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;logger:&nbsp;Logging&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nameserver:&nbsp;pyro&nbsp;nameserver<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nsport:&nbsp;Nameserver&nbsp;port&nbsp;number.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;manager:&nbsp;MaxiNetManager&nbsp;instance&nbsp;hosted&nbsp;by&nbsp;FrontendServer&nbsp;which&nbsp;manages<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Workers.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sshtool:&nbsp;SSH_Tool&nbsp;instance&nbsp;which&nbsp;is&nbsp;used&nbsp;to&nbsp;manage&nbsp;ssh&nbsp;client&nbsp;on&nbsp;frontend<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;machine.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tunhelper:&nbsp;Instance&nbsp;of&nbsp;<a href="#TunHelper">TunHelper</a>&nbsp;to&nbsp;enumerate&nbsp;tunnel&nbsp;instances.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;worker:&nbsp;List&nbsp;of&nbsp;worker&nbsp;instances.&nbsp;Index&nbsp;of&nbsp;worker&nbsp;instance&nbsp;in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sequence&nbsp;must&nbsp;be&nbsp;equal&nbsp;to&nbsp;worker&nbsp;id.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Cluster-__init__"><strong>__init__</strong></a>(self, ip<font color="#909090">=None</font>, port<font color="#909090">=None</font>, password<font color="#909090">=None</font>, minWorkers<font color="#909090">=None</font>, maxWorkers<font color="#909090">=None</font>)</dt><dd><tt>Inits&nbsp;<a href="#Cluster">Cluster</a>&nbsp;class.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ip:&nbsp;IP&nbsp;address&nbsp;of&nbsp;FrontendServer&nbsp;nameserver.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port:&nbsp;port&nbsp;of&nbsp;FrontendServer&nbsp;nameserver.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;password:&nbsp;password&nbsp;of&nbsp;FrontendServer&nbsp;nameserver.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;maxWorkers:&nbsp;number&nbsp;of&nbsp;workers&nbsp;to&nbsp;allocate&nbsp;to&nbsp;this&nbsp;cluster;&nbsp;None&nbsp;for&nbsp;"all&nbsp;you&nbsp;can&nbsp;get".<br>
+&nbsp;&nbsp;&nbsp;&nbsp;minWorkers:&nbsp;minimum&nbsp;number&nbsp;of&nbsp;workers&nbsp;to&nbsp;allocate&nbsp;to&nbsp;this&nbsp;cluster;&nbsp;None&nbsp;for&nbsp;"at&nbsp;least&nbsp;1"</tt></dd></dl>
+
+<dl><dt><a name="Cluster-add_worker"><strong>add_worker</strong></a>(self)</dt><dd><tt>Add&nbsp;worker<br>
+&nbsp;<br>
+Reserves&nbsp;a&nbsp;<a href="#Worker">Worker</a>&nbsp;for&nbsp;this&nbsp;<a href="#Cluster">Cluster</a>&nbsp;on&nbsp;the&nbsp;FrontendServer&nbsp;and&nbsp;adds&nbsp;it&nbsp;to<br>
+the&nbsp;<a href="#Cluster">Cluster</a>&nbsp;instance.&nbsp;Fails&nbsp;if&nbsp;no&nbsp;unreserved&nbsp;<a href="#Worker">Worker</a>&nbsp;is&nbsp;available&nbsp;on&nbsp;the<br>
+FrontendServer.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;True&nbsp;if&nbsp;worker&nbsp;was&nbsp;successfully&nbsp;added,&nbsp;False&nbsp;if&nbsp;not.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-add_worker_by_hostname"><strong>add_worker_by_hostname</strong></a>(self, hostname)</dt><dd><tt>Add&nbsp;worker&nbsp;by&nbsp;hostname<br>
+&nbsp;<br>
+Reserves&nbsp;a&nbsp;<a href="#Worker">Worker</a>&nbsp;for&nbsp;this&nbsp;<a href="#Cluster">Cluster</a>&nbsp;on&nbsp;the&nbsp;FrontendServer&nbsp;and&nbsp;adds&nbsp;it&nbsp;to<br>
+the&nbsp;<a href="#Cluster">Cluster</a>&nbsp;instance.&nbsp;Fails&nbsp;if&nbsp;<a href="#Worker">Worker</a>&nbsp;is&nbsp;reserved&nbsp;by&nbsp;other&nbsp;<a href="#Cluster">Cluster</a>&nbsp;or<br>
+no&nbsp;worker&nbsp;with&nbsp;that&nbsp;hostname&nbsp;exists.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;hostname:&nbsp;hostname&nbsp;of&nbsp;<a href="#Worker">Worker</a><br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;True&nbsp;if&nbsp;worker&nbsp;was&nbsp;successfully&nbsp;added,&nbsp;False&nbsp;if&nbsp;not.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-add_workers"><strong>add_workers</strong></a>(self)</dt><dd><tt>Add&nbsp;all&nbsp;available&nbsp;workers<br>
+&nbsp;<br>
+Reserves&nbsp;all&nbsp;unreserved&nbsp;Workers&nbsp;for&nbsp;this&nbsp;<a href="#Cluster">Cluster</a>&nbsp;on&nbsp;the&nbsp;FrontendServer<br>
+and&nbsp;adds&nbsp;them&nbsp;to&nbsp;the&nbsp;<a href="#Cluster">Cluster</a>&nbsp;instance.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Number&nbsp;of&nbsp;workers&nbsp;added.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-create_tunnel"><strong>create_tunnel</strong></a>(self, w1, w2)</dt><dd><tt>Create&nbsp;GRE&nbsp;tunnel&nbsp;between&nbsp;workers.<br>
+&nbsp;<br>
+Create&nbsp;gre&nbsp;tunnel&nbsp;connecting&nbsp;worker&nbsp;machine&nbsp;w1&nbsp;and&nbsp;w2&nbsp;and&nbsp;return<br>
+name&nbsp;of&nbsp;created&nbsp;network&nbsp;interface.&nbsp;Querys&nbsp;<a href="#TunHelper">TunHelper</a>&nbsp;instance&nbsp;to<br>
+create&nbsp;name&nbsp;of&nbsp;tunnel.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;w1:&nbsp;<a href="#Worker">Worker</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;w2:&nbsp;Woker&nbsp;instance.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Network&nbsp;interface&nbsp;name&nbsp;of&nbsp;created&nbsp;tunnel.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-get_available_workers"><strong>get_available_workers</strong></a>(self)</dt><dd><tt>Get&nbsp;list&nbsp;of&nbsp;worker&nbsp;hostnames&nbsp;which&nbsp;are&nbsp;not&nbsp;reserved.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;list&nbsp;of&nbsp;hostnames&nbsp;of&nbsp;workers&nbsp;which&nbsp;are&nbsp;registered&nbsp;on&nbsp;the&nbsp;FrontendServer<br>
+&nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;not&nbsp;reserved&nbsp;by&nbsp;this&nbsp;or&nbsp;another&nbsp;<a href="#Cluster">Cluster</a>&nbsp;instance.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-get_status_is_alive"><strong>get_status_is_alive</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;status&nbsp;of&nbsp;this&nbsp;<a href="#Cluster">Cluster</a>&nbsp;<a href="__builtin__.html#object">object</a>.<br>
+returns&nbsp;true&nbsp;if&nbsp;the&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;is&nbsp;still&nbsp;alive.<br>
+this&nbsp;function&nbsp;is&nbsp;periodically&nbsp;called&nbsp;from&nbsp;the&nbsp;FrontendServer&nbsp;to&nbsp;check&nbsp;if&nbsp;the&nbsp;cluster&nbsp;still&nbsp;exists<br>
+otherwise&nbsp;its&nbsp;allocated&nbsp;resources&nbsp;(workers)&nbsp;are&nbsp;freed&nbsp;for&nbsp;future&nbsp;use&nbsp;by&nbsp;other&nbsp;clusters</tt></dd></dl>
+
+<dl><dt><a name="Cluster-get_worker"><strong>get_worker</strong></a>(self, hostname)</dt><dd><tt>Return&nbsp;worker&nbsp;instance&nbsp;of&nbsp;worker&nbsp;with&nbsp;hostname&nbsp;hostname.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;hostname:&nbsp;worker&nbsp;hostname<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Worker">Worker</a>&nbsp;instance</tt></dd></dl>
+
+<dl><dt><a name="Cluster-num_workers"><strong>num_workers</strong></a>(self)</dt><dd><tt>Return&nbsp;number&nbsp;of&nbsp;worker&nbsp;nodes&nbsp;in&nbsp;this&nbsp;<a href="#Cluster">Cluster</a>.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-remove_all_tunnels"><strong>remove_all_tunnels</strong></a>(self)</dt><dd><tt>Shut&nbsp;down&nbsp;all&nbsp;tunnels&nbsp;on&nbsp;all&nbsp;workers.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-remove_worker"><strong>remove_worker</strong></a>(self, worker)</dt><dd><tt>Remove&nbsp;worker&nbsp;from&nbsp;<a href="#Cluster">Cluster</a><br>
+&nbsp;<br>
+Removes&nbsp;a&nbsp;<a href="#Worker">Worker</a>&nbsp;from&nbsp;the&nbsp;<a href="#Cluster">Cluster</a>&nbsp;and&nbsp;makes&nbsp;it&nbsp;available&nbsp;for&nbsp;other<br>
+<a href="#Cluster">Cluster</a>&nbsp;instances&nbsp;on&nbsp;the&nbsp;FrontendServer.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;worker:&nbsp;hostname&nbsp;or&nbsp;<a href="#Worker">Worker</a>&nbsp;instance&nbsp;of&nbsp;<a href="#Worker">Worker</a>&nbsp;to&nbsp;remove.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-remove_workers"><strong>remove_workers</strong></a>(self)</dt><dd><tt>Remove&nbsp;all&nbsp;workers&nbsp;from&nbsp;this&nbsp;cluster<br>
+&nbsp;<br>
+Removes&nbsp;all&nbsp;Workers&nbsp;from&nbsp;the&nbsp;<a href="#Cluster">Cluster</a>&nbsp;and&nbsp;makes&nbsp;them&nbsp;available&nbsp;for&nbsp;other<br>
+<a href="#Cluster">Cluster</a>&nbsp;instances&nbsp;on&nbsp;the&nbsp;FrontendServer.</tt></dd></dl>
+
+<dl><dt><a name="Cluster-workers"><strong>workers</strong></a>(self)</dt><dd><tt>Return&nbsp;sequence&nbsp;of&nbsp;worker&nbsp;instances&nbsp;for&nbsp;this&nbsp;cluster.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Sequence&nbsp;of&nbsp;worker&nbsp;instances.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Experiment">class <strong>Experiment</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;to&nbsp;manage&nbsp;MaxiNet&nbsp;<a href="#Experiment">Experiment</a>.<br>
+&nbsp;<br>
+Use&nbsp;this&nbsp;class&nbsp;to&nbsp;specify&nbsp;an&nbsp;experiment.&nbsp;Experiments&nbsp;are&nbsp;created&nbsp;for<br>
+one-time-usage&nbsp;and&nbsp;have&nbsp;to&nbsp;be&nbsp;stopped&nbsp;in&nbsp;the&nbsp;end.&nbsp;One&nbsp;cluster<br>
+instance&nbsp;can&nbsp;run&nbsp;several&nbsp;experiments&nbsp;in&nbsp;sequence.<br>
+&nbsp;<br>
+Attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cluster:&nbsp;<a href="#Cluster">Cluster</a>&nbsp;instance&nbsp;which&nbsp;will&nbsp;be&nbsp;used&nbsp;by&nbsp;this&nbsp;<a href="#Experiment">Experiment</a>.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;config:&nbsp;Config&nbsp;instance&nbsp;to&nbsp;queury&nbsp;config&nbsp;file.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;controller:&nbsp;Controller&nbsp;class&nbsp;to&nbsp;use&nbsp;in&nbsp;<a href="#Experiment">Experiment</a>.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;hostname_to_workerid:&nbsp;Dict&nbsp;to&nbsp;map&nbsp;hostnames&nbsp;of&nbsp;workers&nbsp;to&nbsp;workerids<br>
+&nbsp;&nbsp;&nbsp;&nbsp;hosts:&nbsp;List&nbsp;of&nbsp;host&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instances.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;isMonitoring:&nbsp;True&nbsp;if&nbsp;monitoring&nbsp;is&nbsp;in&nbsp;use.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;logger:&nbsp;Logging&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nodemapping:&nbsp;optional&nbsp;dict&nbsp;to&nbsp;map&nbsp;nodes&nbsp;to&nbsp;specific&nbsp;workers&nbsp;ids.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nodes:&nbsp;List&nbsp;of&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instances.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node_to_worker:&nbsp;Dict&nbsp;to&nbsp;map&nbsp;node&nbsp;name&nbsp;(string)&nbsp;to&nbsp;worker&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node_to_wrapper:&nbsp;Dict&nbsp;to&nbsp;map&nbsp;node&nbsp;name&nbsp;(string)&nbsp;to&nbsp;<a href="#NodeWrapper">NodeWrapper</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;origtopology:&nbsp;Unpartitioned&nbsp;topology&nbsp;if&nbsp;topology&nbsp;was&nbsp;partitioned<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;MaxiNet.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;shares:&nbsp;list&nbsp;to&nbsp;map&nbsp;worker&nbsp;ids&nbsp;to&nbsp;workload&nbsp;shares.&nbsp;shares[x]&nbsp;is&nbsp;used&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;obtain&nbsp;the&nbsp;share&nbsp;of&nbsp;worker&nbsp;id&nbsp;x.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;starttime:&nbsp;Time&nbsp;at&nbsp;which&nbsp;<a href="#Experiment">Experiment</a>&nbsp;was&nbsp;instanciated.&nbsp;Used&nbsp;for<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;logfile&nbsp;creation.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch:&nbsp;Default&nbsp;mininet&nbsp;switch&nbsp;class&nbsp;to&nbsp;use.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switches:&nbsp;List&nbsp;of&nbsp;switch&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instances.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;topology:&nbsp;instance&nbsp;of&nbsp;MaxiNet.Frontend.paritioner.Clustering<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tunnellookup:&nbsp;Dict&nbsp;to&nbsp;map&nbsp;tunnel&nbsp;tuples&nbsp;(switchname1,switchname2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;tunnel&nbsp;names.&nbsp;Order&nbsp;of&nbsp;switchnames&nbsp;can&nbsp;be&nbsp;ignored&nbsp;as&nbsp;both<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;directions&nbsp;are&nbsp;covered.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;workerid_to_hostname:&nbsp;dict&nbsp;to&nbsp;map&nbsp;workerids&nbsp;to&nbsp;hostnames&nbsp;of&nbsp;workers&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;worker&nbsp;ids.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Experiment-CLI"><strong>CLI</strong></a>(self, plocals, pglobals)</dt><dd><tt>Open&nbsp;interactive&nbsp;command&nbsp;line&nbsp;interface.<br>
+&nbsp;<br>
+Arguments&nbsp;are&nbsp;used&nbsp;to&nbsp;allow&nbsp;usage&nbsp;of&nbsp;python&nbsp;commands&nbsp;in&nbsp;the&nbsp;same<br>
+scope&nbsp;as&nbsp;the&nbsp;one&nbsp;where&nbsp;CLI&nbsp;was&nbsp;called.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;plocals:&nbsp;Dictionary&nbsp;as&nbsp;returned&nbsp;by&nbsp;locals()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pglobals:&nbsp;Dictionary&nbsp;as&nbsp;returned&nbsp;by&nbsp;globals()</tt></dd></dl>
+
+<dl><dt><a name="Experiment-__init__"><strong>__init__</strong></a>(self, cluster, topology, controller<font color="#909090">=None</font>, is_partitioned<font color="#909090">=False</font>, switch<font color="#909090">=&lt;class 'mininet.node.UserSwitch'&gt;</font>, nodemapping<font color="#909090">=None</font>, hostnamemapping<font color="#909090">=None</font>, sharemapping<font color="#909090">=None</font>)</dt><dd><tt>Inits&nbsp;<a href="#Experiment">Experiment</a>.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cluster:&nbsp;<a href="#Cluster">Cluster</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;topology:&nbsp;mininet.topo.Topo&nbsp;(is_partitioned==False)&nbsp;or<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MaxiNet.Frontend.partitioner.Clustering<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(is_partitioned==True)&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;controller:&nbsp;Optional&nbsp;IPv4&nbsp;address&nbsp;of&nbsp;OpenFlow&nbsp;controller.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;not&nbsp;set&nbsp;controller&nbsp;IP&nbsp;from&nbsp;MaxiNet&nbsp;configuration&nbsp;will<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;used.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;is_partitioned:&nbsp;Optional&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;whether&nbsp;topology<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;already&nbsp;paritioned&nbsp;or&nbsp;not.&nbsp;Default&nbsp;is&nbsp;unpartitioned.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch:&nbsp;Optional&nbsp;Switch&nbsp;class&nbsp;to&nbsp;use&nbsp;in&nbsp;<a href="#Experiment">Experiment</a>.&nbsp;Default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;mininet.node.UserSwitch.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nodemapping:&nbsp;Optional&nbsp;dict&nbsp;to&nbsp;map&nbsp;nodes&nbsp;to&nbsp;specific&nbsp;worker<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ids&nbsp;(nodename-&gt;workerid).&nbsp;If&nbsp;given&nbsp;needs&nbsp;to&nbsp;hold&nbsp;worker<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ids&nbsp;for&nbsp;every&nbsp;node&nbsp;in&nbsp;topology.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;hostnamemapping:&nbsp;Optional&nbsp;dict&nbsp;to&nbsp;map&nbsp;workers&nbsp;by&nbsp;hostname&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;worker&nbsp;ids.&nbsp;If&nbsp;provided&nbsp;every&nbsp;worker&nbsp;hostname&nbsp;has&nbsp;to&nbsp;be&nbsp;mapped<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;exactly&nbsp;one&nbsp;id.&nbsp;If&nbsp;the&nbsp;cluster&nbsp;consists&nbsp;of&nbsp;N&nbsp;workers&nbsp;valid&nbsp;ids<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;are&nbsp;0&nbsp;to&nbsp;N-1.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sharemapping:&nbsp;Optional&nbsp;list&nbsp;to&nbsp;map&nbsp;worker&nbsp;ids&nbsp;to&nbsp;workload&nbsp;shares.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sharemapping[x]&nbsp;is&nbsp;used&nbsp;to&nbsp;obtain&nbsp;the&nbsp;share&nbsp;of&nbsp;worker&nbsp;id&nbsp;x.&nbsp;Takes<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;precedence&nbsp;over&nbsp;shares&nbsp;configured&nbsp;in&nbsp;config&nbsp;file.&nbsp;If&nbsp;given&nbsp;needs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;hold&nbsp;share&nbsp;for&nbsp;every&nbsp;worker.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-addController"><strong>addController</strong></a>(self, name<font color="#909090">='c0'</font>, controller<font color="#909090">=None</font>, wid<font color="#909090">=None</font>, pos<font color="#909090">=None</font>, **params)</dt><dd><tt>Add&nbsp;controller&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+Use&nbsp;wid&nbsp;to&nbsp;specifiy&nbsp;worker&nbsp;id&nbsp;or&nbsp;pos&nbsp;to&nbsp;specify&nbsp;worker&nbsp;of<br>
+existing&nbsp;node.&nbsp;If&nbsp;none&nbsp;is&nbsp;given&nbsp;random&nbsp;worker&nbsp;is&nbsp;chosen.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;Controller&nbsp;name.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;controller:&nbsp;Optional&nbsp;mininet&nbsp;class&nbsp;to&nbsp;use&nbsp;for&nbsp;instanciation.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;wid:&nbsp;Optional&nbsp;worker&nbsp;id&nbsp;to&nbsp;place&nbsp;node.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pos:&nbsp;Optional&nbsp;existing&nbsp;node&nbsp;name&nbsp;whose&nbsp;worker&nbsp;should&nbsp;be&nbsp;used<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;host&nbsp;of&nbsp;node.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;**params:&nbsp;parameters&nbsp;to&nbsp;use&nbsp;at&nbsp;mininet&nbsp;controller&nbsp;class<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instanciation.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-addHost"><strong>addHost</strong></a>(self, name, cls<font color="#909090">=None</font>, wid<font color="#909090">=None</font>, pos<font color="#909090">=None</font>, **params)</dt><dd><tt>Add&nbsp;host&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+Use&nbsp;wid&nbsp;to&nbsp;specifiy&nbsp;worker&nbsp;id&nbsp;or&nbsp;pos&nbsp;to&nbsp;specify&nbsp;worker&nbsp;of<br>
+existing&nbsp;node.&nbsp;If&nbsp;none&nbsp;is&nbsp;given&nbsp;random&nbsp;worker&nbsp;is&nbsp;chosen.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;Host&nbsp;name.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cls:&nbsp;Optional&nbsp;mininet&nbsp;class&nbsp;to&nbsp;use&nbsp;for&nbsp;instanciation.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;wid:&nbsp;Optional&nbsp;worker&nbsp;id&nbsp;to&nbsp;place&nbsp;node.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pos:&nbsp;Optional&nbsp;existing&nbsp;node&nbsp;name&nbsp;whose&nbsp;worker&nbsp;should&nbsp;be&nbsp;used<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;host&nbsp;of&nbsp;node.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;**params:&nbsp;parameters&nbsp;to&nbsp;use&nbsp;at&nbsp;mininet&nbsp;host&nbsp;class<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instanciation.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-addLink"><strong>addLink</strong></a>(self, node1, node2, port1<font color="#909090">=None</font>, port2<font color="#909090">=None</font>, cls<font color="#909090">=None</font>, autoconf<font color="#909090">=False</font>, **params)</dt><dd><tt>Add&nbsp;link&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+Add&nbsp;link&nbsp;at&nbsp;runtime&nbsp;and&nbsp;create&nbsp;tunnels&nbsp;between&nbsp;workers&nbsp;if<br>
+necessary.&nbsp;Will&nbsp;not&nbsp;work&nbsp;for&nbsp;mininet.node.UserSwitch&nbsp;switches.<br>
+Be&nbsp;aware&nbsp;that&nbsp;tunnels&nbsp;will&nbsp;only&nbsp;work&nbsp;between&nbsp;switches&nbsp;so&nbsp;if&nbsp;you<br>
+want&nbsp;to&nbsp;create&nbsp;a&nbsp;link&nbsp;using&nbsp;a&nbsp;host&nbsp;at&nbsp;one&nbsp;side&nbsp;make&nbsp;sure&nbsp;that<br>
+both&nbsp;nodes&nbsp;are&nbsp;located&nbsp;on&nbsp;the&nbsp;same&nbsp;worker.<br>
+autoconf&nbsp;parameter&nbsp;handles&nbsp;attach()&nbsp;and&nbsp;config&nbsp;calls&nbsp;on&nbsp;switches&nbsp;and<br>
+hosts.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node1:&nbsp;Node&nbsp;name&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node2:&nbsp;Node&nbsp;name&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port1:&nbsp;Optional&nbsp;port&nbsp;number&nbsp;of&nbsp;link&nbsp;on&nbsp;node1.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port2:&nbsp;Optional&nbsp;port&nbsp;number&nbsp;of&nbsp;link&nbsp;on&nbsp;node2.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cls:&nbsp;Optional&nbsp;class&nbsp;to&nbsp;use&nbsp;on&nbsp;Link&nbsp;creation.&nbsp;Be&nbsp;aware&nbsp;that<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;only&nbsp;mininet.link.Link&nbsp;and&nbsp;mininet.link.TCLink&nbsp;are<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;supported&nbsp;for&nbsp;tunnels.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;autoconf:&nbsp;mininet&nbsp;requires&nbsp;some&nbsp;calls&nbsp;to&nbsp;makIe&nbsp;newly&nbsp;added<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tunnels&nbsp;work.&nbsp;If&nbsp;autoconf&nbsp;is&nbsp;set&nbsp;to&nbsp;True&nbsp;MaxiNet&nbsp;will<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;issue&nbsp;these&nbsp;calls&nbsp;automatically.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;RuntimeError:&nbsp;If&nbsp;cls&nbsp;is&nbsp;not&nbsp;None&nbsp;or&nbsp;Link&nbsp;or&nbsp;TCLink&nbsp;and<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tunneling&nbsp;is&nbsp;needed.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-addNode"><strong>addNode</strong></a>(self, name, wid<font color="#909090">=None</font>, pos<font color="#909090">=None</font>)</dt><dd><tt>Do&nbsp;bookkeeping&nbsp;to&nbsp;add&nbsp;a&nbsp;node&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+Use&nbsp;wid&nbsp;to&nbsp;specifiy&nbsp;worker&nbsp;id&nbsp;or&nbsp;pos&nbsp;to&nbsp;specify&nbsp;worker&nbsp;of<br>
+existing&nbsp;node.&nbsp;If&nbsp;none&nbsp;is&nbsp;given&nbsp;random&nbsp;worker&nbsp;is&nbsp;chosen.<br>
+This&nbsp;does&nbsp;NOT&nbsp;actually&nbsp;create&nbsp;a&nbsp;Node&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;on&nbsp;the&nbsp;mininet<br>
+instance&nbsp;but&nbsp;is&nbsp;a&nbsp;helper&nbsp;function&nbsp;for&nbsp;addHost&nbsp;etc.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;Node&nbsp;name.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;wid:&nbsp;Optional&nbsp;worker&nbsp;id&nbsp;to&nbsp;place&nbsp;node.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pos:&nbsp;Optional&nbsp;existing&nbsp;node&nbsp;name&nbsp;whose&nbsp;worker&nbsp;should&nbsp;be&nbsp;used<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;host&nbsp;of&nbsp;node.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-addSwitch"><strong>addSwitch</strong></a>(self, name, cls<font color="#909090">=None</font>, wid<font color="#909090">=None</font>, pos<font color="#909090">=None</font>, **params)</dt><dd><tt>Add&nbsp;switch&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+Use&nbsp;wid&nbsp;to&nbsp;specifiy&nbsp;worker&nbsp;id&nbsp;or&nbsp;pos&nbsp;to&nbsp;specify&nbsp;worker&nbsp;of<br>
+existing&nbsp;node.&nbsp;If&nbsp;none&nbsp;is&nbsp;given&nbsp;random&nbsp;worker&nbsp;is&nbsp;chosen.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;Switch&nbsp;name.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cls:&nbsp;Optional&nbsp;mininet&nbsp;class&nbsp;to&nbsp;use&nbsp;for&nbsp;instanciation.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;wid:&nbsp;Optional&nbsp;worker&nbsp;id&nbsp;to&nbsp;place&nbsp;node.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pos:&nbsp;Optional&nbsp;existing&nbsp;node&nbsp;name&nbsp;whose&nbsp;worker&nbsp;should&nbsp;be&nbsp;used<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;host&nbsp;of&nbsp;node.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;**params:&nbsp;parameters&nbsp;to&nbsp;use&nbsp;at&nbsp;mininet&nbsp;switch&nbsp;class<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instanciation.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-configLinkStatus"><strong>configLinkStatus</strong></a>(self, src, dst, status)</dt><dd><tt>Change&nbsp;status&nbsp;of&nbsp;link.<br>
+&nbsp;<br>
+Change&nbsp;status&nbsp;(up/down)&nbsp;of&nbsp;link&nbsp;between&nbsp;two&nbsp;nodes.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;src:&nbsp;Node&nbsp;name&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;dst:&nbsp;Node&nbsp;name&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;status:&nbsp;String&nbsp;{up,&nbsp;down}.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-find_worker"><strong>find_worker</strong></a>(*args, **kwargs)</dt><dd><tt>Get&nbsp;worker&nbsp;instance&nbsp;which&nbsp;emulates&nbsp;the&nbsp;specified&nbsp;node.<br>
+&nbsp;<br>
+Replaced&nbsp;by&nbsp;get_worker.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node:&nbsp;nodename&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Worker">Worker</a>&nbsp;instance</tt></dd></dl>
+
+<dl><dt><a name="Experiment-generate_hostname_mapping"><strong>generate_hostname_mapping</strong></a>(self)</dt><dd><tt>generates&nbsp;a&nbsp;hostname-&gt;&nbsp;workerid&nbsp;mapping&nbsp;dictionary</tt></dd></dl>
+
+<dl><dt><a name="Experiment-get"><strong>get</strong></a>(self, node)</dt><dd><tt>Return&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance&nbsp;that&nbsp;is&nbsp;specified&nbsp;by&nbsp;nodename.<br>
+&nbsp;<br>
+Alias&nbsp;for&nbsp;get_node.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node:&nbsp;Nodename&nbsp;or&nbsp;nodewrapper&nbsp;instance.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance&nbsp;with&nbsp;name&nbsp;nodename&nbsp;or&nbsp;None&nbsp;if&nbsp;none&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;found.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-get_log_folder"><strong>get_log_folder</strong></a>(self)</dt><dd><tt>Get&nbsp;folder&nbsp;to&nbsp;which&nbsp;log&nbsp;files&nbsp;will&nbsp;be&nbsp;saved.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Logfile&nbsp;folder&nbsp;as&nbsp;String.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-get_node"><strong>get_node</strong></a>(self, node)</dt><dd><tt>Return&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance&nbsp;that&nbsp;is&nbsp;specified&nbsp;by&nbsp;nodename.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node:&nbsp;Nodename&nbsp;or&nbsp;nodewrapper&nbsp;instance.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance&nbsp;with&nbsp;name&nbsp;nodename&nbsp;or&nbsp;None&nbsp;if&nbsp;none&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;found.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-get_worker"><strong>get_worker</strong></a>(self, node)</dt><dd><tt>Get&nbsp;worker&nbsp;instance&nbsp;which&nbsp;emulates&nbsp;the&nbsp;specified&nbsp;node<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node:&nbsp;Nodename&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Worker">Worker</a>&nbsp;instance</tt></dd></dl>
+
+<dl><dt><a name="Experiment-is_valid_hostname_mapping"><strong>is_valid_hostname_mapping</strong></a>(self, d)</dt><dd><tt>checks&nbsp;whether&nbsp;hostname&nbsp;-&gt;&nbsp;workerid&nbsp;mappign&nbsp;is&nbsp;valid<br>
+(every&nbsp;worker&nbsp;has&nbsp;exactly&nbsp;one&nbsp;workerid,&nbsp;workerids&nbsp;are&nbsp;contiguos&nbsp;from&nbsp;0<br>
+upwards)</tt></dd></dl>
+
+<dl><dt><a name="Experiment-log_cpu"><strong>log_cpu</strong></a>(self)</dt><dd><tt>Log&nbsp;cpu&nbsp;useage&nbsp;of&nbsp;workers.<br>
+&nbsp;<br>
+Places&nbsp;log&nbsp;files&nbsp;in&nbsp;/tmp/maxinet_logs/.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-log_cpu_of_worker"><strong>log_cpu_of_worker</strong></a>(self, worker)</dt><dd><tt>Log&nbsp;cpu&nbsp;usage&nbsp;of&nbsp;worker.<br>
+&nbsp;<br>
+Places&nbsp;log&nbsp;file&nbsp;in&nbsp;/tmp/maxinet_logs/.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-log_free_memory"><strong>log_free_memory</strong></a>(self)</dt><dd><tt>Log&nbsp;memory&nbsp;usage&nbsp;of&nbsp;workers.<br>
+&nbsp;<br>
+Places&nbsp;log&nbsp;files&nbsp;in&nbsp;/tmp/maxinet_logs.<br>
+Format&nbsp;is:<br>
+timestamp,FreeMemory,Buffers,Cached</tt></dd></dl>
+
+<dl><dt><a name="Experiment-log_interface"><strong>log_interface</strong></a>(self, worker, intf)</dt><dd><tt>Log&nbsp;statistics&nbsp;of&nbsp;interface&nbsp;of&nbsp;worker.<br>
+&nbsp;<br>
+Places&nbsp;logs&nbsp;in&nbsp;/tmp/maxinet_logs.<br>
+Format&nbsp;is:<br>
+timestamp,received&nbsp;bytes,sent&nbsp;bytes,received&nbsp;packets,sent&nbsp;packets</tt></dd></dl>
+
+<dl><dt><a name="Experiment-log_interfaces_of_node"><strong>log_interfaces_of_node</strong></a>(self, node)</dt><dd><tt>Log&nbsp;statistics&nbsp;of&nbsp;interfaces&nbsp;of&nbsp;node.<br>
+&nbsp;<br>
+Places&nbsp;logs&nbsp;in&nbsp;/tmp/maxinet_logs.<br>
+Format&nbsp;is:<br>
+timestamp,received&nbsp;bytes,sent&nbsp;bytes,received&nbsp;packets,sent&nbsp;packets</tt></dd></dl>
+
+<dl><dt><a name="Experiment-monitor"><strong>monitor</strong></a>(self)</dt><dd><tt>Log&nbsp;statistics&nbsp;of&nbsp;worker&nbsp;interfaces&nbsp;and&nbsp;memory&nbsp;usage.<br>
+&nbsp;<br>
+Places&nbsp;log&nbsp;files&nbsp;in&nbsp;/tmp/maxinet_logs.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-name"><strong>name</strong></a>(self, node)</dt><dd><tt>Get&nbsp;name&nbsp;of&nbsp;network&nbsp;node.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node:&nbsp;Node&nbsp;name&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;String&nbsp;of&nbsp;node&nbsp;name.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-run_cmd_on_host"><strong>run_cmd_on_host</strong></a>(*args, **kwargs)</dt><dd><tt>Run&nbsp;cmd&nbsp;on&nbsp;mininet&nbsp;host.<br>
+&nbsp;<br>
+Run&nbsp;cmd&nbsp;on&nbsp;emulated&nbsp;host&nbsp;specified&nbsp;by&nbsp;host&nbsp;and&nbsp;return<br>
+output.<br>
+This&nbsp;function&nbsp;is&nbsp;deprecated&nbsp;and&nbsp;will&nbsp;be&nbsp;removed&nbsp;in&nbsp;a&nbsp;future<br>
+version&nbsp;of&nbsp;MaxiNet.&nbsp;Use&nbsp;<a href="#Experiment">Experiment</a>.<a href="#Experiment-get">get</a>(node).cmd()&nbsp;instead.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:&nbsp;Hostname&nbsp;or&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd:&nbsp;Command&nbsp;to&nbsp;run&nbsp;as&nbsp;String.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-setMTU"><strong>setMTU</strong></a>(self, host, mtu)</dt><dd><tt>Set&nbsp;MTUs&nbsp;of&nbsp;all&nbsp;Interfaces&nbsp;of&nbsp;mininet&nbsp;host.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;instance.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mtu:&nbsp;MTU&nbsp;value.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-setup"><strong>setup</strong></a>(self)</dt><dd><tt>Start&nbsp;experiment.<br>
+&nbsp;<br>
+Partition&nbsp;topology&nbsp;(if&nbsp;needed),&nbsp;assign&nbsp;topology&nbsp;parts&nbsp;to&nbsp;workers&nbsp;and<br>
+start&nbsp;mininet&nbsp;instances&nbsp;on&nbsp;workers.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;RuntimeError:&nbsp;If&nbsp;<a href="#Cluster">Cluster</a>&nbsp;is&nbsp;too&nbsp;small.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-stop"><strong>stop</strong></a>(self)</dt><dd><tt>Stop&nbsp;experiment&nbsp;and&nbsp;shut&nbsp;down&nbsp;emulation&nbsp;on&nbsp;workers.</tt></dd></dl>
+
+<dl><dt><a name="Experiment-terminate_logging"><strong>terminate_logging</strong></a>(self)</dt><dd><tt>Stop&nbsp;logging.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="NodeWrapper">class <strong>NodeWrapper</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Wrapper&nbsp;that&nbsp;allows&nbsp;most&nbsp;commands&nbsp;that&nbsp;can&nbsp;be&nbsp;used&nbsp;in&nbsp;mininet&nbsp;to&nbsp;be<br>
+used&nbsp;in&nbsp;MaxiNet&nbsp;as&nbsp;well.<br>
+&nbsp;<br>
+Whenever&nbsp;you&nbsp;call&nbsp;for&nbsp;example<br>
+&gt;&nbsp;exp.get("h1")<br>
+you'll&nbsp;get&nbsp;an&nbsp;instance&nbsp;of&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;which&nbsp;will&nbsp;forward&nbsp;calls&nbsp;to<br>
+the&nbsp;respective&nbsp;mininet&nbsp;node.<br>
+&nbsp;<br>
+Mininet&nbsp;method&nbsp;calls&nbsp;that&nbsp;SHOULD&nbsp;work:<br>
+"cleanup",&nbsp;"read",&nbsp;"readline",&nbsp;"write",&nbsp;"terminate",<br>
+"stop",&nbsp;"waitReadable",&nbsp;"sendCmd",&nbsp;"sendInt",&nbsp;"monitor",<br>
+"waitOutput",&nbsp;"cmd",&nbsp;"cmdPrint",&nbsp;"pexec",&nbsp;"newPort",<br>
+"addIntf",&nbsp;"defaultIntf",&nbsp;"intf",&nbsp;"connectionsTo",<br>
+"deleteIntfs",&nbsp;"setARP",&nbsp;"setIP",&nbsp;"IP",&nbsp;"MAC",&nbsp;"intfIsUp",<br>
+"config",&nbsp;"configDefault",&nbsp;"intfNames",&nbsp;"cgroupSet",<br>
+"cgroupGet",&nbsp;"cgroupDel",&nbsp;"chrt",&nbsp;"rtInfo",&nbsp;"cfsInfo",<br>
+"setCPUFrac",&nbsp;"setCPUs",&nbsp;"defaultDpid",&nbsp;"defaultIntf",<br>
+"connected",&nbsp;"setup",&nbsp;"dpctl",&nbsp;"start",&nbsp;"stop",&nbsp;"attach",<br>
+"detach",&nbsp;"controllerUUIDs",&nbsp;"checkListening"<br>
+&nbsp;<br>
+Mininet&nbsp;attributes&nbsp;that&nbsp;SHOULD&nbsp;be&nbsp;queryable:<br>
+"name",&nbsp;"inNamespace",&nbsp;"params",&nbsp;"nameToIntf",&nbsp;"waiting"<br>
+&nbsp;<br>
+Attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nn:&nbsp;Node&nbsp;name&nbsp;as&nbsp;String.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;worker:&nbsp;<a href="#Worker">Worker</a>&nbsp;instance&nbsp;on&nbsp;which&nbsp;node&nbsp;is&nbsp;hosted.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="NodeWrapper-__getattr__"><strong>__getattr__</strong></a>(self, name)</dt></dl>
+
+<dl><dt><a name="NodeWrapper-__init__"><strong>__init__</strong></a>(self, nodename, worker)</dt><dd><tt>Inits&nbsp;<a href="#NodeWrapper">NodeWrapper</a>.<br>
+&nbsp;<br>
+The&nbsp;<a href="#NodeWrapper">NodeWrapper</a>&nbsp;does&nbsp;not&nbsp;create&nbsp;a&nbsp;node&nbsp;on&nbsp;the&nbsp;worker.&nbsp;For&nbsp;this<br>
+reason&nbsp;the&nbsp;node&nbsp;should&nbsp;already&nbsp;exist&nbsp;on&nbsp;the&nbsp;<a href="#Worker">Worker</a>&nbsp;when<br>
+<a href="#NodeWrapper">NodeWrapper</a>.__init__&nbsp;gets&nbsp;called.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nodename:&nbsp;Node&nbsp;name&nbsp;as&nbsp;String<br>
+&nbsp;&nbsp;&nbsp;&nbsp;worker:&nbsp;<a href="#Worker">Worker</a>&nbsp;instance</tt></dd></dl>
+
+<dl><dt><a name="NodeWrapper-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="TunHelper">class <strong>TunHelper</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;to&nbsp;manage&nbsp;tunnel&nbsp;interface&nbsp;names.<br>
+&nbsp;<br>
+This&nbsp;class&nbsp;is&nbsp;used&nbsp;by&nbsp;MaxiNet&nbsp;to&nbsp;make&nbsp;sure&nbsp;that&nbsp;tunnel&nbsp;interace<br>
+names&nbsp;are&nbsp;unique.<br>
+WARNING:&nbsp;This&nbsp;class&nbsp;is&nbsp;not&nbsp;designed&nbsp;for&nbsp;concurrent&nbsp;use!<br>
+&nbsp;<br>
+Attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tunnr:&nbsp;counter&nbsp;which&nbsp;increases&nbsp;with&nbsp;each&nbsp;tunnel.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;keynr:&nbsp;counter&nbsp;which&nbsp;increases&nbsp;with&nbsp;each&nbsp;tunnel.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="TunHelper-__init__"><strong>__init__</strong></a>(self)</dt><dd><tt>Inits&nbsp;<a href="#TunHelper">TunHelper</a></tt></dd></dl>
+
+<dl><dt><a name="TunHelper-get_key_nr"><strong>get_key_nr</strong></a>(self)</dt><dd><tt>Get&nbsp;key&nbsp;number.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;number&nbsp;to&nbsp;use&nbsp;when&nbsp;creating&nbsp;a&nbsp;new&nbsp;tunnel.<br>
+This&nbsp;number&nbsp;will&nbsp;only&nbsp;be&nbsp;returned&nbsp;once&nbsp;by&nbsp;this&nbsp;method.<br>
+(see&nbsp;get_last_key_nr)<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Number&nbsp;to&nbsp;use&nbsp;for&nbsp;key&nbsp;in&nbsp;tunnel&nbsp;creation.</tt></dd></dl>
+
+<dl><dt><a name="TunHelper-get_last_key_nr"><strong>get_last_key_nr</strong></a>(self)</dt><dd><tt>Get&nbsp;last&nbsp;key&nbsp;number.<br>
+&nbsp;<br>
+Returns&nbsp;the&nbsp;last&nbsp;number&nbsp;returned&nbsp;by&nbsp;get_key_nr.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Number&nbsp;to&nbsp;use&nbsp;for&nbsp;key&nbsp;in&nbsp;tunnel&nbsp;creation.</tt></dd></dl>
+
+<dl><dt><a name="TunHelper-get_last_tun_nr"><strong>get_last_tun_nr</strong></a>(self)</dt><dd><tt>Get&nbsp;last&nbsp;tunnel&nbsp;number.<br>
+&nbsp;<br>
+Returns&nbsp;the&nbsp;last&nbsp;number&nbsp;returned&nbsp;by&nbsp;get_tun_nr.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Number&nbsp;to&nbsp;use&nbsp;for&nbsp;tunnel&nbsp;creation.</tt></dd></dl>
+
+<dl><dt><a name="TunHelper-get_tun_nr"><strong>get_tun_nr</strong></a>(self)</dt><dd><tt>Get&nbsp;tunnel&nbsp;number.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;number&nbsp;to&nbsp;use&nbsp;when&nbsp;creating&nbsp;a&nbsp;new&nbsp;tunnel.<br>
+This&nbsp;number&nbsp;will&nbsp;only&nbsp;be&nbsp;returned&nbsp;once&nbsp;by&nbsp;this&nbsp;method.<br>
+(see&nbsp;get_last_tun_nr)<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Number&nbsp;to&nbsp;use&nbsp;for&nbsp;tunnel&nbsp;creation.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Worker">class <strong>Worker</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#Worker">Worker</a>&nbsp;class&nbsp;used&nbsp;to&nbsp;manage&nbsp;an&nbsp;individual&nbsp;<a href="#Worker">Worker</a>&nbsp;host.<br>
+&nbsp;<br>
+A&nbsp;<a href="#Worker">Worker</a>&nbsp;is&nbsp;part&nbsp;of&nbsp;a&nbsp;<a href="#Cluster">Cluster</a>&nbsp;and&nbsp;runs&nbsp;a&nbsp;part&nbsp;of&nbsp;the&nbsp;emulated<br>
+network.&nbsp;A&nbsp;<a href="#Worker">Worker</a>&nbsp;is&nbsp;identified&nbsp;by&nbsp;its&nbsp;hostname.<br>
+The&nbsp;<a href="#Worker">Worker</a>&nbsp;class&nbsp;is&nbsp;instanciated&nbsp;when&nbsp;a&nbsp;<a href="#Worker">Worker</a>&nbsp;is&nbsp;added&nbsp;to&nbsp;a&nbsp;<a href="#Cluster">Cluster</a>.<br>
+&nbsp;<br>
+Attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;config:&nbsp;instance&nbsp;of&nbsp;class&nbsp;MaxiNetConfig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mininet:&nbsp;remote&nbsp;instance&nbsp;of&nbsp;class&nbsp;MininetManager&nbsp;which&nbsp;is&nbsp;used&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;and&nbsp;manage&nbsp;mininet&nbsp;on&nbsp;the&nbsp;<a href="#Worker">Worker</a>&nbsp;machine.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;server:&nbsp;remote&nbsp;instance&nbsp;of&nbsp;class&nbsp;WorkerServer&nbsp;which&nbsp;is&nbsp;used&nbsp;to&nbsp;run<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;commands&nbsp;on&nbsp;the&nbsp;<a href="#Worker">Worker</a>&nbsp;machine.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch:&nbsp;default&nbsp;mininet&nbsp;switch&nbsp;class&nbsp;to&nbsp;use&nbsp;in&nbsp;mininet&nbsp;instances.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ssh:&nbsp;instance&nbsp;of&nbsp;class&nbsp;SSH_Manager&nbsp;used&nbsp;to&nbsp;configure&nbsp;the&nbsp;ssh&nbsp;daemon<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on&nbsp;the&nbsp;worker.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sshtool:&nbsp;instance&nbsp;of&nbsp;class&nbsp;SSH_Tool&nbsp;used&nbsp;to&nbsp;manage&nbsp;the&nbsp;ssh&nbsp;client&nbsp;on<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;frontend&nbsp;machine.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Worker-__init__"><strong>__init__</strong></a>(self, nameserver, pyroname, pyropw, sshtool, switch<font color="#909090">=&lt;class 'mininet.node.UserSwitch'&gt;</font>)</dt><dd><tt>Init&nbsp;<a href="#Worker">Worker</a>&nbsp;class.</tt></dd></dl>
+
+<dl><dt><a name="Worker-addController"><strong>addController</strong></a>(self, name<font color="#909090">='c0'</font>, controller<font color="#909090">=None</font>, **params)</dt><dd><tt>Add&nbsp;controller&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+You&nbsp;probably&nbsp;want&nbsp;to&nbsp;use&nbsp;<a href="#Experiment">Experiment</a>.addController&nbsp;as&nbsp;this&nbsp;does<br>
+some&nbsp;bookkeeping&nbsp;on&nbsp;nodes&nbsp;etc.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;controllername&nbsp;to&nbsp;add.&nbsp;Must&nbsp;not&nbsp;already&nbsp;exist&nbsp;on&nbsp;<a href="#Worker">Worker</a>.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;controller:&nbsp;mininet&nbsp;controller&nbsp;class&nbsp;to&nbsp;use.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;**params:&nbsp;Additional&nbsp;parameters&nbsp;for&nbsp;cls&nbsp;instanciation.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;controllername</tt></dd></dl>
+
+<dl><dt><a name="Worker-addHost"><strong>addHost</strong></a>(self, name, cls<font color="#909090">=None</font>, **params)</dt><dd><tt>Add&nbsp;host&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+You&nbsp;probably&nbsp;want&nbsp;to&nbsp;use&nbsp;<a href="#Experiment">Experiment</a>.addHost&nbsp;as&nbsp;this&nbsp;does&nbsp;some<br>
+bookkeeping&nbsp;of&nbsp;nodes&nbsp;etc.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;Nodename&nbsp;to&nbsp;add.&nbsp;Must&nbsp;not&nbsp;already&nbsp;exist&nbsp;on&nbsp;<a href="#Worker">Worker</a>.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cls:&nbsp;Node&nbsp;class&nbsp;to&nbsp;use.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;**params:&nbsp;Additional&nbsp;parameters&nbsp;for&nbsp;cls&nbsp;instanciation.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nodename</tt></dd></dl>
+
+<dl><dt><a name="Worker-addLink"><strong>addLink</strong></a>(self, node1, node2, port1<font color="#909090">=None</font>, port2<font color="#909090">=None</font>, cls<font color="#909090">=None</font>, **params)</dt><dd><tt>Add&nbsp;link&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+You&nbsp;probably&nbsp;want&nbsp;to&nbsp;use&nbsp;<a href="#Experiment">Experiment</a>.addLink&nbsp;as&nbsp;this&nbsp;does&nbsp;some<br>
+bookkeeping.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node1:&nbsp;nodename<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node2:&nbsp;nodename<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port1:&nbsp;optional&nbsp;port&nbsp;number&nbsp;to&nbsp;use&nbsp;on&nbsp;node1.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port2:&nbsp;optional&nbsp;port&nbsp;number&nbsp;to&nbsp;use&nbsp;on&nbsp;node2.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cls:&nbsp;optional&nbsp;class&nbsp;to&nbsp;use&nbsp;when&nbsp;creating&nbsp;the&nbsp;link.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Tuple&nbsp;of&nbsp;the&nbsp;following&nbsp;form:&nbsp;((node1,intfname1),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(node2,intfname2))&nbsp;where&nbsp;intfname1&nbsp;and&nbsp;intfname2&nbsp;are&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;names&nbsp;of&nbsp;the&nbsp;interfaces&nbsp;which&nbsp;where&nbsp;created&nbsp;for&nbsp;the&nbsp;link.</tt></dd></dl>
+
+<dl><dt><a name="Worker-addSwitch"><strong>addSwitch</strong></a>(self, name, cls<font color="#909090">=None</font>, **params)</dt><dd><tt>Add&nbsp;switch&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+You&nbsp;probably&nbsp;want&nbsp;to&nbsp;use&nbsp;<a href="#Experiment">Experiment</a>.addSwitch&nbsp;as&nbsp;this&nbsp;does&nbsp;some<br>
+bookkeeping&nbsp;on&nbsp;nodes&nbsp;etc.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;switchname&nbsp;to&nbsp;add.&nbsp;Must&nbsp;not&nbsp;already&nbsp;exist&nbsp;on&nbsp;<a href="#Worker">Worker</a>.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cls:&nbsp;Node&nbsp;class&nbsp;to&nbsp;use.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;**params:&nbsp;Additional&nbsp;parameters&nbsp;for&nbsp;cls&nbsp;instanciation.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nodename</tt></dd></dl>
+
+<dl><dt><a name="Worker-addTunnel"><strong>addTunnel</strong></a>(self, name, switch, port, intf, **params)</dt><dd><tt>Add&nbsp;tunnel&nbsp;at&nbsp;runtime.<br>
+&nbsp;<br>
+You&nbsp;probably&nbsp;want&nbsp;to&nbsp;use&nbsp;<a href="#Experiment">Experiment</a>.addLink&nbsp;as&nbsp;this&nbsp;does&nbsp;some<br>
+bookkeeping&nbsp;on&nbsp;tunnels&nbsp;etc.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;tunnelname&nbsp;(must&nbsp;be&nbsp;unique&nbsp;on&nbsp;<a href="#Worker">Worker</a>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch:&nbsp;name&nbsp;of&nbsp;switch&nbsp;to&nbsp;which&nbsp;tunnel&nbsp;will&nbsp;be&nbsp;connected.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port:&nbsp;port&nbsp;number&nbsp;to&nbsp;use&nbsp;on&nbsp;switch.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;intf:&nbsp;Intf&nbsp;class&nbsp;to&nbsp;use&nbsp;when&nbsp;creating&nbsp;the&nbsp;tunnel.</tt></dd></dl>
+
+<dl><dt><a name="Worker-configLinkStatus"><strong>configLinkStatus</strong></a>(self, src, dst, status)</dt><dd><tt>Wrapper&nbsp;for&nbsp;configLinkStatus&nbsp;method&nbsp;on&nbsp;remote&nbsp;mininet.<br>
+&nbsp;<br>
+Used&nbsp;to&nbsp;enable&nbsp;and&nbsp;disable&nbsp;links.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;src:&nbsp;name&nbsp;of&nbsp;source&nbsp;node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dst:&nbsp;name&nbsp;of&nbsp;destination&nbsp;node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;status:&nbsp;string&nbsp;{up|down}</tt></dd></dl>
+
+<dl><dt><a name="Worker-daemonize"><strong>daemonize</strong></a>(self, cmd)</dt><dd><tt>run&nbsp;command&nbsp;in&nbsp;background&nbsp;and&nbsp;terminate&nbsp;when&nbsp;MaxiNet&nbsp;is&nbsp;shut<br>
+down.</tt></dd></dl>
+
+<dl><dt><a name="Worker-daemonize_script"><strong>daemonize_script</strong></a>(self, script, args)</dt><dd><tt>run&nbsp;script&nbsp;from&nbsp;script&nbsp;folder&nbsp;in&nbsp;background&nbsp;and&nbsp;terminate&nbsp;when&nbsp;MaxiNet&nbsp;is&nbsp;shut<br>
+down.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;script:&nbsp;Script&nbsp;name&nbsp;to&nbsp;call<br>
+&nbsp;&nbsp;&nbsp;&nbsp;args:&nbsp;string&nbsp;of&nbsp;args&nbsp;which&nbsp;will&nbsp;be&nbsp;appended&nbsp;to&nbsp;script&nbsp;name&nbsp;call</tt></dd></dl>
+
+<dl><dt><a name="Worker-get_file"><strong>get_file</strong></a>(self, src, dst)</dt><dd><tt>Transfer&nbsp;file&nbsp;specified&nbsp;by&nbsp;src&nbsp;on&nbsp;worker&nbsp;to&nbsp;dst&nbsp;on&nbsp;Frontend.<br>
+&nbsp;<br>
+Transfers&nbsp;file&nbsp;src&nbsp;to&nbsp;filename&nbsp;or&nbsp;folder&nbsp;dst&nbsp;on&nbsp;Frontend&nbsp;machine<br>
+via&nbsp;scp.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;src:&nbsp;string&nbsp;of&nbsp;path&nbsp;to&nbsp;file&nbsp;on&nbsp;<a href="#Worker">Worker</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;dst:&nbsp;string&nbsp;of&nbsp;path&nbsp;to&nbsp;file&nbsp;or&nbsp;folder&nbsp;on&nbsp;Frontend</tt></dd></dl>
+
+<dl><dt><a name="Worker-hn"><strong>hn</strong></a>(self)</dt><dd><tt>Get&nbsp;hostname&nbsp;of&nbsp;worker&nbsp;machine.</tt></dd></dl>
+
+<dl><dt><a name="Worker-ip"><strong>ip</strong></a>(self, classifier<font color="#909090">=None</font>)</dt><dd><tt>Get&nbsp;public&nbsp;ip&nbsp;adress&nbsp;of&nbsp;worker&nbsp;machine.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;classifier:&nbsp;if&nbsp;multiple&nbsp;ip&nbsp;addresses&nbsp;are&nbsp;configured&nbsp;for&nbsp;a&nbsp;worker<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;classifier&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;hint&nbsp;which&nbsp;ip&nbsp;address&nbsp;should&nbsp;be&nbsp;used.</tt></dd></dl>
+
+<dl><dt><a name="Worker-put_file"><strong>put_file</strong></a>(self, src, dst)</dt><dd><tt>transfer&nbsp;file&nbsp;specified&nbsp;by&nbsp;src&nbsp;on&nbsp;Frontend&nbsp;to&nbsp;dst&nbsp;on&nbsp;worker.<br>
+&nbsp;<br>
+Transfers&nbsp;file&nbsp;src&nbsp;to&nbsp;filename&nbsp;or&nbsp;folder&nbsp;dst&nbsp;on&nbsp;<a href="#Worker">Worker</a>&nbsp;machine<br>
+via&nbsp;scp.<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;src:&nbsp;string&nbsp;of&nbsp;path&nbsp;to&nbsp;file&nbsp;on&nbsp;Frontend<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dst:&nbsp;string&nbsp;of&nbsp;path&nbsp;to&nbsp;file&nbsp;or&nbsp;folder&nbsp;on&nbsp;<a href="#Worker">Worker</a></tt></dd></dl>
+
+<dl><dt><a name="Worker-rattr"><strong>rattr</strong></a>(self, host, name)</dt><dd><tt>Get&nbsp;attributes&nbsp;of&nbsp;mininet&nbsp;node.<br>
+&nbsp;<br>
+MaxiNet&nbsp;uses&nbsp;this&nbsp;function&nbsp;to&nbsp;get&nbsp;attributes&nbsp;of&nbsp;remote&nbsp;nodes&nbsp;in<br>
+<a href="#NodeWrapper">NodeWrapper</a>&nbsp;class.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:&nbsp;Nodename<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host.name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;WARNING:&nbsp;if&nbsp;the&nbsp;attribute&nbsp;is&nbsp;not&nbsp;serializable&nbsp;this&nbsp;might<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crash.</tt></dd></dl>
+
+<dl><dt><a name="Worker-rpc"><strong>rpc</strong></a>(self, host, cmd, *params1, **params2)</dt><dd><tt>Do&nbsp;rpc&nbsp;call&nbsp;to&nbsp;mininet&nbsp;node.<br>
+&nbsp;<br>
+MaxiNet&nbsp;uses&nbsp;this&nbsp;function&nbsp;to&nbsp;do&nbsp;rpc&nbsp;calls&nbsp;on&nbsp;remote&nbsp;nodes&nbsp;in<br>
+<a href="#NodeWrapper">NodeWrapper</a>&nbsp;class.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:&nbsp;Nodename<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd:&nbsp;Method&nbsp;of&nbsp;node&nbsp;to&nbsp;call.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*params1:&nbsp;Unnamed&nbsp;parameters&nbsp;to&nbsp;call.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;**params2:&nbsp;Named&nbsp;parameters&nbsp;to&nbsp;call.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Return&nbsp;of&nbsp;host.cmd(*params1,**params2).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;WARNING:&nbsp;if&nbsp;returned&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;is&nbsp;not&nbsp;serializable&nbsp;this&nbsp;might<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crash.</tt></dd></dl>
+
+<dl><dt><a name="Worker-run_cmd"><strong>run_cmd</strong></a>(self, cmd)</dt><dd><tt>run&nbsp;cmd&nbsp;on&nbsp;worker&nbsp;machine&nbsp;and&nbsp;return&nbsp;output.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd:&nbsp;string&nbsp;of&nbsp;program&nbsp;name&nbsp;and&nbsp;arguments&nbsp;to&nbsp;call.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Stdout&nbsp;of&nbsp;program&nbsp;call.</tt></dd></dl>
+
+<dl><dt><a name="Worker-run_cmd_on_host"><strong>run_cmd_on_host</strong></a>(self, host, cmd)</dt><dd><tt>Run&nbsp;cmd&nbsp;in&nbsp;context&nbsp;of&nbsp;host&nbsp;and&nbsp;return&nbsp;output.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:&nbsp;nodename<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd:&nbsp;string&nbsp;of&nbsp;program&nbsp;name&nbsp;and&nbsp;arguments&nbsp;to&nbsp;call.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Stdout&nbsp;of&nbsp;program&nbsp;call.</tt></dd></dl>
+
+<dl><dt><a name="Worker-run_script"><strong>run_script</strong></a>(self, cmd)</dt><dd><tt>Run&nbsp;MaxiNet&nbsp;script&nbsp;on&nbsp;worker&nbsp;machine&nbsp;and&nbsp;return&nbsp;output.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd:&nbsp;String&nbsp;of&nbsp;name&nbsp;of&nbsp;MaxiNet&nbsp;script&nbsp;and&nbsp;arguments.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Stdout&nbsp;of&nbsp;program&nbsp;call.</tt></dd></dl>
+
+<dl><dt><a name="Worker-set_switch"><strong>set_switch</strong></a>(self, switch)</dt><dd><tt>Set&nbsp;default&nbsp;switch&nbsp;class.</tt></dd></dl>
+
+<dl><dt><a name="Worker-start"><strong>start</strong></a>(self, topo, tunnels, controller<font color="#909090">=None</font>)</dt><dd><tt>Start&nbsp;mininet&nbsp;instance&nbsp;on&nbsp;worker&nbsp;machine.<br>
+&nbsp;<br>
+Start&nbsp;mininet&nbsp;emulating&nbsp;the&nbsp;in&nbsp;&nbsp;argument&nbsp;topo&nbsp;specified&nbsp;topology.<br>
+if&nbsp;controller&nbsp;is&nbsp;not&nbsp;specified&nbsp;mininet&nbsp;will&nbsp;start&nbsp;an&nbsp;own<br>
+controller&nbsp;for&nbsp;this&nbsp;net.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;topo:&nbsp;Topology&nbsp;to&nbsp;emulate&nbsp;on&nbsp;this&nbsp;worker.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tunnels:&nbsp;List&nbsp;of&nbsp;tunnels&nbsp;in&nbsp;format:&nbsp;[[tunnelname,&nbsp;switch,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;options],].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;controller:&nbsp;optional&nbsp;mininet&nbsp;controller&nbsp;class&nbsp;to&nbsp;use&nbsp;in&nbsp;this<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;network.</tt></dd></dl>
+
+<dl><dt><a name="Worker-stop"><strong>stop</strong></a>(self)</dt><dd><tt>Stop&nbsp;mininet&nbsp;instance&nbsp;on&nbsp;this&nbsp;worker.</tt></dd></dl>
+
+<dl><dt><a name="Worker-tunnelX11"><strong>tunnelX11</strong></a>(self, node)</dt><dd><tt>Create&nbsp;X11&nbsp;tunnel&nbsp;from&nbsp;Frontend&nbsp;to&nbsp;node&nbsp;on&nbsp;worker&nbsp;to&nbsp;make<br>
+x-forwarding&nbsp;work.<br>
+&nbsp;<br>
+This&nbsp;is&nbsp;used&nbsp;in&nbsp;CLI&nbsp;class&nbsp;to&nbsp;allow&nbsp;calls&nbsp;to&nbsp;wireshark&nbsp;etc.<br>
+For&nbsp;each&nbsp;node&nbsp;only&nbsp;one&nbsp;tunnel&nbsp;will&nbsp;be&nbsp;created.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node:&nbsp;nodename<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;boolean&nbsp;whether&nbsp;tunnel&nbsp;was&nbsp;successfully&nbsp;created.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-deprecated"><strong>deprecated</strong></a>(func)</dt><dd><tt>This&nbsp;is&nbsp;a&nbsp;decorator&nbsp;which&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;mark&nbsp;functions<br>
+as&nbsp;deprecated.&nbsp;It&nbsp;will&nbsp;result&nbsp;in&nbsp;a&nbsp;warning&nbsp;being&nbsp;emitted<br>
+when&nbsp;the&nbsp;function&nbsp;is&nbsp;used.</tt></dd></dl>
+ <dl><dt><a name="-run_cmd"><strong>run_cmd</strong></a>(cmd)</dt><dd><tt>Run&nbsp;cmd&nbsp;on&nbsp;frontend&nbsp;machine.<br>
+&nbsp;<br>
+See&nbsp;also:&nbsp;rum_cmd_shell(cmd)<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd:&nbsp;Either&nbsp;a&nbsp;string&nbsp;of&nbsp;program&nbsp;name&nbsp;or&nbsp;sequence&nbsp;of&nbsp;program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arguments.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Stdout&nbsp;of&nbsp;cmd&nbsp;call&nbsp;as&nbsp;string.</tt></dd></dl>
+ <dl><dt><a name="-run_cmd_shell"><strong>run_cmd_shell</strong></a>(cmd)</dt><dd><tt>Run&nbsp;cmd&nbsp;on&nbsp;frontend&nbsp;machine.<br>
+&nbsp;<br>
+See&nbsp;also:&nbsp;rum_cmd(cmd)<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd:&nbsp;Either&nbsp;a&nbsp;string&nbsp;of&nbsp;program&nbsp;name&nbsp;and&nbsp;arguments&nbsp;or&nbsp;sequence<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;program&nbsp;name&nbsp;and&nbsp;arguments.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Stdout&nbsp;of&nbsp;cmd&nbsp;call&nbsp;as&nbsp;string.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>logger</strong> = &lt;logging.Logger object&gt;</td></tr></table>
+</body></html>

@@ -54,13 +54,14 @@ for filename in cpulogs:
     axis_y = []
     for line in open(os.path.join(folder, filename)):
         line = line.split()
-        if(len(line) == 12 and line[2] == "all"):
+        if("all" in line):
             timestamp = int(line[0])
             idle = float(line[-1])
             used = 100 - idle
             axis_x.append(timestamp)
             axis_y.append(used)
     ax[graph].plot(axis_x, axis_y, label=workerHN)
+print ax[graph]
 xmin, xmax = map(lambda x: int(x), ax[graph].get_xaxis().get_data_interval())
 xticks = range(xmin, xmax)[0::10]
 xlabels = map(lambda x: x - xmin, xticks)
