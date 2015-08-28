@@ -1,4 +1,0 @@
-261c261
-<     if [ "$DIST" = "Ubuntu" ] && version_ge $RELEASE 12.04; then
----
->     if [ "$DIST" = "Ubuntu" ] || [ "$DIST" = "Debian" ]; then
