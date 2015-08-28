@@ -154,7 +154,7 @@ class MaxiNetManager(object):
 
                 if(not alive):
                     #we just detected that this cluster is no more alive!
-                    print "Detected a hung cluster. Freeing workers."
+                    self.logger.warn("Detected a hung cluster. Freeing workers.")
                     for worker in self._worker_dict.keys():
                         if(self._worker_dict[worker]["assigned"] == cluster):
                             pn = self._worker_dict[worker]["pyroname"]+".mnManager"
@@ -211,6 +211,13 @@ class MaxiNetManager(object):
         self._pyrodaemon.shutdown()
 
     def stop(self):
+        """Stop FrontendServer.
+
+        Tries to stop FrontendServer. Fails if there are workers assigned
+        to a cluster.
+
+        returns: True if FrontendServer was successfully stopped, False if not
+        """
         self._worker_dict_lock.acquire()
         if (len(filter(lambda x: not (x["assigned"] is None),
                        self._worker_dict.values())) > 0):
@@ -224,6 +231,16 @@ class MaxiNetManager(object):
             return True
 
     def worker_signin(self, worker_pyroname, worker_hostname):
+        """Register Worker with FrontendServer.
+
+        Fails if Worker is already registered.
+
+        Args:
+            worker_pyroname: Pyro Identifier of Worker (String)
+            worker_hostname: Hostname of Worker
+        Returns:
+            True if successful, False if not.
+        """
         self._worker_dict_lock.acquire()
         if(worker_hostname in self._worker_dict):
             self._worker_dict_lock.release()
@@ -266,6 +283,13 @@ class MaxiNetManager(object):
         return (signed_in, assigned)
 
     def worker_signout(self, worker_hostname):
+        """Unregister Worker from FrontendServer.
+
+        Fails if worker is still assigned to a cluster.
+
+        Returns:
+            True if successful, False if not.
+        """
         self._worker_dict_lock.acquire()
         if(worker_hostname in self._worker_dict):
             if(not self._is_assigned(worker_hostname)):
@@ -282,6 +306,16 @@ class MaxiNetManager(object):
         return True
 
     def reserve_worker(self, worker_hostname, id):
+        """Assign Worker to cluster.
+
+        Fails if worker is already assigned to another cluster.
+
+        Args:
+            worker_hostname: Hostname of worker
+            id: identifier to identify cluster
+        Returns:
+            True if successful, False if not.
+        """
         self._worker_dict_lock.acquire()
         if(self._is_assigned(worker_hostname)):
             self._worker_dict_lock.release()
@@ -300,6 +334,16 @@ class MaxiNetManager(object):
                 return None
 
     def free_worker(self, worker_hostname, id, force=False):
+        """Deassign worker from cluster.
+
+        Fails if id is not equal to id provided at assignment call. Can be overriden
+        by force flag.
+
+        Args:
+            worker_hostname: Hostname of Worker
+            id: identifier of cluster
+            force: override flag for identifier verification
+        """
         self._worker_dict_lock.acquire()
         if((self._worker_dict[worker_hostname]["assigned"] == id) or force):
             self._worker_dict[worker_hostname]["assigned"] = None
@@ -314,6 +358,7 @@ class MaxiNetManager(object):
             return False
 
     def get_free_workers(self):
+        """Get list of unassigned workers"""
         rd = {}
         self._worker_dict_lock.acquire()
         w = filter(lambda x: self._worker_dict[x]["assigned"] is None,
@@ -324,6 +369,7 @@ class MaxiNetManager(object):
         return rd
 
     def get_workers(self):
+        """Get list of all workers"""
         self._worker_dict_lock.acquire()
         w = self._worker_dict.copy()
         self._worker_dict_lock.release()

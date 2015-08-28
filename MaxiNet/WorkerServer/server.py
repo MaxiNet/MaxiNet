@@ -204,23 +204,53 @@ class WorkerServer(object):
             return True
 
     def check_output(self, cmd):
+        """Run cmd on Worker and return output
+
+        Args:
+            cmd: command to call with optional parameters
+
+        Returns:
+            Shell output of command
+        """
         self.logger.debug("Executing %s" % cmd)
         return subprocess.check_output(cmd, shell=True,
                                        stderr=subprocess.STDOUT).strip()
 
     def script_check_output(self, cmd):
+        """Call MaxiNet Script and return output
+
+        Args:
+            cmd: name of script to call
+        Returns:
+            Shell output of script
+        """
         # Prefix command by our worker directory
         cmd = Tools.get_script_dir() + cmd
         return self.check_output(cmd)
 
     def run_cmd(self, command):
+        """Call command (blocking)
+
+        Args:
+            command: command to call with optional parameters
+        """
         subprocess.call(command, shell=True)
 
     def daemonize(self, cmd):
+        """Call command (non-blocking)
+
+        Args:
+            command: command to call with optional parameters
+        """
         p = subprocess.Popen(cmd, shell=True)
         atexit.register(p.terminate)
 
     def daemonize_script(self, script, args):
+        """Call MaxiNet Script (non-blocking)
+
+        Args:
+            cmd: name of script to call
+        """
         cmd = Tools.get_script_dir()+script+" "+args
         p = subprocess.Popen(cmd, shell=True)
         atexit.register(p.terminate)
@@ -234,6 +264,7 @@ class MininetManager(object):
 
     def create_mininet(self, topo, tunnels=[],  switch=UserSwitch,
                        controller=None):
+        """create and start mininet instance"""
         if(not self.net is None):
             self.logger.warn("running mininet instance detected!\
                               Shutting it down...")
@@ -264,6 +295,7 @@ class MininetManager(object):
         return True
 
     def destroy_mininet(self):
+        """shut down mininet instance"""
         if self.net:
             for popen in self.x11popens:
                 popen.terminate()

@@ -165,6 +165,12 @@ class Partitioner(object):
         return r
 
     def partition(self, n, shares=None):
+        """Partition loaded topology into n partitions.
+
+        Args:
+            n: Number of partitions to create
+            shares: list of workload shares for each partition. Must add up to 1
+        """
         self.tunnels = []
         self.partitions = []
         if(n > 1 and len(self.switches) > 1):
