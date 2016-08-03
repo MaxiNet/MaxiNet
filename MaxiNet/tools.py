@@ -66,6 +66,11 @@ class MaxiNetConfig(RawConfigParser):
             return self.getboolean("all","runWith1500MTU")
         return False
 
+    def use_stt_tunneling(self):
+        if(self.has_option("all","useSTT")):
+            return self.getboolean("all","useSTT")
+        return False
+
     def deactivateTSO(self):
         if(self.has_option("all","deactivateTSO")):
             return self.getboolean("all","deactivateTSO")

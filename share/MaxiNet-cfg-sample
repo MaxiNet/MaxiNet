@@ -10,6 +10,7 @@ useMultipleIPs = 0     ; for RSS load balancing. Set to n > 0 to use multiple IP
 deactivateTSO = True   ; Deactivate TCP-Segmentation-Offloading at the emulated hosts.
 sshuser = root         ; On Debian set this to root. On ubuntu set this to user which can do passwordless sudo
 usesudo = False        ; If sshuser is set to something different than root set this to True.
+useSTT = False         ; enables stt usage for tunnels. Only usable with OpenVSwitch. Bandwithlimitations etc do not work on STT tunnels!
 
 [FrontendServer]
 ip = 192.168.123.1
