@@ -31,28 +31,35 @@ class MaxiNetConfig(RawConfigParser):
         if(register):
             self.register()
 
+    @Pyro4.expose
     def set_loglevel(self, level=None):
         if(level is None):
             level = self.get_loglevel()
         logging.basicConfig(level=level)
 
+    @Pyro4.expose
     def get_nameserver_port(self):
         return self.getint("all", "port_ns")
 
+    @Pyro4.expose
     def get_sshd_port(self):
         return self.getint("all", "port_sshd")
 
+    @Pyro4.expose
     def get_frontend_ip(self):
         return self.get("FrontendServer", "ip")
 
+    @Pyro4.expose
     def get_frontend_threads(self):
         if self.has_option("FrontendServer", "threadpool"):
             return self.getint("FrontendServer", "threadpool")
         return 256
 
+    @Pyro4.expose
     def get_controller(self):
         return self.get("all", "controller")
 
+    @Pyro4.expose
     def get_worker_ip(self, hostname, classifier=None):
         if(not self.has_section(hostname)):
             self.logger.warn("Unknown hostname: %s" % hostname)
@@ -66,27 +73,33 @@ class MaxiNetConfig(RawConfigParser):
                 else:
                     return self.get(hostname, "ip_%s" % classifier)
 
+    @Pyro4.expose
     def run_with_1500_mtu(self):
         if(self.has_option("all","runWith1500MTU")):
             return self.getboolean("all","runWith1500MTU")
         return False
 
+    @Pyro4.expose
     def use_stt_tunneling(self):
         if(self.has_option("all","useSTT")):
             return self.getboolean("all","useSTT")
         return False
 
+    @Pyro4.expose
     def deactivateTSO(self):
         if(self.has_option("all","deactivateTSO")):
             return self.getboolean("all","deactivateTSO")
         return False
 
+    @Pyro4.expose
     def get_nameserver_ip(self):
         return self.get_frontend_ip()
 
+    @Pyro4.expose
     def get_nameserver_password(self):
         return self.get("all", "password")
 
+    @Pyro4.expose
     def get_loglevel(self):
         lvl = self.get("all", "logLevel")
         lvls = {"CRITICAL": logging.CRITICAL,
@@ -114,6 +127,22 @@ class MaxiNetConfig(RawConfigParser):
             self.daemon = None
             self.daemon_thread.join()
             self.daemon_thread = None
+
+    @Pyro4.expose
+    def get(self, section, option):
+        return RawConfigParser.get(self, section, option)
+
+    @Pyro4.expose
+    def has_section(self, section):
+        return RawConfigParser.has_section(self, section)
+
+    @Pyro4.expose
+    def has_option(self, section, option):
+        return RawConfigParser.has_option(self, section, option)
+
+    @Pyro4.expose
+    def getint(self, section, option):
+        return RawConfigParser.getint(self, section, option)
 
 
 class SSH_Tool(object):

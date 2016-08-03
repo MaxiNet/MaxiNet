@@ -4,12 +4,10 @@ import atexit
 import logging
 import threading
 import time
-import traceback
 
 import Pyro4
 
 from MaxiNet.tools import MaxiNetConfig
-
 
 Pyro4.config.SOCK_REUSE = True
 
@@ -72,6 +70,7 @@ class MaxiNetManager(object):
         self._monitor_thread.daemon = True
         self._monitor_thread.start()
 
+    @Pyro4.expose
     def register_ident(self, ident):
         """Register identifier on manager.
 
@@ -92,6 +91,7 @@ class MaxiNetManager(object):
         else:
             return False
 
+    @Pyro4.expose
     def unregister_ident(self, ident):
         """Unregister identifier.
 
@@ -110,6 +110,7 @@ class MaxiNetManager(object):
             self.idents.remove(ident)
         return True
 
+    @Pyro4.expose
     def valid_ident(self, ident):
         """Check if identifier is registerd with manager instance.
 
@@ -124,6 +125,7 @@ class MaxiNetManager(object):
         else:
             return False
 
+    @Pyro4.expose
     def monitor_clusters(self):
         """check if the clusters (which allocated workers) are alive
         otherwise, deallocate the workers from the cluster
@@ -164,6 +166,7 @@ class MaxiNetManager(object):
                             self.free_worker(worker, cluster, True)
                     self.unregister_ident(cluster)
 
+    @Pyro4.expose
     def getStatus(self):
         """ used to check if the frontend server is still alive.
         """
@@ -210,6 +213,7 @@ class MaxiNetManager(object):
         self._pyrodaemon.unregister(self)
         self._pyrodaemon.shutdown()
 
+    @Pyro4.expose
     def stop(self):
         """Stop FrontendServer.
 
@@ -230,6 +234,7 @@ class MaxiNetManager(object):
             self._stop()
             return True
 
+    @Pyro4.expose
     def worker_signin(self, worker_pyroname, worker_hostname):
         """Register Worker with FrontendServer.
 
@@ -258,6 +263,7 @@ class MaxiNetManager(object):
     def _is_assigned(self, worker_hostname):
         return not (self._worker_dict[worker_hostname]["assigned"] is None)
 
+    @Pyro4.expose
     def print_worker_status(self):
         numWorkers = len(self._worker_dict)
         out = ""
@@ -272,6 +278,7 @@ class MaxiNetManager(object):
             out += "%s\t\t%s\n" % (worker_name, status)
         return out
 
+    @Pyro4.expose
     def get_worker_status(self, worker_hostname):
         signed_in = False
         assigned = None
@@ -282,6 +289,7 @@ class MaxiNetManager(object):
         self._worker_dict_lock.release()
         return (signed_in, assigned)
 
+    @Pyro4.expose
     def worker_signout(self, worker_hostname):
         """Unregister Worker from FrontendServer.
 
@@ -305,6 +313,7 @@ class MaxiNetManager(object):
         self._worker_dict_lock.release()
         return True
 
+    @Pyro4.expose
     def reserve_worker(self, worker_hostname, id):
         """Assign Worker to cluster.
 
@@ -333,6 +342,7 @@ class MaxiNetManager(object):
                                   not right here.")
                 return None
 
+    @Pyro4.expose
     def free_worker(self, worker_hostname, id, force=False):
         """Deassign worker from cluster.
 
@@ -357,6 +367,7 @@ class MaxiNetManager(object):
                              % (worker_hostname, id))
             return False
 
+    @Pyro4.expose
     def get_free_workers(self):
         """Get list of unassigned workers"""
         rd = {}
@@ -368,6 +379,7 @@ class MaxiNetManager(object):
         self._worker_dict_lock.release()
         return rd
 
+    @Pyro4.expose
     def get_workers(self):
         """Get list of all workers"""
         self._worker_dict_lock.acquire()

@@ -632,6 +632,7 @@ class Cluster(object):
         else:
             self.ident = ident
 
+    @Pyro4.expose
     def get_status_is_alive(self):
         """Get the status of this Cluster object.
             returns true if the object is still alive.
@@ -640,6 +641,7 @@ class Cluster(object):
         """
         return True
 
+    @Pyro4.expose
     def get_available_workers(self):
         """Get list of worker hostnames which are not reserved.
 
@@ -649,6 +651,7 @@ class Cluster(object):
         """
         return self.manager.get_free_workers()
 
+    @Pyro4.expose
     def add_worker_by_hostname(self, hostname):
         """Add worker by hostname
 
@@ -671,6 +674,7 @@ class Cluster(object):
             self.logger.warn("adding worker %s failed" % hostname)
             return False
 
+    @Pyro4.expose
     def add_worker(self):
         """Add worker
 
@@ -687,6 +691,7 @@ class Cluster(object):
                 return True
         return False
 
+    @Pyro4.expose
     def add_workers(self):
         """Add all available workers
 
@@ -701,6 +706,7 @@ class Cluster(object):
             i = i + 1
         return i
 
+    @Pyro4.expose
     def remove_worker(self, worker):
         """Remove worker from Cluster
 
@@ -719,6 +725,7 @@ class Cluster(object):
         self.manager.free_worker(worker.hn(), self.ident)
         self.logger.info("removed worker %s" % hn)
 
+    @Pyro4.expose
     def remove_workers(self):
         """Remove all workers from this cluster
 
@@ -743,10 +750,12 @@ class Cluster(object):
 
 
 
+    @Pyro4.expose
     def num_workers(self):
         """Return number of worker nodes in this Cluster."""
         return len(self.workers())
 
+    @Pyro4.expose
     def workers(self):
         """Return sequence of worker instances for this cluster.
 
@@ -755,6 +764,7 @@ class Cluster(object):
         """
         return self.worker
 
+    @Pyro4.expose
     def get_worker(self, hostname):
         """Return worker instance of worker with hostname hostname.
 
@@ -766,6 +776,7 @@ class Cluster(object):
         """
         return self.hostname_to_worker[hostname]
 
+    @Pyro4.expose
     def get_tunnel_metadata(self, w1, w2):
         """Get metadata needed for tunnel creation
 
@@ -796,6 +807,7 @@ class Cluster(object):
             ip2 = "%d.%d.%d.%d" % tuple(ip2_int)
         return (ip1, ip2, tid, tkey, intf)
 
+    @Pyro4.expose
     def create_tunnel(self, w1, w2):
         """Create GRE tunnel between workers.
 
@@ -820,6 +832,7 @@ class Cluster(object):
         self.logger.debug("tunnel " + intf + " created.")
         return intf
 
+    @Pyro4.expose
     def remove_all_tunnels(self):
         """Shut down all tunnels on all workers."""
         for worker in self.workers():

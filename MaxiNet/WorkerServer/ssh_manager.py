@@ -2,6 +2,8 @@ import atexit
 import os
 import subprocess
 
+import Pyro4
+
 
 class SSH_Manager(object):
 
@@ -35,10 +37,12 @@ class SSH_Manager(object):
         with open(os.path.join(self.folder, "sshd_config"), "w") as fn:
             fn.write(content)
 
+    @Pyro4.expose
     def add_key(self, key):
         with open(os.path.join(self.folder, "authorized_keys"), "a") as fn:
             fn.write("\n%s" % (key,))
 
+    @Pyro4.expose
     def has_key(self, key):
         with open(os.path.join(self.folder, "authorized_keys"), "r") as fn:
             content = fn.read()
@@ -46,6 +50,7 @@ class SSH_Manager(object):
             return True
         return False
 
+    @Pyro4.expose
     def remove_key(self, key):
         with open(os.path.join(self.folder, "authorized_keys"), "r") as fn:
             content = fn.read()
@@ -53,6 +58,7 @@ class SSH_Manager(object):
         with open(os.path.join(self.folder, "authorized_keys"), "w") as fn:
             fn.write(content)
 
+    @Pyro4.expose
     def remove_all_keys(self):
         with open(os.path.join(self.folder, "authorized_keys"), "w") as fn:
             fn.write("")
@@ -61,15 +67,18 @@ class SSH_Manager(object):
         subprocess.call(["ssh-keygen", "-q", "-N", "", "-t", "rsa", "-f",
                          os.path.join(self.folder, "ssh_host_rsa_key")])
 
+    @Pyro4.expose
     def get_host_key_fingerprint(self):
         return subprocess.check_output(["ssh-keygen", "-l", "-f",
                                         os.path.join(self.folder, "ssh_host_rsa_key")]).strip()
 
+    @Pyro4.expose
     def initialize_ssh_folder(self, ip, port, user):
         self._write_sshd_config(ip, port, user)
         subprocess.call(["touch", os.path.join(self.folder, "authorized_keys")])
         self._generate_host_key()
 
+    @Pyro4.expose
     def start_sshd(self):
         #kill the process that might listen on MaxiNets sshd port:
         r = subprocess.call(["sudo", "fuser", "-k", "-n", "tcp", "%s" % self.port])
@@ -83,12 +92,14 @@ class SSH_Manager(object):
                                       stdout=open("/dev/null", "w"))
         atexit.register(self.terminate_sshd)
 
+    @Pyro4.expose
     def sshd_running(self):
         if(self.popen):
             if(self.popen.poll() is None):
                 return True
         return False
 
+    @Pyro4.expose
     def terminate_sshd(self):
         if(self.sshd_running()):
             self.popen.terminate()

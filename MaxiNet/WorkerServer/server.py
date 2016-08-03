@@ -69,6 +69,7 @@ class WorkerServer(object):
         self._shutdown = True
         sys.exit()
 
+    @Pyro4.expose
     def monitorFrontend(self):
         """ function to monitor if the frontend is still alive.
             if not, try to reconnect.
@@ -108,6 +109,7 @@ class WorkerServer(object):
                 pass
             time.sleep(5)
 
+    @Pyro4.expose
     def start(self, ip, port, password, retry=float("inf")):
         """Start WorkerServer and ssh daemon and connect to nameserver."""
         self.logger.info("starting up and connecting to  %s:%d"
@@ -174,6 +176,7 @@ class WorkerServer(object):
     def _get_pyroname(self):
         return "MaxiNetWorker_%s" % self.get_hostname()
 
+    @Pyro4.expose
     def get_hostname(self):
         return subprocess.check_output(["hostname"]).strip()
 
@@ -190,10 +193,12 @@ class WorkerServer(object):
         self._pyrodaemon.shutdown()
         self._pyrodaemon.close()
 
+    @Pyro4.expose
     def remoteShutdown(self):
         self._pyrodaemon.shutdown()
 
 
+    @Pyro4.expose
     def stop(self):
         (signedin, assigned) = self._manager.get_worker_status(self.get_hostname())
         if(assigned):
@@ -203,6 +208,7 @@ class WorkerServer(object):
             self._stop()
             return True
 
+    @Pyro4.expose
     def check_output(self, cmd):
         """Run cmd on Worker and return output
 
@@ -216,6 +222,7 @@ class WorkerServer(object):
         return subprocess.check_output(cmd, shell=True,
                                        stderr=subprocess.STDOUT).strip()
 
+    @Pyro4.expose
     def script_check_output(self, cmd):
         """Call MaxiNet Script and return output
 
@@ -228,6 +235,7 @@ class WorkerServer(object):
         cmd = Tools.get_script_dir() + cmd
         return self.check_output(cmd)
 
+    @Pyro4.expose
     def run_cmd(self, command):
         """Call command (blocking)
 
@@ -236,6 +244,7 @@ class WorkerServer(object):
         """
         subprocess.call(command, shell=True)
 
+    @Pyro4.expose
     def daemonize(self, cmd):
         """Call command (non-blocking)
 
@@ -245,6 +254,7 @@ class WorkerServer(object):
         p = subprocess.Popen(cmd, shell=True)
         atexit.register(p.terminate)
 
+    @Pyro4.expose
     def daemonize_script(self, script, args):
         """Call MaxiNet Script (non-blocking)
 
@@ -262,6 +272,7 @@ class MininetManager(object):
         self.logger = logging.getLogger(__name__)
         self.net = None
 
+    @Pyro4.expose
     def create_mininet(self, topo, tunnels=[],  switch=UserSwitch,
                        controller=None, STT=False):
         if(not self.net is None):
@@ -297,6 +308,7 @@ class MininetManager(object):
         self.x11popens = []
         return True
 
+    @Pyro4.expose
     def destroy_mininet(self):
         """shut down mininet instance"""
         if self.net:
@@ -308,31 +320,38 @@ class MininetManager(object):
             self.logger.info("mininet instance terminated")
             self.net = None
 
+    @Pyro4.expose
     def configLinkStatus(self, src, dst, status):
         self.net.configLinkStatus(src, dst, status)
 
+    @Pyro4.expose
     def rpc(self, hostname, cmd, *params1, **params2):
         h = self.net.get(hostname)
         return getattr(h, cmd)(*params1, **params2)
 
+    @Pyro4.expose
     def attr(self, hostname, name):
         h = self.net.get(hostname)
         return getattr(h, name)
 
+    @Pyro4.expose
     def addHost(self, name, cls=None, **params):
         self.net.addHost(name, cls, **params)
         return name
 
+    @Pyro4.expose
     def addSwitch(self, name, cls=None, **params):
         self.net.addSwitch(name, cls, **params)
         #TODO: This should not be done here
         self.net.get(name).start(self.net.controllers)
         return name
 
+    @Pyro4.expose
     def addController(self, name="c0", controller=None, **params):
         self.net.addController(name, controller, **params)
         return name
 
+    @Pyro4.expose
     def addTunnel(self, name, switch, port, intf, STT=False, **params):
         switch_i = self.net.get(switch)
         if not intf:
@@ -342,11 +361,13 @@ class MininetManager(object):
         else:
             intf(name, node=switch_i, port=port, link=None, **params)
 
+    @Pyro4.expose
     def tunnelX11(self, node, display):
         node = self.net.get(node)
         (tunnel, popen) = mininet.term.tunnelX11(node, display)
         self.x11popens.append(popen)
 
+    @Pyro4.expose
     def addLink(self, node1, node2, port1=None, port2=None, cls=None,
                 **params):
         node1 = self.net.get(node1)
@@ -354,6 +375,8 @@ class MininetManager(object):
         l = self.net.addLink(node1, node2, port1, port2, cls, **params)
         return ((node1.name, l.intf1.name), (node2.name, l.intf2.name))
 
+
+    @Pyro4.expose
     def runCmdOnHost(self, hostname, command, noWait=False):
         '''
             e.g. runCmdOnHost('h1', 'ifconfig')
