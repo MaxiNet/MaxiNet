@@ -12,7 +12,6 @@ from MaxiNet.tools import MaxiNetConfig
 
 
 Pyro4.config.SOCK_REUSE = True
-Pyro4.config.THREADPOOL_SIZE = 256  #increase if more workers are needed (each Worker requires 2 threads on the FrontendServer)
 
 class NameServer(object):
     def __init__(self, config=MaxiNetConfig()):
@@ -23,6 +22,7 @@ class NameServer(object):
         """Start namserver instance
         """
         Pyro4.config.SERVERTYPE = "thread"
+        Pyro4.config.THREADPOOL_SIZE = self.config.get_frontend_threads()
 
         self._ns_thread = threading.Thread(target=Pyro4.naming.startNSloop,
                                 kwargs={

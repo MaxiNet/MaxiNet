@@ -13,7 +13,7 @@ clean:
 uninstall:
 	rm -rf /usr/local/lib/python2.7/dist-packages/MaxiNet-*/
 	rm -rf /usr/local/share/MaxiNet
-	rm /usr/local/bin/MaxiNetServer
+	rm -f /usr/local/bin/MaxiNetServer /usr/local/bin/MaxiNetStatus /usr/local/bin/MaxiNetFrondendServer /usr/local/bin/MaxiNetWorker
 
 reinstall: uninstall clean install
 

@@ -45,6 +45,11 @@ class MaxiNetConfig(RawConfigParser):
     def get_frontend_ip(self):
         return self.get("FrontendServer", "ip")
 
+    def get_frontend_threads(self):
+        if self.has_option("FrontendServer", "threadpool"):
+            return self.getint("FrontendServer", "threadpool")
+        return 256
+
     def get_controller(self):
         return self.get("all", "controller")
 
