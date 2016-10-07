@@ -23,7 +23,6 @@ from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
 
 
 
-
 class WorkerServer(object):
     """Manages the Worker
 
@@ -294,9 +293,13 @@ class MininetManager(object):
         for tunnel in tunnels:
             port = None
             cls = None
-            if "port" in tunnel[2].keys():
-                port = tunnel[2]["port"]
-                del tunnel[2]["port"]
+            if "node1" not in tunnel[2].keys():
+               self.logger.info("Error! node1 is missing in tunnel metadata")
+            if tunnel[2]["node1"] in topo.nodes():
+               port = tunnel[2]["port1"]
+            else:
+               port = tunnel[2]["port2"]
+
             if "cls" in tunnel[2].keys():
                 cls = tunnel[2]["cls"]
                 del tunnel[2]["cls"]
