@@ -247,7 +247,7 @@ class FatTree(Topo):
         return hex(random.randint(0, 255))[2:]
 
     def makeMAC(self, i):
-        return self.randByte() + ":" + self.randByte() + ":" + \
+        return "00:" + self.randByte() + ":" + \
                self.randByte() + ":00:00:" + hex(i)[2:]
 
     def makeDPID(self, i):
