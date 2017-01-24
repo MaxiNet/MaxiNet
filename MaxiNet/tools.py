@@ -144,6 +144,9 @@ class MaxiNetConfig(RawConfigParser):
     def getint(self, section, option):
         return RawConfigParser.getint(self, section, option)
 
+    @Pyro4.expose
+    def getboolean(self, section, option):
+        return RawConfigParser.getboolean(self, section, option)
 
 class SSH_Tool(object):
 
