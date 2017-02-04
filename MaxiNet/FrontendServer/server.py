@@ -144,9 +144,9 @@ class MaxiNetManager(object):
             #iterate over clusters and check if still alive:
             for cluster in clusters:
                 try:
+                    alive = False
                     uri = self._ns.lookup(cluster)
                     cluster_instance = Pyro4.Proxy(uri)
-                    alive = False
                     if(cluster_instance):
                         cluster_instance._pyroHmacKey=self.config.get_nameserver_password()
                         if(cluster_instance.get_status_is_alive()):

@@ -19,18 +19,28 @@ then
     metis="y"
     pyro="y"
 else
-
-    read -n1 -r -p "Do you want to install Mininet 2.2.1rc1? ([y]/n)" mininet
-
-    if [ "$mininet" == "" ] || [ "$mininet" == "y" ] || [ "$mininet" == "Y" ]
+    read -n1 -r -p "Do you want to install MaxiNet with Docker container support? (y/[n])" containernet
+    if [ "$containernet" == "y" ] || [ "$containernet" == "Y" ]
     then
-        mininet="y"
-        echo ""
-        echo "You choose to install Mininet. Warning: This will automatically remove existing directories ~/mininet, ~/loxigen, and ~/openflow"
+      containernet="y"
+      echo ""
+      echo "You choose to install container support. Warning: This will overwrite any existing Mininet installation."
     else
-        mininet="n"
+      containernet="n"
+      echo ""
+
+      read -n1 -r -p "Do you want to install Mininet 2.2.1rc1? ([y]/n)" mininet
+
+      if [ "$mininet" == "" ] || [ "$mininet" == "y" ] || [ "$mininet" == "Y" ]
+      then
+          mininet="y"
+          echo ""
+          echo "You choose to install Mininet. Warning: This will automatically remove existing directories ~/mininet, ~/loxigen, and ~/openflow"
+      else
+          mininet="n"
+      fi
+      echo ""
     fi
-    echo ""
 
     read -n1 -r -p "Do you want to install Metis 5.1? ([y]/n)" metis
 
@@ -57,6 +67,7 @@ else
     echo ""
     echo "MaxiNet installer will now install: "
     if [ "$mininet" == "y" ]; then echo " -Mininet 2.2.1rc1"; fi
+    if [ "$containernet" == "y" ]; then echo " -Containernet 2.2.1"; fi
     if [ "$metis" == "y" ]; then echo " -Metis 5.1"; fi
     if [ "$pyro" == "y" ]; then echo " -Pyro 4"; fi
     echo " -MaxiNet 1.0"
@@ -93,8 +104,24 @@ then
 	then
 	    ./install.sh
 	fi
+elif [ "$containernet" == "y" ]
+then
+  sudo apt-get install ansible aptitude
+  # Patch config file if necessary
+  grep "localhost ansible_connection=local" /etc/ansible/hosts >/dev/null
+  if [ $? -ne 0 ]; then
+    echo "localhost ansible_connection=local" | sudo tee -a /etc/ansible/hosts
+  fi
 
-
+  cd ~
+	sudo rm -rf containernet &> /dev/null
+	sudo rm -rf oflops &> /dev/null
+	sudo rm -rf oftest &> /dev/null
+	sudo rm -rf openflow &> /dev/null
+	sudo rm -rf pox &> /dev/null
+  git clone https://github.com/containernet/containernet
+  cd containernet/ansible
+  sudo ansible-playbook install.yml
 fi
 
 if [ "$metis" == "y" ]

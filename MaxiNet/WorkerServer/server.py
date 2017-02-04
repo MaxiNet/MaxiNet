@@ -142,7 +142,7 @@ class WorkerServer(object):
             if not self.config.has_section(self.get_hostname()):
                 self.config.add_section(self.get_hostname())
             self.config.set(self.get_hostname(), "ip", self.ip)
-            self.logger.warn("""FrontendServer did not know IP of this host.
+            self.logger.warn("""FrontendServer did not know IP of this host (check configuration for hostname).
                              Guessed: %s""" % self.ip)
         self.logger.info("configuring and starting ssh daemon...")
         self.sshManager = SSH_Manager(folder=self.ssh_folder, ip=self.ip, port=self.config.get_sshd_port(), user=self.config.get("all", "sshuser"))
