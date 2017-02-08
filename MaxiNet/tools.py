@@ -137,6 +137,10 @@ class MaxiNetConfig(RawConfigParser):
         return RawConfigParser.has_section(self, section)
 
     @Pyro4.expose
+    def add_section(self, section):
+        return RawConfigParser.add_section(self, section)
+
+    @Pyro4.expose
     def has_option(self, section, option):
         return RawConfigParser.has_option(self, section, option)
 
