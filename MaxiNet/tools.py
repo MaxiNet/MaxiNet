@@ -133,8 +133,16 @@ class MaxiNetConfig(RawConfigParser):
         return RawConfigParser.get(self, section, option)
 
     @Pyro4.expose
+    def set(self, section, option, val):
+        return RawConfigParser.set(self, section, option, val)
+
+    @Pyro4.expose
     def has_section(self, section):
         return RawConfigParser.has_section(self, section)
+
+    @Pyro4.expose
+    def add_section(self, section):
+        return RawConfigParser.add_section(self, section)
 
     @Pyro4.expose
     def has_option(self, section, option):
@@ -144,6 +152,9 @@ class MaxiNetConfig(RawConfigParser):
     def getint(self, section, option):
         return RawConfigParser.getint(self, section, option)
 
+    @Pyro4.expose
+    def getboolean(self, section, option):
+        return RawConfigParser.getboolean(self, section, option)
 
 class SSH_Tool(object):
 
@@ -247,13 +258,13 @@ class FatTree(Topo):
         return hex(random.randint(0, 255))[2:]
 
     def makeMAC(self, i):
-        return self.randByte() + ":" + self.randByte() + ":" + \
+        return "00:" + self.randByte() + ":" + \
                self.randByte() + ":00:00:" + hex(i)[2:]
 
     def makeDPID(self, i):
         a = self.makeMAC(i)
         dp = "".join(re.findall(r'[a-f0-9]+', a))
-        return "0" * (12 - len(dp)) + dp
+        return "0" * (16 - len(dp)) + dp
 
     # args is a string defining the arguments of the topology!
     # has be to format: "x,y,z" to have x hosts and a bw limit of y for
