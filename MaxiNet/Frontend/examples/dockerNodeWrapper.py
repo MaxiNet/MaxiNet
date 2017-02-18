@@ -19,7 +19,7 @@ node_wrapper = exp.get_node("d1")
 print("Testing methods:")
 print("=================")
 print("updateCpuLimit():")
-print("\t" + str(node_wrapper.updateCpuLimit(10000, 10000, 1, "0-1")))
+print("\t" + str(node_wrapper.updateCpuLimit(10000, 10000, 1, "0-1")))  # cpu_quota, cpu_period, cpu_shares, cores
 
 print("updateMemoryLimit():")
 print("\t" + str(node_wrapper.updateMemoryLimit(300000)))
@@ -27,25 +27,11 @@ print("\t" + str(node_wrapper.updateMemoryLimit(300000)))
 print("cgroupGet():")
 print("\t" + str(node_wrapper.cgroupGet('cpus', resource='cpuset')))
 
-print("_check_image_exists():")
-print("\t" + str(node_wrapper._check_image_exists("ubuntu:trusty", "false")))
-
-print("_image_exists():")
-print("\t" + str(node_wrapper._image_exists("ubuntu", "trusty")))
-
-print("_pull_image():")
-print("\t" + str(node_wrapper._pull_image("ubuntu", "trusty")))
-
 print("")
 print("Testing attributes:")
 print("====================")
 print("dimage = " + str(node_wrapper.dimage))
-print("cpu_quota = " + str(node_wrapper.cpu_quota))
-print("cpu_period = " + str(node_wrapper.cpu_period))
-print("cpu_shares = " + str(node_wrapper.cpu_shares))
-print("cpuset = " + str(node_wrapper.cpuset))
-print("mem_limit = " + str(node_wrapper.mem_limit))
-print("memswap_limit = " + str(node_wrapper.memswap_limit))
+print("resources = " + str(node_wrapper.resources))
 print("volumes = " + str(node_wrapper.volumes))
 
 exp.stop()

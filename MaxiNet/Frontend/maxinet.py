@@ -1609,11 +1609,9 @@ class NodeWrapper(object):
             return self._get(name)
         elif self._get("__class__").__name__ == "Docker":
             if name in ["updateCpuLimit", "updateMemoryLimit", "cgroupSet",
-                        "cgroupGet", "_check_image_exists", "_image_exists",
-                        "_pull_image"]:
+                        "cgroupGet", "update_resources"]:
                 return method
-            elif name in ["dimage", "cpu_quota", "cpu_period", "cpu_shares",
-                          "cpuset", "mem_limit", "memswap_limit", "volumes"]:
+            elif name in ["dimage", "resources", "volumes"]:
                 return self._get(name)
         else:
             raise AttributeError(name)
