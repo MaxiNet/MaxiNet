@@ -6,6 +6,7 @@ import threading
 import time
 
 import Pyro4
+import Pyro4.naming
 
 from MaxiNet.tools import MaxiNetConfig
 
