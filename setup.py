@@ -2,7 +2,7 @@ import sys, os, subprocess,distutils
 from setuptools import setup, find_packages
 
 setup(name='MaxiNet',
-      version='1.0',
+      version='1.1',
       description='Distributed Software Defined Network Emulation',
       long_description="MaxiNet extends the famous Mininet emulation environment to span the emulation across several physical machines. This allows to emulate very large SDN networks.",
       classifiers=[

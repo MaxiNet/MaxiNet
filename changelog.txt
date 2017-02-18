@@ -1,5 +1,9 @@
 MaxiNet
 
+MaxiNet 1.1:
+ * feature: Support for Docker container hosts via containernet
+ * feature: Pyro 4.55 compatibility
+
 MaxiNet 1.0:
  * change: Reworked MaxiNet startup architecture.
            To start MaxiNet cluster call MaxiNetFrontendServer command
