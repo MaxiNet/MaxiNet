@@ -597,8 +597,8 @@ class Cluster(object):
         if (myIP.strip() == "local"):
             myIP = "127.0.0.1"
         else:
-            myIP = subprocess.check_output("ip route get %s | cut -d' ' -f6" % ip, shell=True)
-            myIP = myIP.strip()
+            myIP = subprocess.check_output("ip route get %s" % ip, shell=True).split("src")[1].split()[0]
+
         self._pyrodaemon = Pyro4.Daemon(host=myIP)
         self._pyrodaemon._pyroHmacKey=password
         uri = self._pyrodaemon.register(self)
