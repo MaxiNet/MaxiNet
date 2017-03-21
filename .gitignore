@@ -1,4 +1,7 @@
 .idea
+build
+MaxiNet.egg-info
+dist
 Frontend/mininet
 *.pyc
 Frontend/config.py

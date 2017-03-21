@@ -1538,19 +1538,22 @@ class NodeWrapper(object):
     the respective mininet node.
 
     Mininet method calls that SHOULD work:
-    "cleanup", "read", "readline", "write", "terminate",
-    "stop", "waitReadable", "sendCmd", "sendInt", "monitor",
-    "waitOutput", "cmd", "cmdPrint", "pexec", "newPort",
-    "addIntf", "defaultIntf", "intf", "connectionsTo",
-    "deleteIntfs", "setARP", "setIP", "IP", "MAC", "intfIsUp",
-    "config", "configDefault", "intfNames", "cgroupSet",
-    "cgroupGet", "cgroupDel", "chrt", "rtInfo", "cfsInfo",
-    "setCPUFrac", "setCPUs", "defaultDpid", "defaultIntf",
-    "connected", "setup", "dpctl", "start", "stop", "attach",
-    "detach", "controllerUUIDs", "checkListening"
+    "IP", "MAC", "attach", "cfsInfo", "cgroupDel", "cleanup",
+    "cmd", "cmdPrint", "connected", "controllerUUIDs", "defaultDpid",
+    "detach", "dpctl", "intfIsUp", "intfNames", "monitor", "newPort",
+    "pexec", "read", "readline", "rtInfo", "sendCmd", "sendInt",
+    "setARP", "setIP", "setup", "start", "stop", "terminate",
+    "waitOutput", "waitReadable", "write"
 
-    Mininet attributes that SHOULD be queryable:
-    "name", "inNamespace", "params", "nameToIntf", "waiting"
+    Mininet attributes that SHOULD be gettable:
+    "inNamespace", "name", "params", "waiting"
+
+    Containernet Docker Host method calls that SHOULD work:
+    "updateCpuLimit", "updateMemoryLimit", "cgroupSet", "cgroupGet",
+    "update_resources"
+
+    Containernet Docker Host attributes that SHOULD be gettable:
+    "dimage", "resources", "volumes"
 
     Attributes:
         nn: Node name as String.
@@ -1590,23 +1593,39 @@ class NodeWrapper(object):
     def __getattr__(self, name):
         def method(*params1, **params2):
             return self._call(name, *params1, **params2)
-        # the following commands SHOULD work. no guarantee given
+
+        # The following commands and attributes did NOT work, when last tested.
+        # They are deactivated to avoid confusion. This is mostly caused by
+        # Pyro4 related serialization problems.
         if name in [
-                "cleanup", "read", "readline", "write", "terminate",
-                "stop", "waitReadable", "sendCmd", "sendInt", "monitor",
-                "waitOutput", "cmd", "cmdPrint", "pexec", "newPort",
-                "addIntf", "defaultIntf", "intf", "connectionsTo",
-                "deleteIntfs", "setARP", "setIP", "IP", "MAC", "intfIsUp",
-                "config", "configDefault", "intfNames", "cgroupSet",
-                "cgroupGet", "cgroupDel", "chrt", "rtInfo", "cfsInfo",
-                "setCPUFrac", "setCPUs", "defaultDpid", "defaultIntf",
-                "connected", "setup", "dpctl", "start", "stop", "attach",
-                "detach", "controllerUUIDs", "checkListening"
+            # methods:
+            "addIntf", "cgroupGet", "cgroupSet", "checkListening", "chrt",
+            "config", "configDefault", "connectionsTo", "defaultIntf",
+            "deleteIntfs", "intf", "setCPUFrac", "setCPUs"
+            # attributes:
+            "nameToIntf"
+        ]:
+            raise NotImplementedError(
+                str(name)
+                + ": Explicitly disabled due to serialization problems. "
+                + "To force access use the _call or _get methods manually. "
+                + "Use at own risk."
+            )
+
+        # the following attributes and methods SHOULD work. no guarantee given
+        if name in [
+            "IP", "MAC", "attach", "cfsInfo", "cgroupDel", "cleanup",
+            "cmd", "cmdPrint", "connected", "controllerUUIDs", "defaultDpid",
+            "detach", "dpctl", "intfIsUp", "intfNames", "monitor", "newPort",
+            "pexec", "read", "readline", "rtInfo", "sendCmd", "sendInt",
+            "setARP", "setIP", "setup", "start", "stop", "terminate",
+            "waitOutput", "waitReadable", "write"
         ]:
             return method
-        elif name in ["name", "inNamespace", "params", "nameToIntf",
-                      "waiting"]:
+        elif name in ["inNamespace", "name", "params", "waiting"]:
             return self._get(name)
+
+        # Containernet specific
         elif self._get("__class__").__name__ == "Docker":
             if name in ["updateCpuLimit", "updateMemoryLimit", "cgroupSet",
                         "cgroupGet", "update_resources"]:

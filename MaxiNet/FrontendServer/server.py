@@ -339,8 +339,9 @@ class MaxiNetManager(object):
                                  % (worker_hostname, id))
                 return pyname
             else:
-                self.logger.warn("unknown identfier %s encounterd. Something is \
-                                  not right here.")
+                # self._worker_dict_lock.release()
+                self.logger.warn("unknown identifier %s encountered. Something is \
+                                  not right here." % id)
                 return None
 
     @Pyro4.expose
