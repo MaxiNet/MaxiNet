@@ -1538,12 +1538,13 @@ class NodeWrapper(object):
     the respective mininet node.
 
     Mininet method calls that SHOULD work:
-    "IP", "MAC", "attach", "cfsInfo", "cgroupDel", "cleanup",
-    "cmd", "cmdPrint", "connected", "controllerUUIDs", "defaultDpid",
+    "IP", "MAC", "attach", "cfsInfo", "cgroupGet", "cgroupDel",
+    "cgroupSet", "cleanup", "cmd", "cmdPrint", "config",
+    "configDefault", "connected", "controllerUUIDs", "defaultDpid",
     "detach", "dpctl", "intfIsUp", "intfNames", "monitor", "newPort",
     "pexec", "read", "readline", "rtInfo", "sendCmd", "sendInt",
-    "setARP", "setIP", "setup", "start", "stop", "terminate",
-    "waitOutput", "waitReadable", "write"
+    "setARP", "setCPUFrac", "setCPUs", "setIP", "setup", "start",
+    "stop", "terminate", "waitOutput", "waitReadable", "write"
 
     Mininet attributes that SHOULD be gettable:
     "inNamespace", "name", "params", "waiting"
@@ -1599,9 +1600,8 @@ class NodeWrapper(object):
         # Pyro4 related serialization problems.
         if name in [
             # methods:
-            "addIntf", "cgroupGet", "cgroupSet", "checkListening", "chrt",
-            "config", "configDefault", "connectionsTo", "defaultIntf",
-            "deleteIntfs", "intf", "setCPUFrac", "setCPUs"
+            "addIntf", "checkListening", "chrt", "connectionsTo",
+            "defaultIntf", "deleteIntfs", "intf"
             # attributes:
             "nameToIntf"
         ]:
@@ -1614,12 +1614,13 @@ class NodeWrapper(object):
 
         # the following attributes and methods SHOULD work. no guarantee given
         if name in [
-            "IP", "MAC", "attach", "cfsInfo", "cgroupDel", "cleanup",
-            "cmd", "cmdPrint", "connected", "controllerUUIDs", "defaultDpid",
+            "IP", "MAC", "attach", "cfsInfo", "cgroupGet", "cgroupDel",
+            "cgroupSet", "cleanup", "cmd", "cmdPrint", "config",
+            "configDefault", "connected", "controllerUUIDs", "defaultDpid",
             "detach", "dpctl", "intfIsUp", "intfNames", "monitor", "newPort",
             "pexec", "read", "readline", "rtInfo", "sendCmd", "sendInt",
-            "setARP", "setIP", "setup", "start", "stop", "terminate",
-            "waitOutput", "waitReadable", "write"
+            "setARP", "setCPUFrac", "setCPUs", "setIP", "setup", "start",
+            "stop", "terminate", "waitOutput", "waitReadable", "write"
         ]:
             return method
         elif name in ["inNamespace", "name", "params", "waiting"]:
