@@ -254,8 +254,8 @@ class SSH_Tool(object):
 # Fat-tree topology implemention for mininet
 #
 class FatTree(Topo):
-    def randByte(self):
-        return hex(random.randint(0, 255))[2:]
+    def randByte(self, max=255):
+        return hex(random.randint(0, max))[2:]
 
     def makeMAC(self, i):
         return "00:" + self.randByte() + ":" + \
@@ -319,7 +319,7 @@ class Tools(object):
 
     @staticmethod
     def makeMAC(i):
-        return Tools.randByte() + ":" + Tools.randByte() + ":" +\
+        return Tools.randByte(127) + ":" + Tools.randByte() + ":" +\
                Tools.randByte() + ":00:00:" + hex(i)[2:]
 
     @staticmethod
