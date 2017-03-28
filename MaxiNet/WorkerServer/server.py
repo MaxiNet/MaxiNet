@@ -11,7 +11,7 @@ import tempfile
 import time
 
 from mininet.node import UserSwitch, OVSSwitch
-from mininet.link import TCLink, TCIntf
+from mininet.link import Link, TCIntf
 from mininet.net import Mininet
 import mininet.term
 import Pyro4
@@ -265,6 +265,26 @@ class WorkerServer(object):
         atexit.register(p.terminate)
 
 
+class TCLinkParams(Link):
+    """Link with symmetric TC interfaces
+
+    Like the mininet TCLink class but with support of the params1
+    and params2 arguments.
+    """
+
+    def __init__(self, node1, node2, port1=None, port2=None,
+                 intfName1=None, intfName2=None,
+                 addr1=None, addr2=None, params1=None,
+                 params2=None, **kvargs):
+        Link.__init__(self, node1, node2, port1=port1, port2=port2,
+                      intfName1=intfName1, intfName2=intfName2,
+                      cls1=TCIntf,
+                      cls2=TCIntf,
+                      addr1=addr1, addr2=addr2,
+                      params1=params1,
+                      params2=params2)
+
+
 class MininetManager(object):
 
     def __init__(self):
@@ -281,10 +301,10 @@ class MininetManager(object):
 
         self.logger.info("Creating mininet instance")
         if controller:
-            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
+            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLinkParams,
                                switch=switch, controller=controller)
         else:
-            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLink,
+            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLinkParams,
                                switch=switch)
         if STT:
             self.logger.info("Starting Mininet...")
