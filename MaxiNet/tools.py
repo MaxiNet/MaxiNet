@@ -314,8 +314,8 @@ class Tools(object):
         return os.path.abspath(os.path.dirname(os.path.abspath(__file__))) + os.sep
 
     @staticmethod
-    def randByte():
-        return hex(random.randint(0, 255))[2:]
+    def randByte(max=255):
+        return hex(random.randint(0, max))[2:]
 
     @staticmethod
     def makeMAC(i):
