@@ -14,24 +14,26 @@ cluster = maxinet.Cluster()
 exp = maxinet.Experiment(cluster, topo, switch=OVSSwitch)
 exp.setup()
 
-node_wrapper = exp.get_node("d1")
+try:
+    node_wrapper = exp.get_node("d1")
 
-print("Testing methods:")
-print("=================")
-print("updateCpuLimit():")
-print("\t" + str(node_wrapper.updateCpuLimit(10000, 10000, 1, "0-1")))  # cpu_quota, cpu_period, cpu_shares, cores
+    print("Testing methods:")
+    print("=================")
+    print("updateCpuLimit():")
+    print("\t" + str(node_wrapper.updateCpuLimit(10000, 10000, 1, "0-1")))  # cpu_quota, cpu_period, cpu_shares, cores
 
-print("updateMemoryLimit():")
-print("\t" + str(node_wrapper.updateMemoryLimit(300000)))
+    print("updateMemoryLimit():")
+    print("\t" + str(node_wrapper.updateMemoryLimit(300000)))
 
-print("cgroupGet():")
-print("\t" + str(node_wrapper.cgroupGet('cpus', resource='cpuset')))
+    print("cgroupGet():")
+    print("\t" + str(node_wrapper.cgroupGet('cpus', resource='cpuset')))
 
-print("")
-print("Testing attributes:")
-print("====================")
-print("dimage = " + str(node_wrapper.dimage))
-print("resources = " + str(node_wrapper.resources))
-print("volumes = " + str(node_wrapper.volumes))
+    print("")
+    print("Testing attributes:")
+    print("====================")
+    print("dimage = " + str(node_wrapper.dimage))
+    print("resources = " + str(node_wrapper.resources))
+    print("volumes = " + str(node_wrapper.volumes))
 
-exp.stop()
+finally:
+    exp.stop()

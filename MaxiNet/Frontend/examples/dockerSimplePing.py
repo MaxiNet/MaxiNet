@@ -24,13 +24,15 @@ cluster = maxinet.Cluster()
 exp = maxinet.Experiment(cluster, topo, switch=OVSSwitch)
 exp.setup()
 
-print exp.get_node("d1").cmd("ifconfig")
-print exp.get_node("d2").cmd("ifconfig")
+try:
+    print exp.get_node("d1").cmd("ifconfig")
+    print exp.get_node("d2").cmd("ifconfig")
 
-print "waiting 5 seconds for routing algorithms on the controller to converge"
-time.sleep(5)
+    print "waiting 5 seconds for routing algorithms on the controller to converge"
+    time.sleep(5)
 
-print exp.get_node("d1").cmd("ping -c 5 10.0.0.252")
-print exp.get_node("d2").cmd("ping -c 5 10.0.0.251")
+    print exp.get_node("d1").cmd("ping -c 5 10.0.0.252")
+    print exp.get_node("d2").cmd("ping -c 5 10.0.0.251")
 
-exp.stop()
+finally:
+    exp.stop()
