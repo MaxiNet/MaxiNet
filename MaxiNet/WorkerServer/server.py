@@ -300,12 +300,16 @@ class MininetManager(object):
             self.destroy_mininet()
 
         self.logger.info("Creating mininet instance")
-        if controller:
-            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLinkParams,
-                               switch=switch, controller=controller)
-        else:
-            self.net = Mininet(topo=topo, intf=TCIntf, link=TCLinkParams,
-                               switch=switch)
+        try:
+            if controller:
+                self.net = Mininet(topo=topo, intf=TCIntf, link=TCLinkParams,
+                                   switch=switch, controller=controller)
+            else:
+                self.net = Mininet(topo=topo, intf=TCIntf, link=TCLinkParams,
+                                   switch=switch)
+        except Exception, e:
+            self.logger.error("Failed to create mininet instance: %s" % traceback.format_exc())
+            raise e
         if STT:
             self.logger.info("Starting Mininet...")
             self.net.start()
