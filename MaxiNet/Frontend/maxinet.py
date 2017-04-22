@@ -985,12 +985,12 @@ class Experiment(object):
         if(len(d) != len(self.cluster.workers())):
             return False
         for w in self.cluster.workers():
-            if(not w in d.keys()):
+            if(not w.hn() in d.keys()):
                 return False
         for i in range(0, len(self.cluster.workers())):
             if (d.values().count(i) != 1):
                 return False
-        return False
+        return True
 
     def configLinkStatus(self, src, dst, status):
         """Change status of link.
