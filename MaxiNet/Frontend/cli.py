@@ -135,11 +135,15 @@ class CLI(Cmd):
                 time.sleep(0.2)
 
     def do_exit(self, s):
-        "Exit"
+        """Exit"""
         return "exited by user command"
 
+    def do_EOF(self, s):
+        """Exit on EOF (Ctrl+D)"""
+        return self.do_exit(s)
+
     def do_quit(self, s):
-        "Exit"
+        """Exit"""
         return self.do_exit(s)
 
     def default(self, s):
