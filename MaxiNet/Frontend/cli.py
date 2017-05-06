@@ -149,7 +149,8 @@ class CLI(Cmd):
     def default(self, s):
         node = s[:s.find(" ")]
         cmd = s[s.find(" ") + 1:]
-        if(self.experiment.get(node) is None):
+        node_wrapper = self.experiment.get(node)
+        if(node_wrapper is None):
             # check if node is the name of a worker. if so, execute command on that worker
             if(node in self.experiment.hostname_to_workerid):
                 worker = self.experiment.cluster.get_worker(node)
@@ -161,6 +162,8 @@ class CLI(Cmd):
                 subprocess.call(rcmd)
             else:
                 print "Error: Node " + node + " does not exist"
+        elif node_wrapper.is_docker():
+            sys.stdout.write(node_wrapper.cmdPrint(cmd))
         else:
             blocking = True
             if cmd[-1] == "&":

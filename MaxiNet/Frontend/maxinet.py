@@ -1577,6 +1577,10 @@ class NodeWrapper(object):
         self.nn = nodename
         self.worker = worker
 
+    def is_docker(self):
+        """Checks if the node wrapper belongs to a docker host."""
+        return self._get("__class__").__name__ == "Docker"
+
     def _call(self, cmd, *params1, **params2):
         """Send method call to remote mininet instance and get return.
 
@@ -1627,7 +1631,7 @@ class NodeWrapper(object):
             return self._get(name)
 
         # Containernet specific
-        elif self._get("__class__").__name__ == "Docker":
+        elif self.is_docker():
             if name in ["updateCpuLimit", "updateMemoryLimit", "cgroupSet",
                         "cgroupGet", "update_resources"]:
                 return method
