@@ -1,5 +1,18 @@
 MaxiNet
 
+MaxiNet 1.2:
+ * change: Disabled non-functional methods and attributes of NodeWrapper
+ * bugfix: Fixed hostname to workerid mapping
+ * bugfix: Fixed simplePing.py experiment
+ * bugfix: Never set highest bit in MAC address (resolves #26)
+ * bugfix: Fixed corner case during source IP extraction
+ * bugfix: Fix port selection for tunneling (Thanks to  Marco Vanotti <mvanotti@dc.uba.ar>)
+ * bugfix: Removed corner case during FatTree MAC generation (Thanks to  Marco Vanotti <mvanotti@dc.uba.ar>)
+ * feature: Added CLI support for Docker hosts
+ * feature: Added logging of caught exceptions during mininet creation
+ * feature: Added support for "params1" and "params2" arguments for links
+ * feature: Showcase example for NodeWrapper methods and attributes
+
 MaxiNet 1.1:
  * feature: Support for Docker container hosts via containernet
  * feature: Pyro 4.55 compatibility

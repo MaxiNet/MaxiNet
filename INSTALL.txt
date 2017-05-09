@@ -19,7 +19,7 @@ Supported Operating Systems:
 Debian 8
 Ubuntu 14.04
 
-There are two different ways to install MaxiNet 1.1:
+There are two different ways to install MaxiNet 1.2:
  - automated installation using the installer.sh script
  - manual installation using the instructions below.
 
@@ -58,7 +58,7 @@ In case you want to use the automated installer, just issue the following comman
 5: Download and install MaxiNet
 > cd ~ && git clone git://github.com/MaxiNet/MaxiNet.git
 > cd MaxiNet
-> git checkout v1.1
+> git checkout v1.2
 > sudo make install
 
 6: Set up cluster and configure MaxiNet
