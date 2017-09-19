@@ -239,6 +239,48 @@ class SSH_Tool(object):
         cmd.extend(["%s@%s:\"%s\"" % (user, rip, remote), local])
         return cmd
 
+    def get_rsync_put_cmd(self, targethostname, local, remote, opts=None):
+        rip = self.config.get_worker_ip(targethostname)
+
+        loc = subprocess.check_output("ip route get %s" % rip, shell=True)
+        if (loc[0:5] == "local"):
+            rip = "localhost"
+
+        user = self.config.get("all", "sshuser")
+        if (rip is None):
+            return None
+        sshcmd = "'ssh -p {port} -o UserKnownHostsFile={khfile} -i {key}'".format(
+            port=str(self.config.get_sshd_port()),
+            khfile=self.known_hosts,
+            key=self.key_priv)
+
+        cmd = ["rsync", "-au", "-e", sshcmd]
+        if (opts):
+            cmd.extend(opts)
+        cmd.extend([local, "%s@%s:%s" % (user, rip, remote)])
+        return cmd
+
+    def get_rsync_get_cmd(self, targethostname, remote, local, opts=None):
+        rip = self.config.get_worker_ip(targethostname)
+
+        loc = subprocess.check_output("ip route get %s" % rip, shell=True)
+        if (loc[0:5] == "local"):
+            rip = "localhost"
+
+        user = self.config.get("all", "sshuser")
+        if (rip is None):
+            return None
+        sshcmd = "'ssh -p {port} -o UserKnownHostsFile={khfile} -i {key}'".format(
+            port=str(self.config.get_sshd_port()),
+            khfile=self.known_hosts,
+            key=self.key_priv)
+        cmd = ["rsync", "-au", "-e", sshcmd]
+        if (opts):
+            cmd.extend(opts)
+        cmd.extend(["%s@%s:%s" % (user, rip, remote), local])
+        return cmd
+
+
     def add_known_host(self, ip):
         with open(self.known_hosts, "a") as kh:
             fp = subprocess.check_output(["ssh-keyscan", "-p",
