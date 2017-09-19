@@ -376,12 +376,12 @@ class Worker(object):
                                                remote=dst)
         subprocess.call(cmd_put)
 
-    def sync_put_file(self, src, dst):
+    def sync_get_file(self, src, dst):
         """Transfer file specified by src on worker to dst on Frontend.
 
         Transfers file src to filename or folder dst on Frontend machine
         via rsync. Does not transfer anything if dst already exists and
-       is the same as src.
+        is the same as src.
 
         Args:
             src: string of path to file on Worker
@@ -392,7 +392,7 @@ class Worker(object):
                                                  local=dst)
         subprocess.call(cmd_get)
 
-    def sync_get_file(self, src, dst):
+    def sync_put_file(self, src, dst):
         """transfer file specified by src on Frontend to dst on worker.
 
         Transfers file src to filename or folder dst on Worker machine
