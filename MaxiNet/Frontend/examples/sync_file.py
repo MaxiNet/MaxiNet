@@ -25,14 +25,12 @@ exp = maxinet.Experiment(cluster, topo)
 exp.setup()
 time.sleep(2)
 
-
-
 h3 = exp.get_node("h3")  # get node object "h3"
 w3 = exp.get_worker("h3")  # get worker-machine running node "h3"
 
-testfile="/tmp/testfile1"
+testfile = "/tmp/testfile1"
 w3.run_cmd("dd if=/dev/urandom of=%s bs=1024 count=2048" % testfile)
-w3.sync_put_file(testfile, testfile)
+w3.sync_get_file(testfile, testfile)
 
 print(w3.run_cmd("md5sum %s" % testfile).strip())
 # compare files
