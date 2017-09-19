@@ -262,9 +262,7 @@ class FatTree(Topo):
                self.randByte() + ":00:00:" + hex(i)[2:]
 
     def makeDPID(self, i):
-        a = self.makeMAC(i)
-        dp = "".join(re.findall(r'[a-f0-9]+', a))
-        return "0" * (16 - len(dp)) + dp
+        return self.makeMAC(i)
 
     # args is a string defining the arguments of the topology!
     # has be to format: "x,y,z" to have x hosts and a bw limit of y for
