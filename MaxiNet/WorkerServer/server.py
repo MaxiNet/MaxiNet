@@ -23,7 +23,7 @@ from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
 
 try:
     from mininet.net import Containernet as Mininet
-except:
+except ImportError:
     from mininet.net import Mininet
 
 class WorkerServer(object):

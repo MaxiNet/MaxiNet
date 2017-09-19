@@ -1612,6 +1612,10 @@ class NodeWrapper(object):
         """Checks if the node wrapper belongs to a docker host."""
         return self._get("__class__").__name__ == "Docker"
 
+    def is_libvirt(self):
+        """Checks if the node wrapper belongs to a docker host."""
+        return self._get("__class__").__name__ == "LibvirtHost"
+
     def _call(self, cmd, *params1, **params2):
         """Send method call to remote mininet instance and get return.
 
@@ -1667,6 +1671,11 @@ class NodeWrapper(object):
                         "cgroupGet", "update_resources"]:
                 return method
             elif name in ["dimage", "resources", "volumes"]:
+                return self._get(name)
+        elif self.is_libvirt():
+            if name in ["updateCpuLimit", "updateMemoryLimit", "update_resources"]:
+                return method
+            elif name in ["disk_image", "resources"]:
                 return self._get(name)
         else:
             raise AttributeError(name)
