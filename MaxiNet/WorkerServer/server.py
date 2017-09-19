@@ -12,7 +12,7 @@ import time
 
 from mininet.node import UserSwitch, OVSSwitch
 from mininet.link import Link, TCIntf
-from mininet.net import Mininet
+
 import mininet.term
 import Pyro4
 import threading
@@ -21,7 +21,10 @@ import traceback
 from MaxiNet.tools import Tools, MaxiNetConfig
 from MaxiNet.WorkerServer.ssh_manager import SSH_Manager
 
-
+try:
+    from mininet.net import Containernet as Mininet
+except:
+    from mininet.net import Mininet
 
 class WorkerServer(object):
     """Manages the Worker
