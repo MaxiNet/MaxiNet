@@ -249,7 +249,7 @@ class SSH_Tool(object):
         user = self.config.get("all", "sshuser")
         if (rip is None):
             return None
-        sshcmd = "'ssh -p {port} -o UserKnownHostsFile={khfile} -i {key}'".format(
+        sshcmd = "ssh -p {port} -o UserKnownHostsFile={khfile} -i {key}".format(
             port=str(self.config.get_sshd_port()),
             khfile=self.known_hosts,
             key=self.key_priv)
@@ -270,7 +270,7 @@ class SSH_Tool(object):
         user = self.config.get("all", "sshuser")
         if (rip is None):
             return None
-        sshcmd = "'ssh -p {port} -o UserKnownHostsFile={khfile} -i {key}'".format(
+        sshcmd = "ssh -p {port} -o UserKnownHostsFile={khfile} -i {key}".format(
             port=str(self.config.get_sshd_port()),
             khfile=self.known_hosts,
             key=self.key_priv)
