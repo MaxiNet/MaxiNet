@@ -1613,7 +1613,7 @@ class NodeWrapper(object):
         return self._get("__class__").__name__ == "Docker"
 
     def is_libvirt(self):
-        """Checks if the node wrapper belongs to a docker host."""
+        """Checks if the node wrapper belongs to a LibvirtHost."""
         return self._get("__class__").__name__ == "LibvirtHost"
 
     def _call(self, cmd, *params1, **params2):
