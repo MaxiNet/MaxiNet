@@ -1662,7 +1662,7 @@ class NodeWrapper(object):
             "stop", "terminate", "waitOutput", "waitReadable", "write"
         ]:
             return method
-        elif name in ["inNamespace", "name", "params", "waiting"]:
+        elif name in ["dpid", "inNamespace", "name", "params", "waiting"]:
             return self._get(name)
 
         # Containernet specific
